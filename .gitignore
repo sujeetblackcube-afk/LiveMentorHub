@@ -11,6 +11,7 @@ pnpm-debug.log*
 
 # Environment Variables
 .env
+.env.example
 .env.local
 .env.development.local
 .env.test.local
@@ -20,6 +21,8 @@ pnpm-debug.log*
 dist/
 dist-ssr/
 build/
+.next/
+out/
 
 # Coverage
 coverage/
