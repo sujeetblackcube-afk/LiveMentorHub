@@ -106,7 +106,7 @@ export default function LandingPage() {
                                 </Link>
 
                                 <a
-                                    href="https://livementorhub.com/teacher/login"
+                                    href="/teacher"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
@@ -116,6 +116,20 @@ export default function LandingPage() {
                                         className="bg-white hover:bg-gray-50 text-[#0d1f5c] rounded-lg h-12 px-8 text-base font-bold shadow-md transition-all border border-gray-200"
                                     >
                                         Teacher Panel
+                                    </Button>
+                                </a>
+
+                                <a
+                                    href="/admin"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        className="bg-white hover:bg-gray-50 text-[#0d1f5c] rounded-lg h-12 px-8 text-base font-bold shadow-md transition-all border border-gray-200"
+                                    >
+                                        Admin Panel
                                     </Button>
                                 </a>
                             </div>
@@ -571,7 +585,7 @@ export default function LandingPage() {
                                     Learning on the Go
                                 </span>
                                 <h2 className="text-4xl md:text-5xl font-black text-[#0d1f5c] leading-[1.1] mb-6">
-                                    Get the <div className="inline-block w-12 h-10 bg-white rounded-lg align-middle mx-1 overflow-hidden relative shadow-sm border border-gray-100"><Image src="/student/logo.png" alt="LiveMentorHub" width={120} height={120} className="w-full h-full object-contain scale-[1.7]" unoptimized /></div> Hub App
+                                    Get the <div className="inline-block w-12 h-10 bg-white rounded-lg align-middle mx-1 overflow-hidden relative shadow-sm border border-gray-100"><Image src="/logo.png" alt="LiveMentorHub" width={120} height={120} className="w-full h-full object-contain scale-[1.7]" unoptimized /></div> Hub App
                                 </h2>
                                 <p className="text-gray-500 text-lg leading-relaxed max-w-xl">
                                     Everything you need for your learning journey is now at your fingertips. Access live doubt solving, interactive classes, and seamless material downloads from your smartphone.
@@ -638,7 +652,7 @@ export default function LandingPage() {
                                     <div className="absolute inset-0 pt-2 px-1 pb-1">
                                         <div className="w-full h-full rounded-[2.8rem] overflow-hidden bg-white">
                                             <Image
-                                                src="/student/app-final.jpeg"
+                                                src="/app-final.jpeg"
                                                 alt="App Preview"
                                                 width={400}
                                                 height={800}

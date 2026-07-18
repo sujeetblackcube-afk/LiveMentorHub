@@ -99,7 +99,7 @@ export default function ProfilePage() {
                     </div>
 
                     <Link
-                        href="/student/auth/login"
+                        href="/auth/login"
                         className="flex items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-3.5 font-semibold text-white hover:bg-red-600"
                     >
                         <LogOut className="h-5 w-5" />

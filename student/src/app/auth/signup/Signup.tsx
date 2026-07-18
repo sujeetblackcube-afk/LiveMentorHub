@@ -542,7 +542,7 @@ export default function SignupPage() {
               whileHover={{ scale: 1.1, rotate: 5 }}
             >
               <img
-                src="/student/logo.png"
+                src="/logo.png"
                 alt="Live Mentor Hub Logo"
                 className="w-full h-full object-contain"
               />

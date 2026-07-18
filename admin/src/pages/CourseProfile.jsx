@@ -60,7 +60,7 @@ export default function CourseProfile() {
               <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">Course Image</h3>
               <div className="relative overflow-hidden rounded-xl shadow-lg bg-gray-100">
                 <img
-                  src={`${BACKEND_BASE_URL}${course.thumbnail}`}
+                  src={course.thumbnail?.startsWith('http') ? course.thumbnail : `${BACKEND_BASE_URL}${course.thumbnail}`}
                   alt={course.courseName}
                   className="w-full h-32 md:h-32 object-contain cursor-pointer hover:scale-105 transition-transform duration-300"
                   onClick={() => setIsModalOpen(true)}
@@ -207,7 +207,7 @@ export default function CourseProfile() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setIsModalOpen(false)}>
           <div className="relative max-w-4xl max-h-full p-4">
             <img
-              src={`${BACKEND_BASE_URL}${course.thumbnail}`}
+              src={course.thumbnail?.startsWith('http') ? course.thumbnail : `${BACKEND_BASE_URL}${course.thumbnail}`}
               alt={course.courseName}
               className="max-w-full max-h-full object-contain"
               onClick={(e) => e.stopPropagation()}

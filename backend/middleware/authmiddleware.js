@@ -54,8 +54,8 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // Check if the token matches either the active web token or active app token
-    if (user.activeWebToken !== token && user.activeAppToken !== token) {
+    // Check if the token matches either the active web token or active app token (skip single-device check for superadmin)
+    if (payload.role !== "superadmin" && user.activeWebToken !== token && user.activeAppToken !== token) {
       return res.status(401).json({
         status: false,
         message: "Session expired or logged in from another device",

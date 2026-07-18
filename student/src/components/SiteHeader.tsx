@@ -84,7 +84,7 @@ export default function SiteHeader() {
               <button
                 onClick={() => {
                   logout();
-                  window.location.href = "/student/auth/login";
+                  window.location.href = "/auth/login";
                 }}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-white/90 hover:bg-white/10 hover:text-red-300 transition-colors"
                 title="Logout"

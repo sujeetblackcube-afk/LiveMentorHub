@@ -19,7 +19,7 @@ export function Footer() {
             <Link href="/" className="flex items-center gap-4 mb-6 group text-xl font-bold text-white">
               <div className="bg-white rounded-xl w-12 h-10 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm transition-transform duration-300">
                 <img
-                  src="/student/logo.png"
+                  src="/logo.png"
                   alt="Live Mentor Hub"
                   className="h-12 w-auto scale-[1.5] transform group-hover:scale-[1.6] transition-transform duration-300"
                 />
@@ -48,9 +48,14 @@ export function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/courses" className="hover:text-white transition-colors text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                    All Courses
-                  </Link>
+                  <a href="/teacher" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                    Teacher Panel
+                  </a>
+                </li>
+                <li>
+                  <a href="/admin" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                    Admin Panel
+                  </a>
                 </li>
               </ul>
             </div>

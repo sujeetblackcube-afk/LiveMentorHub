@@ -177,7 +177,7 @@ export default function ForgotPasswordPage() {
                             className="flex h-24 w-24 items-center justify-center rounded-3xl overflow-hidden shadow-xl shadow-indigo-500/30"
                             whileHover={{ scale: 1.1, rotate: 5 }}
                         >
-                            <img src="/student/logo.png" alt="Live Mentor Hub Logo" className="w-full h-full object-contain" />
+                            <img src="/logo.png" alt="Live Mentor Hub Logo" className="w-full h-full object-contain" />
                         </motion.div>
                         <div className="flex flex-col">
                             <span className="font-bold text-2xl text-gray-900 tracking-tight leading-none">Live Mentor Hub</span>

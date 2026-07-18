@@ -48,7 +48,7 @@ export function Navbar() {
   const handleLogout = () => {
     logout();
     setIsProfileOpen(false);
-    window.location.href = "/student/auth/login";
+    window.location.href = "/auth/login";
   };
 
   const fetchNotifications = async () => {
@@ -127,7 +127,7 @@ export function Navbar() {
           <Link href="/" className="flex items-center gap-3 group">
             <div className="bg-white/50 rounded-xl border border-gray-100 shadow-sm w-12 h-10 flex items-center justify-center overflow-hidden">
               <Image
-                src="/student/logo.png"
+                src="/logo.png"
                 alt="LiveMentorHub"
                 width={120}
                 height={120}

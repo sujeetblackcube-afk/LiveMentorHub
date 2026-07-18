@@ -978,11 +978,13 @@ const login = async (req, res) => {
       specificId,
     });
 
-    // Save the active token based on deviceType
-    if (deviceType === "web") {
-      await user.update({ activeWebToken: token });
-    } else {
-      await user.update({ activeAppToken: token });
+    // Save the active token based on deviceType (except for superadmin to allow multi-device/multi-tab admin logins)
+    if (role !== "superadmin") {
+      if (deviceType === "web") {
+        await user.update({ activeWebToken: token });
+      } else {
+        await user.update({ activeAppToken: token });
+      }
     }
 
     // =======================

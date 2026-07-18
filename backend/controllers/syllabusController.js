@@ -110,9 +110,13 @@ export const getSyllabus = async (req, res) => {
 
     const syllabus = await Syllabus.findByPk(courseCode);
     if (!syllabus) {
-      return res.status(404).json({
-        success: false,
-        message: 'Syllabus not found'
+      return res.status(200).json({
+        success: true,
+        data: {
+          courseCode,
+          syllabusUrl: null,
+          syllabusPoints: []
+        }
       });
     }
 
@@ -201,17 +205,11 @@ export const updateBulletPoints = async (req, res) => {
     let points = Array.isArray(bulletPoints) ? bulletPoints : bulletPoints.split(',').map(p => p.trim()).filter(p => p);
 
 
-    const [updatedCount] = await Syllabus.update(
-      { syllabusPoints: points },
-      { where: { courseCode } }
-    );
-
-    if (updatedCount === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Syllabus not found'
-      });
-    }
+    await Syllabus.upsert({
+      courseCode,
+      courseName: course.courseName,
+      syllabusPoints: points
+    });
 
     const syllabus = await Syllabus.findByPk(courseCode);
 

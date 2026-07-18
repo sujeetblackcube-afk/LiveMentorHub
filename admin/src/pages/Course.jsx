@@ -17,6 +17,7 @@ import {
   getSyllabus,
   addUpdateSyllabusFile,
   updateSyllabusBullets,
+  BACKEND_BASE_URL,
 } from "../services/api";
 
 const DIFFICULTY_LEVELS = ["Beginner", "Intermediate", "Advanced"];
@@ -1326,11 +1327,20 @@ const handleSyllabusEdit = async (course) => {
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
-                  {formData.thumbnail && (
+                  {formData.thumbnail ? (
                     <p className="text-sm text-gray-600 mt-1">
                       Selected: {formData.thumbnail.name}
                     </p>
-                  )}
+                  ) : editingCourse && editingCourse.thumbnail ? (
+                    <div className="mt-2 flex items-center gap-3">
+                      <img
+                        src={editingCourse.thumbnail.startsWith('http') ? editingCourse.thumbnail : `${BACKEND_BASE_URL}${editingCourse.thumbnail}`}
+                        alt="Current Thumbnail"
+                        className="h-14 w-20 object-cover rounded-md border border-gray-200"
+                      />
+                      <span className="text-xs text-gray-500">Current Thumbnail</span>
+                    </div>
+                  ) : null}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">

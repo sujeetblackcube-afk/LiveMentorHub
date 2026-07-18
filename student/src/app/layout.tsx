@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   title: "Live Mentor Hub",
   description: "Track progress, join live classes, and manage assignments with ease.",
   icons: {
-    icon: "/student/logo.png",
-    apple: "/student/logo.png",
+    icon: "/logo.png",
+    apple: "/logo.png",
   },
 };
 

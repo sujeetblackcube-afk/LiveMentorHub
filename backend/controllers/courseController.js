@@ -6,6 +6,7 @@ const { Op } = pkg;
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
 import { 
   getCurrencyFromCountry, 
   convertCurrency, 
@@ -120,10 +121,19 @@ export const createCourse = async (req, res) => {
     // Format code with sequential number (up to 8 digits as requested)
     const courseCode = `${prefix}${dateStr}${String(nextNumber).padStart(8, "0")}`;
 
-    // Handle thumbnail upload
+    // Handle thumbnail upload to Cloudinary
     let thumbnailPath = null;
     if (req.file) {
-      thumbnailPath = `/uploads/thumbnails/${req.file.filename}`;
+      try {
+        const result = await uploadBufferToCloudinary(req.file.buffer, 'courses', 'image');
+        thumbnailPath = result.secure_url;
+      } catch (uploadError) {
+        console.error('Error uploading thumbnail to Cloudinary:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Error uploading course thumbnail to Cloudinary',
+        });
+      }
     }
     // Generate global course id
     const id = await generateCourseId();
@@ -261,17 +271,18 @@ export const updateCourse = async (req, res) => {
       });
     }
 
-    // Handle thumbnail upload
+    // Handle thumbnail upload to Cloudinary
     if (req.file) {
-      // Delete old thumbnail file if exists
-      if (course.thumbnail) {
-        const oldFilePath = path.join(process.cwd(), course.thumbnail);
-        if (fs.existsSync(oldFilePath)) {
-          fs.unlinkSync(oldFilePath);
-        }
+      try {
+        const result = await uploadBufferToCloudinary(req.file.buffer, 'courses', 'image');
+        course.thumbnail = result.secure_url;
+      } catch (uploadError) {
+        console.error('Error uploading thumbnail to Cloudinary:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Error uploading course thumbnail to Cloudinary',
+        });
       }
-      // Set new thumbnail path
-      course.thumbnail = `/uploads/thumbnails/${req.file.filename}`;
     }
 
     // Allowed fields to update
@@ -410,20 +421,8 @@ export const updateCourseStatus = async (req, res) => {
   }
 };
 
-// Multer configuration for thumbnail uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(process.cwd(), 'uploads', 'thumbnails');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Multer configuration for Cloudinary thumbnail uploads
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/')) {

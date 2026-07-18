@@ -277,7 +277,7 @@ export default function LoginPage() {
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
               <img
-                src="/student/logo.png"
+                src="/logo.png"
                 alt="Live Mentor Hub Logo"
                 className="w-full h-full object-contain"
               />

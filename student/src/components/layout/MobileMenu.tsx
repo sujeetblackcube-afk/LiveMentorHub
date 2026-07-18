@@ -93,7 +93,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                                 <Button
                                     onClick={() => {
                                         logout();
-                                        window.location.href = "/student";
+                                        window.location.href = "/";
                                         onClose();
                                     }}
                                     variant="outline"
@@ -103,10 +103,10 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                                 </Button>
                             ) : (
                                 <>
-                                    <Button onClick={() => { onClose(); window.location.href = "/student/auth/login"; }} variant="outline" className="w-full h-12 text-base border-white/20 text-[#0d1f5c] hover:bg-white/5 hover:text-white hover:border-white/30 rounded-xl">
+                                    <Button onClick={() => { onClose(); window.location.href = "/auth/login"; }} variant="outline" className="w-full h-12 text-base border-white/20 text-[#0d1f5c] hover:bg-white/5 hover:text-white hover:border-white/30 rounded-xl">
                                         Log In
                                     </Button>
-                                    <Button onClick={() => { onClose(); window.location.href = "/student/auth/signup"; }} className="w-full h-12 text-base bg-[#d4940a] hover:bg-[#e8a020] text-[#0d1f5c] font-bold rounded-xl shadow-lg shadow-[#d4940a]/20">
+                                    <Button onClick={() => { onClose(); window.location.href = "/auth/signup"; }} className="w-full h-12 text-base bg-[#d4940a] hover:bg-[#e8a020] text-[#0d1f5c] font-bold rounded-xl shadow-lg shadow-[#d4940a]/20">
                                         Create Free Account
                                     </Button>
                                 </>
