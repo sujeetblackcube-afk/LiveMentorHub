@@ -530,7 +530,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
     setHandRaised(!handRaised);
     toast.info(!handRaised ? 'Hand raised!' : 'Hand lowered');
     
-    if (clientRef.current && clientRef.current.connectionState === 'CONNECTED') {
+    if (clientRef.current && (clientRef.current as any).connectionState === 'CONNECTED') {
       try {
         const messageData = JSON.stringify({
           type: 'hand_raise',
@@ -553,7 +553,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
     if (input.trim()) {
       const messageText = input.trim();
       
-      if (clientRef.current && clientRef.current.connectionState === 'CONNECTED') {
+      if (clientRef.current && (clientRef.current as any).connectionState === 'CONNECTED') {
         const messageData = JSON.stringify({
           sender: studentId,
           text: messageText,
