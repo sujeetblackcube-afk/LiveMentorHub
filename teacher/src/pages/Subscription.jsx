@@ -123,7 +123,7 @@ export default function Subscription() {
         setCashfreeSessionId(intentRes.payment_session_id);
         
         const cashfree = await load({
-            mode: "production"
+            mode: intentRes?.cf_mode || "sandbox"
         });
         
         await cashfree.checkout({

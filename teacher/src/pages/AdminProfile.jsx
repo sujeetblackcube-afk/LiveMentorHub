@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { theme } from '../theme';
+import { getImageUrl } from '../utils/image';
 
 const AdminProfile = () => {
   const { user } = useAuth();
@@ -49,9 +50,8 @@ const AdminProfile = () => {
 
       if (response.ok) {
         const result = await response.json();
-      setProfile(result.data);
-        setPreviewImage(result.data.profileImage ? (result.data.profileImage.startsWith('http') ? result.data.profileImage : `${import.meta.env.VITE_BACKEND_BASE_URL}${result.data.profileImage}`) : '');
-        
+        setProfile(result.data);
+        setPreviewImage(getImageUrl(result.data.profileImage, ''));
       } else {
         toast.error('Failed to fetch profile data');
       }
@@ -109,7 +109,15 @@ const AdminProfile = () => {
           <div className="flex items-center space-x-6">
             <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
               {previewImage ? (
-                <img src={previewImage} alt="Profile" className="w-full h-full object-cover" />
+                <img
+                  src={getImageUrl(previewImage)}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://res.cloudinary.com/tivvs1hg/image/upload/v1784356473/banners/owvuikvq07d3nldssn5h.jpg";
+                  }}
+                />
               ) : (
                 <div className="text-2xl font-bold" style={{ color: theme.colors.textSecondary }}>
                   {profile.name ? profile.name.charAt(0).toUpperCase() : 'A'}
@@ -266,9 +274,10 @@ const AdminProfile = () => {
                     address: result.data.address,
                     profileImage: result.data.profileImage
                   }));
-                  setPreviewImage(result.data.profileImage ? (result.data.profileImage.startsWith('http') ? result.data.profileImage : `${import.meta.env.VITE_BACKEND_BASE_URL}${result.data.profileImage}`) : previewImage);
+                  setPreviewImage(getImageUrl(result.data.profileImage, previewImage));
                   setIsModalOpen(false);
                   toast.success('Profile updated successfully!');
+                  window.dispatchEvent(new Event('profileUpdated'));
                 } else {
                   toast.error('Failed to update profile');
                 }

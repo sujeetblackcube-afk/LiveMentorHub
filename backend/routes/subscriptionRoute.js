@@ -11,6 +11,7 @@ import {
   getAllSubscriptionsBuyed,
   getSubscriptionsWithTeacherStatus,
   createSubscriptionCashfreeOrder,
+  verifySubscriptionCashfreeOrder,
 } from "../controllers/subscriptionController.js";
 
 import authMiddleware from '../middleware/authmiddleware.js';
@@ -24,6 +25,9 @@ router.post("/", createSubscription);
 
 // Cashfree order for subscriptions (teacher purchase)
 router.post("/create-cashfree-order", authMiddleware, createSubscriptionCashfreeOrder);
+
+// Cashfree verify order for subscription
+router.post("/verify-cashfree-order/:orderId", authMiddleware, verifySubscriptionCashfreeOrder);
 
 // Get all subscriptions
 

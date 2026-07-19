@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { theme } from "../theme";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl, DEFAULT_BANNER_IMAGE } from "../utils/image";
 import {
   getBanners,
   BACKEND_BASE_URL,
@@ -286,33 +287,30 @@ export default function Dashboard() {
                   {/* Full Width Image */}
                   {banners[currentBannerIndex].image && (
                     <img
-                      src={`${BACKEND_BASE_URL}${banners[currentBannerIndex].image}`}
-                      alt={banners[currentBannerIndex].title}
+                      src={getImageUrl(banners[currentBannerIndex].image)}
+                      alt={banners[currentBannerIndex].title || "Banner"}
                       className="w-full h-40 sm:h-52 md:h-64 lg:h-72 xl:h-80 2xl:h-96 object-cover transition-transform duration-700 group-hover:scale-105"
+                      onError={(e) => {
+                        e.target.src = DEFAULT_BANNER_IMAGE;
+                      }}
                     />
                   )}
 
                   {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-                  {/* Hover Overlay (Admin Dashboard + Add Banner) */}
-                  <div className="absolute inset-0 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-all duration-300 p-4 sm:p-6">
-                    {/* Top Section - Admin Dashboard + Actions */}
-                    <div className="flex items-start justify-between">
-                      <h2 className="text-white text-lg sm:text-xl md:text-2xl font-bold tracking-wide">
-                        🎓 Admin Dashboard
-                      </h2>
-                    </div>
-
-                    {/* Bottom Text Content */}
-                    <div className="text-white">
-                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold">
+                  {/* Banner Title & Description */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white z-10">
+                    {banners[currentBannerIndex].title && (
+                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-1">
                         {banners[currentBannerIndex].title}
                       </h3>
+                    )}
+                    {banners[currentBannerIndex].description && (
                       <p className="text-sm sm:text-base opacity-90 max-w-2xl">
                         {banners[currentBannerIndex].description}
                       </p>
-                    </div>
+                    )}
                   </div>
 
                   {/* Navigation Arrows */}

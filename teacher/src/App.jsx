@@ -21,6 +21,7 @@ import Questions from './pages/Question';
 import Test from './pages/Test';
 import Classes from './pages/Classes';
 import Subscription from './pages/Subscription';
+import CheckoutSuccess from './pages/CheckoutSuccess';
 import Earnings from './pages/Earnings';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
@@ -173,6 +174,7 @@ function AppContent() {
               }
             />
             <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+            <Route path="/checkout-success" element={<ProtectedRoute><CheckoutSuccess /></ProtectedRoute>} />
             <Route
               path="/earning"
               element={

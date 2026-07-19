@@ -155,7 +155,7 @@ export default function SignupPage() {
   const { login, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) router.push("/dashboard");
+    if (isAuthenticated) router.push("/student/dashboard");
   }, [isAuthenticated, router]);
 
   const [step, setStep] = useState<Step>("details");
@@ -410,7 +410,7 @@ export default function SignupPage() {
       }
 
       setStep("success");
-      setTimeout(() => router.push("/dashboard"), 1500);
+      setTimeout(() => router.push("/student/dashboard"), 1500);
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "Invalid OTP. Please try again.",

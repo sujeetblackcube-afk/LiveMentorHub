@@ -10,6 +10,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-toastify";
 import { theme } from "../theme.js";
 import LiveVideo from "../components/LiveVideo";
+import { getImageUrl, DEFAULT_BANNER_IMAGE } from "../utils/image";
 
 const Classes = () => {
   const { user } = useAuth();
@@ -76,24 +77,34 @@ const Classes = () => {
     setFilteredSessions(data.data || []);
   };
 
-  // Helper function to format date WITHOUT timezone conversion
+  // Helper function to format date WITH timezone conversion
   const formatDate = (isoString) => {
     if (!isoString) return "N/A";
-    // Extract YYYY-MM-DD
-    return isoString.split('T')[0];
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    return d.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
-  // Helper function to format time WITHOUT timezone conversion (HH:MM)
+  // Helper function to format time WITH timezone conversion (HH:MM AM/PM)
   const formatTime = (isoString) => {
     if (!isoString) return "N/A";
-    // Extract HH:MM from HH:MM:SS
-    return isoString.split('T')[1]?.substring(0, 5) || "N/A";
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    return d.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
   };
 
-  // Helper function to format full datetime WITHOUT conversion
+  // Helper function to format full datetime WITH conversion
   const formatDateTime = (isoString) => {
     if (!isoString) return "N/A";
-    return `${formatDate(isoString)} ${formatTime(isoString)}`;
+    return `${formatDate(isoString)}, ${formatTime(isoString)}`;
   };
 
   // Helper for edit form - convert UTC to local datetime-local
@@ -210,29 +221,14 @@ const Classes = () => {
                   boxShadow: `0 8px 20px ${theme.colors.shadow}`,
                 }}
               >
-                {session.thumbnailUrl ? (
-                  <img
-                    src={session.thumbnailUrl.startsWith('http') 
-                      ? session.thumbnailUrl 
-                      : `${BACKEND_BASE_URL}${session.thumbnailUrl}`}
-                    alt={session.title}
-                    className="w-full h-40 object-cover rounded-xl mb-4"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = '';
-                    }}
-                  />
-                ) : (
-                  <div
-                    className="w-full h-40 rounded-xl mb-4 flex items-center justify-center"
-                    style={{
-                      backgroundColor: theme.colors.secondary,
-                      color: theme.colors.textSecondary,
-                    }}
-                  >
-                    No Thumbnail
-                  </div>
-                )}
+                <img
+                  src={getImageUrl(session.thumbnailUrl || session.thumbnail || session.image)}
+                  alt={session.title || "Class"}
+                  className="w-full h-40 object-cover rounded-xl mb-4"
+                  onError={(e) => {
+                    e.target.src = DEFAULT_BANNER_IMAGE;
+                  }}
+                />
 
                 <h2
                   className="text-lg font-semibold mb-2"
@@ -430,13 +426,15 @@ const Classes = () => {
                   className="w-full p-2 border rounded"
                 />
               </div>
+              {/* Max Participants input commented out as requested */}
+              {/* 
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">
                   Max Participants
                 </label>
                 <input
                   type="number"
-                  value={editForm.maxParticipants}
+                  value={editForm.maxParticipants || 100}
                   onChange={(e) =>
                     setEditForm({
                       ...editForm,
@@ -446,6 +444,7 @@ const Classes = () => {
                   className="w-full p-2 border rounded"
                 />
               </div>
+              */}
               <div className="mb-4">
                 <label className="flex items-center">
                   <input

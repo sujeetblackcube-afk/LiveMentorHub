@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { theme } from '../theme';
 import { createLiveSession } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { getImageUrl, DEFAULT_BANNER_IMAGE } from '../utils/image';
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
@@ -96,7 +97,7 @@ const Courses = () => {
     formData.append('description', sessionData.description);
     formData.append('startTime', sessionData.startTime);
     formData.append('endTime', sessionData.endTime);
-    formData.append('maxParticipants', sessionData.maxParticipants);
+    formData.append('maxParticipants', sessionData.maxParticipants || 100);
     formData.append('isPrivate', sessionData.isPrivate);
 
     if (thumbnail) {
@@ -185,26 +186,14 @@ const Courses = () => {
               >
                 {/* THUMBNAIL */}
                 <div className="relative">
-                  {course.thumbnail ? (
-                    <img
-                      src={`${import.meta.env.VITE_BACKEND_BASE_URL}${course.thumbnail}`}
-                      alt={course.courseName}
-                      className="w-full h-44 sm:h-48 xl:h-52 object-cover transition-transform duration-300 hover:scale-105"
-                      onError={(e) =>
-                        (e.target.src = "/placeholder-course.jpg")
-                      }
-                    />
-                  ) : (
-                    <div
-                      className="w-full h-44 sm:h-48 xl:h-52 flex items-center justify-center text-5xl"
-                      style={{
-                        backgroundColor: theme.colors.secondary,
-                        color: theme.colors.primary,
-                      }}
-                    >
-                      📘
-                    </div>
-                  )}
+                  <img
+                    src={getImageUrl(course.thumbnail || course.image || course.banner)}
+                    alt={course.courseName || course.title || "Course"}
+                    className="w-full h-44 sm:h-48 xl:h-52 object-cover transition-transform duration-300 hover:scale-105"
+                    onError={(e) => {
+                      e.target.src = DEFAULT_BANNER_IMAGE;
+                    }}
+                  />
                   {course.status === "Active" && (
                     <div
                       className="absolute top-2 right-2 px-2 py-1 rounded text-xs font-semibold text-white"
@@ -321,17 +310,20 @@ const Courses = () => {
                     disabled={isSubmitting}
                   />
                 </div>
+                {/* Max Participants input commented out as requested */}
+                {/* 
                 <div className="mb-4">
                   <label className="block text-sm font-medium mb-1">Max Participants</label>
                   <input
                     type="number"
-                    value={sessionData.maxParticipants}
-                    onChange={(e) => setSessionData({ ...sessionData, maxParticipants: parseInt(e.target.value) })}
+                    value={sessionData.maxParticipants || 100}
+                    onChange={(e) => setSessionData({ ...sessionData, maxParticipants: parseInt(e.target.value) || 100 })}
                     className="w-full p-2 border rounded"
                     min="1"
                     disabled={isSubmitting}
                   />
                 </div>
+                */}
                 <div className="mb-4">
                   <label className="flex items-center">
                     <input

@@ -440,6 +440,7 @@ export default function SettingsPage() {
             profileImage: studentData.profileImage,
           });
         }
+        window.dispatchEvent(new Event("profileUpdated"));
         
         setIsEditPopupOpen(false);
       } else {

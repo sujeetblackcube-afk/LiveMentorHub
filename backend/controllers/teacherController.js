@@ -605,9 +605,11 @@ const updateTeacherProfile = async (req, res) => {
   try {
     const teacher = req.user;
 
-    // ✅ Handle profile image (optional)
-    if (req.file) {
-      teacher.profileImage = '/uploads/profiles/' + req.file.filename;
+    // ✅ Handle profile image (stored in dedicated /uploads/teacher-profiles/ directory)
+    if (req.files && req.files.profileImage && req.files.profileImage[0]) {
+      teacher.profileImage = '/uploads/teacher-profiles/' + req.files.profileImage[0].filename;
+    } else if (req.file) {
+      teacher.profileImage = '/uploads/teacher-profiles/' + req.file.filename;
     }
 
     // ✅ Handle documents upload (optional)

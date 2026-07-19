@@ -12,6 +12,7 @@ import {
   createBulkLiveSessions,
 } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
+import { getImageUrl, DEFAULT_BANNER_IMAGE } from "../utils/image";
 
 const CourseDetail = () => {
   const { courseCode } = useParams();
@@ -385,23 +386,14 @@ const CourseDetail = () => {
           }}
         >
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-            {course.thumbnail ? (
-              <img
-                src={`${import.meta.env.VITE_BACKEND_BASE_URL}${course.thumbnail}`}
-                alt={course.courseName}
-                className="w-24 h-24 object-cover rounded-xl shadow-md"
-              />
-            ) : (
-              <div
-                className="w-24 h-24 flex items-center justify-center text-4xl rounded-xl shadow-md"
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.9)',
-                  color: theme.colors.primary,
-                }}
-              >
-                📚
-              </div>
-            )}
+            <img
+              src={getImageUrl(course.thumbnail || course.image || course.banner)}
+              alt={course.courseName || course.title || "Course"}
+              className="w-24 h-24 object-cover rounded-xl shadow-md"
+              onError={(e) => {
+                e.target.src = DEFAULT_BANNER_IMAGE;
+              }}
+            />
             <div className="flex-1">
               <h1
                 className="text-3xl font-bold mb-2"
@@ -1274,17 +1266,20 @@ const CourseDetail = () => {
                     disabled={isSubmitting}
                   />
                 </div>
+                {/* Max Participants input commented out as requested */}
+                {/* 
                 <div className="mb-4">
                   <label className="block text-sm font-medium mb-1">Max Participants</label>
                   <input
                     type="number"
-                    value={sessionData.maxParticipants}
-                    onChange={(e) => setSessionData({ ...sessionData, maxParticipants: parseInt(e.target.value) })}
+                    value={sessionData.maxParticipants || 100}
+                    onChange={(e) => setSessionData({ ...sessionData, maxParticipants: parseInt(e.target.value) || 100 })}
                     className="w-full p-2 border rounded"
                     min="1"
                     disabled={isSubmitting}
                   />
                 </div>
+                */}
                 <div className="mb-4">
                   <label className="flex items-center">
                     <input

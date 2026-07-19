@@ -238,8 +238,22 @@ export const createCashfreeOrder = async (req, res) => {
 
     const cfOrderId = `ENR_${Date.now()}_${studentId}`;
 
-    const returnUrl = process.env.CASHFREE_RETURN_URL || process.env.FRONTEND_URL || "https://localhost:3000";
-    const normalizedReturnUrl = returnUrl.endsWith("/") ? returnUrl : `${returnUrl}/`;
+    let returnBaseUrl = process.env.CASHFREE_RETURN_URL || process.env.FRONTEND_URL;
+    if (!returnBaseUrl) {
+      if (req.headers.referer) {
+        try {
+          const refUrl = new URL(req.headers.referer);
+          returnBaseUrl = refUrl.origin;
+        } catch (e) {
+          returnBaseUrl = req.headers.origin || "http://localhost:3000";
+        }
+      } else if (req.headers.origin) {
+        returnBaseUrl = req.headers.origin;
+      } else {
+        returnBaseUrl = "http://localhost:3000";
+      }
+    }
+    const normalizedReturnUrl = returnBaseUrl.endsWith("/") ? returnBaseUrl : `${returnBaseUrl}/`;
 
     const request = {
       order_amount: Math.round(amount),
@@ -266,7 +280,12 @@ export const createCashfreeOrder = async (req, res) => {
 
     res
       .status(200)
-      .json({ success: true, payment_session_id: response.data.payment_session_id, order_id: cfOrderId });
+      .json({ 
+        success: true, 
+        payment_session_id: response.data.payment_session_id, 
+        order_id: cfOrderId,
+        cf_mode: process.env.CASHFREE_ENV === "PRODUCTION" ? "production" : "sandbox"
+      });
   } catch (err) {
     console.error("Cashfree create order error:", err);
     res.status(500).json({ success: false, message: err.message });

@@ -100,9 +100,9 @@ export function EnrollmentModal({ isOpen, onClose, onSuccess, courseCode, price,
             const data = await response.json();
 
             if (data.success && data.payment_session_id) {
-                // Initialize Cashfree
+                // Initialize Cashfree dynamically (sandbox or production)
                 const cashfree = await load({
-                    mode: "production" // Production as per user instructions
+                    mode: (data.cf_mode || "sandbox") as "production" | "sandbox"
                 });
 
                 // Start Cashfree checkout process

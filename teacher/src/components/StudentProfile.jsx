@@ -4,6 +4,7 @@ import { ArrowLeft, MoreVertical, Trash2, Loader2, Edit, Save, X } from "lucide-
 import { theme } from "../theme";
 import { getStudentById, getAllEnrollments, updateStudentData, BACKEND_BASE_URL } from "../services/api";
 import { toast } from "react-toastify";
+import { getImageUrl } from "../utils/image";
 
 export default function StudentProfile() {
   const { studentId } = useParams();
@@ -288,7 +289,7 @@ export default function StudentProfile() {
                 />
               ) : studentData.image ? (
                 <img
-                  src={studentData.image}
+                  src={getImageUrl(studentData.image)}
                   alt={studentData.name}
                   style={{
                     width: "100%",

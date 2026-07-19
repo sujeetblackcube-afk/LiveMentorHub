@@ -124,7 +124,7 @@ export default function LoginPage() {
   // Redirect to dashboard if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/dashboard");
+      router.push("/student/dashboard");
     }
   }, [isAuthenticated, router]);
 
@@ -190,7 +190,7 @@ export default function LoginPage() {
       }
 
       toast.success("Logged in successfully!");
-      router.push("/dashboard");
+      router.push("/student/dashboard");
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong.";

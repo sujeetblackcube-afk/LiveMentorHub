@@ -435,6 +435,18 @@ export const createSubscriptionCashfreeOrder = async (payload) => {
   }).then(json);
 };
 
+// Cashfree: verify order for subscription purchase
+export const verifySubscriptionCashfreeOrder = async (orderId) => {
+  const url = `${BASE_URL}/subscriptions/verify-cashfree-order/${orderId}`;
+  return fetch(url, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+  }).then(json);
+};
+
 // Get all subscriptions buyed by teacher ID
 export const getSubscriptionsByTeacherId = async (teacherId) => {
   const url = `${BASE_URL}/subscriptions/buyed/teacher/${teacherId}`;

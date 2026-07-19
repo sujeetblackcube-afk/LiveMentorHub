@@ -3,13 +3,27 @@ import multer from 'multer';
 import { getAllTeachers, updateTeacherStatus, getTeacherCount, updateCoursename, getTeacherProfile, getTeacherCourses, getTeacherCourseStudents,getTeacherLiveSessions, courseCountForTeacher, getTotalStudentCountForTeacher ,updateTeacherProfile,deleteTeacher} from '../controllers/teacherController.js';
 import authMiddleware from '../middleware/authmiddleware.js';
 
-// Configure multer for profile image uploads
+import fs from 'fs';
+import path from 'path';
+
+// Ensure dedicated directory exists for teacher profiles and documents
+const teacherProfileDir = path.join(process.cwd(), 'uploads', 'teacher-profiles');
+const teacherDocDir = path.join(process.cwd(), 'uploads', 'teacher-documents');
+if (!fs.existsSync(teacherProfileDir)) fs.mkdirSync(teacherProfileDir, { recursive: true });
+if (!fs.existsSync(teacherDocDir)) fs.mkdirSync(teacherDocDir, { recursive: true });
+
+// Configure multer for profile image and document uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/profiles/');
+    if (file.fieldname === 'profileImage') {
+      cb(null, 'uploads/teacher-profiles/');
+    } else {
+      cb(null, 'uploads/teacher-documents/');
+    }
   },
   filename: (req, file, cb) => {
-    cb(null, `profile-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${file.originalname}`);
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `teacher-${file.fieldname}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}${ext}`);
   }
 });
 

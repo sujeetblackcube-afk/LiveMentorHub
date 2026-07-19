@@ -169,24 +169,32 @@ export default function LivePage() {
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return "";
-    const datePart = dateString.split('T')[0];
-    const [year, month, day] = datePart.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    
     const today = new Date();
     if (date.toDateString() === today.toDateString()) return "Today";
-    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
     if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
-    return `${day} ${new Date(date).toLocaleString('en-US', { month: 'short' })}`;
+    
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
   };
 
   const formatTime = (dateString: string): string => {
     if (!dateString) return "";
-    const timePart = dateString.split('T')[1]?.substring(0, 5);
-    if (!timePart) return "";
-    const [hours, minutes] = timePart.split(':').map(Number);
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const hour12 = hours % 12 || 12;
-    return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    return date.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
   };
 
   const calculateDuration = (startTime: string, endTime: string): string => {

@@ -19,11 +19,11 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useAuth } from "@/store/useAuth";
 import { AnimatePresence, motion } from "framer-motion";
-import { API_BASE, NOTIFICATION_PATHS } from "@/lib/api";
+import { API_BASE, API_AUTH_BASE, NOTIFICATION_PATHS, GETPROFILE } from "@/lib/api";
 
 
 export function Navbar() {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, updateUser } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -36,10 +36,49 @@ export function Navbar() {
   const STUDENT_ID = user?.studentId;
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 10);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    const fetchStudentProfile = async () => {
+      try {
+        const studentId = user?.studentId || (typeof window !== "undefined" ? localStorage.getItem("studentId") : null);
+        if (!studentId) return;
+
+        const token = typeof window !== "undefined" ? localStorage.getItem("cp_token") : null;
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch(`${API_AUTH_BASE}${GETPROFILE.getprofile(studentId)}`, { headers });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.status && json.data) {
+            updateUser({
+              name: json.data.name,
+              email: json.data.email,
+              studentId: json.data.studentId,
+              country: json.data.country,
+              profileImage: json.data.profileImage,
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching student profile for navbar:", err);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchStudentProfile();
+    }
+
+    const handleProfileUpdate = () => fetchStudentProfile();
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+    return () => window.removeEventListener("profileUpdated", handleProfileUpdate);
+  }, [isAuthenticated, user?.studentId]);
 
   useEffect(() => {
     if (isAuthenticated && isNotifOpen) fetchNotifications();
@@ -48,7 +87,7 @@ export function Navbar() {
   const handleLogout = () => {
     logout();
     setIsProfileOpen(false);
-    window.location.href = "/auth/login";
+    window.location.href = "/student/auth/login";
   };
 
   const fetchNotifications = async () => {
@@ -100,16 +139,16 @@ export function Navbar() {
   };
 
   const AUTH_NAV_LINKS = [
-    { label: "Home", href: "/dashboard" },
-    { label: "Courses", href: "/courses" },
-    { label: "Live", href: "/live" },
-    { label: "Doubt", href: "/doubt" },
+    { label: "Home", href: "/student/dashboard" },
+    { label: "Courses", href: "/student/courses" },
+    { label: "Live", href: "/student/live" },
+    { label: "Doubt", href: "/student/doubt" },
   ];
 
   const GUEST_NAV_LINKS = [
     { label: "Home", href: "/" },
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Course", href: "/courses?demo=true" },
+    { label: "Dashboard", href: "/student/dashboard" },
+    { label: "Course", href: "/student/courses?demo=true" },
   ];
 
   const NAV_LINKS = isAuthenticated ? AUTH_NAV_LINKS : GUEST_NAV_LINKS;
@@ -131,6 +170,8 @@ export function Navbar() {
                 alt="LiveMentorHub"
                 width={120}
                 height={120}
+                priority
+                loading="eager"
                 className="w-auto h-12 scale-[1.5] transform group-hover:scale-[1.6] transition-transform duration-300"
                 unoptimized
               />
@@ -274,7 +315,7 @@ export function Navbar() {
                           </div>
                           <div className="p-1.5 space-y-0.5">
                             <Link
-                              href="/settings"
+                              href="/student/settings"
                               className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-[#0d1f5c] transition-colors"
                               onClick={() => setIsProfileOpen(false)}
                             >
@@ -301,12 +342,12 @@ export function Navbar() {
                 <Button
                   variant="ghost"
                   className="text-[#0d1f5c]/60 hover:text-[#0d1f5c] font-semibold hover:bg-gray-50 rounded-lg px-5 h-10"
-                  onClick={() => router.push("/auth/login")}
+                  onClick={() => router.push("/student/auth/login")}
                 >
                   Log in
                 </Button>
                 <Button
-                  onClick={() => router.push("/auth/signup")}
+                  onClick={() => router.push("/student/auth/signup")}
                   className="rounded-lg bg-[#d4940a] hover:bg-[#e8a020] text-[#0d1f5c] font-bold px-6 h-10 shadow-sm"
                 >
                   Sign Up Free

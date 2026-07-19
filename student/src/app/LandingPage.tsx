@@ -98,7 +98,7 @@ export default function LandingPage() {
 
                             {/* CTA Buttons */}
                             <div className="flex flex-col sm:flex-row items-start gap-4 pt-2">
-                                <Link href="/auth/login">
+                                <Link href="/student/auth/login">
                                     <Button size="lg" className="bg-[#d4940a] hover:bg-[#c5880a] text-[#0d1f5c] rounded-lg h-12 px-8 text-base font-bold shadow-md transition-all">
                                         Get Started Free
                                         <ArrowRight className="ml-2 h-4 w-4" />
@@ -733,12 +733,12 @@ export default function LandingPage() {
                             Join 2 Million+ students who are already learning from India&apos;s best mentors. Start your free account today.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
-                            <Link href="/auth/signup">
+                            <Link href="/student/auth/signup">
                                 <Button size="lg" className="bg-[#0d1f5c] hover:bg-[#0a1540] text-white rounded-xl h-14 px-10 text-lg font-bold shadow-lg">
                                     Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
                                 </Button>
                             </Link>
-                            <Link href="/courses">
+                            <Link href="/student/courses">
                                 <Button variant="outline" size="lg" className="bg-white hover:bg-gray-50 border-0 text-[#0d1f5c] rounded-xl h-14 px-10 text-lg font-bold shadow-lg">
                                     Browse Courses
                                 </Button>

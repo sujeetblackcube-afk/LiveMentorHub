@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { theme } from "../theme.js";
 import { getNotificationByTeacherId, deleteAllNotificationByTeacher, deleteNotification } from '../services/api';
 
+import { getImageUrl } from "../utils/image";
+
 export default function Navbar({ collapsed, setCollapsed }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
@@ -20,7 +22,10 @@ export default function Navbar({ collapsed, setCollapsed }) {
     if (role === 'teacher') {
       fetchProfile();
     }
-  }, [role]);
+    const handleProfileUpdate = () => fetchProfile();
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -35,6 +40,8 @@ export default function Navbar({ collapsed, setCollapsed }) {
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) return;
+      
       const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/teachers/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -42,8 +49,12 @@ export default function Navbar({ collapsed, setCollapsed }) {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setProfileImage(data.profileImage ? (data.profileImage.startsWith('http') ? data.profileImage : `${import.meta.env.VITE_BACKEND_BASE_URL}/${data.profileImage}`) : '');
+        const resJson = await response.json();
+        const profileObj = resJson.data || resJson;
+        const imgPath = profileObj?.profileImage || profileObj?.image;
+        if (imgPath) {
+          setProfileImage(getImageUrl(imgPath, ''));
+        }
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -236,7 +247,12 @@ export default function Navbar({ collapsed, setCollapsed }) {
           >
             <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full text-white flex items-center justify-center font-semibold text-sm sm:text-base" style={{ backgroundColor: theme.colors.primary }}>
               {profileImage ? (
-                <img src={profileImage} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                <img
+                  src={profileImage}
+                  alt="Profile"
+                  className="w-full h-full object-cover rounded-full"
+                  onError={() => setProfileImage('')}
+                />
               ) : (
                 <div className="text-lg sm:text-2xl font-bold" style={{ color: theme.colors.textSecondary }}>
                   {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}

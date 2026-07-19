@@ -214,8 +214,13 @@ export const createSubscriptionCashfreeOrder = async (req, res) => {
     const currency = process.env.CASHFREE_CURRENCY || "INR";
     const cfOrderId = `SUB_${Date.now()}_${teacherId}`;
 
-    const returnUrl = process.env.CASHFREE_RETURN_URL || process.env.FRONTEND_URL || "https://localhost:5174";
-    const normalizedReturnUrl = returnUrl.endsWith("/") ? returnUrl : `${returnUrl}/`;
+    let returnBaseUrl = process.env.CASHFREE_RETURN_URL || process.env.FRONTEND_URL;
+    if (!returnBaseUrl) {
+      const origin = req.headers.origin || "http://localhost:5173";
+      const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+      returnBaseUrl = cleanOrigin.endsWith('/teacher') ? cleanOrigin : `${cleanOrigin}/teacher`;
+    }
+    const normalizedReturnUrl = returnBaseUrl.endsWith("/") ? returnBaseUrl : `${returnBaseUrl}/`;
 
     const request = {
       order_amount: Math.round(price),
@@ -248,6 +253,7 @@ export const createSubscriptionCashfreeOrder = async (req, res) => {
       success: true,
       payment_session_id: response.data.payment_session_id,
       order_id: cfOrderId,
+      cf_mode: process.env.CASHFREE_ENV === "PRODUCTION" ? "production" : "sandbox",
     });
   } catch (error) {
     console.error("Create subscription cashfree order error:", error);
@@ -572,3 +578,97 @@ export const getSubscriptionsWithTeacherStatus = async (req, res) => {
     });
   }
 };
+
+// Verify Cashfree Subscription Order by orderId (Instant verification on return URL / redirect)
+export const verifySubscriptionCashfreeOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: "Order ID is required" });
+    }
+
+    const client = createCashfreeClient();
+    const response = await client.PGFetchOrder(orderId);
+    const order = response.data;
+
+    if (!order || order.order_status !== "PAID") {
+      return res.status(400).json({
+        success: false,
+        message: `Order status is ${order?.order_status || "NOT PAID"}`,
+        order_status: order?.order_status || "PENDING",
+      });
+    }
+
+    // Check if subscription record already exists
+    let existing = await SubscriptionBuyed.findOne({
+      where: { orderId: String(orderId) },
+    });
+
+    if (existing) {
+      return res.status(200).json({
+        success: true,
+        message: "Subscription already active",
+        data: existing,
+      });
+    }
+
+    const tags = order.order_tags || {};
+    const teacherId = tags.teacherId || req.user?.teacherId;
+    const planName = tags.planName;
+    const durationDays = parseInt(tags.durationDays || "30", 10);
+    const startDate = tags.startDate;
+    const endDate = tags.endDate;
+
+    if (!teacherId || !planName) {
+      return res.status(400).json({ success: false, message: "Missing order metadata tags" });
+    }
+
+    const teacher = await Teacher.findOne({ where: { teacherId } });
+    if (!teacher) {
+      return res.status(404).json({ success: false, message: "Teacher not found" });
+    }
+
+    const price = order.order_amount;
+
+    const subscriptionBuyed = await SubscriptionBuyed.create({
+      teacherId,
+      teacherName: teacher.name,
+      planName,
+      price,
+      durationDays: durationDays || 30,
+      startDate: startDate ? new Date(startDate) : new Date(),
+      endDate: endDate ? new Date(endDate) : new Date(Date.now() + (durationDays || 30) * 24 * 60 * 60 * 1000),
+      orderId: String(orderId),
+      status: "active",
+      paymentStatus: "paid",
+      transactionId: String(orderId),
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Subscription verified and activated successfully!",
+      data: subscriptionBuyed,
+    });
+  } catch (error) {
+    if (error.name === 'SequelizeUniqueConstraintError' || error.code === '23505') {
+      try {
+        const existing = await SubscriptionBuyed.findOne({
+          where: { orderId: String(req.params.orderId) },
+        });
+        if (existing) {
+          return res.status(200).json({
+            success: true,
+            message: "Subscription verified and active",
+            data: existing,
+          });
+        }
+      } catch (findErr) {
+        console.error("Error fetching existing subscription on constraint error:", findErr);
+      }
+    }
+    console.error("Verify Cashfree order error:", error);
+    return res.status(500).json({ success: false, message: error.message || "Failed to verify order" });
+  }
+};
+

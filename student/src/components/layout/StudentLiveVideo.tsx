@@ -501,9 +501,13 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
       (track) => track && track.trackMediaType === 'video'
     );
     if (videoTrack) {
-      const newState = !videoTrack.enabled;
-      videoTrack.setEnabled(newState);
-      setIsCameraOn(newState);
+      try {
+        const newState = !videoTrack.enabled;
+        videoTrack.setEnabled(newState);
+        setIsCameraOn(newState);
+      } catch (e) {
+        console.warn('Camera track toggle ignored:', e);
+      }
     }
   };
 
@@ -512,65 +516,68 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
       (track) => track && track.trackMediaType === 'audio'
     );
     if (audioTrack) {
-      const newState = !audioTrack.enabled;
-      audioTrack.setEnabled(newState);
-      setIsMicOn(newState);
+      try {
+        const newState = !audioTrack.enabled;
+        audioTrack.setEnabled(newState);
+        setIsMicOn(newState);
+      } catch (e) {
+        console.warn('Mic track toggle ignored:', e);
+      }
     }
   };
 
   const raiseHand = (): void => {
     setHandRaised(!handRaised);
-    toast.info(handRaised ? 'Hand lowered' : 'Hand raised!');
+    toast.info(!handRaised ? 'Hand raised!' : 'Hand lowered');
     
-    if (clientRef.current) {
-      const messageData = JSON.stringify({
-        type: 'hand_raise',
-        studentId: studentId,
-        isRaised: !handRaised,
-        timestamp: Date.now()
-      });
-      
-      const encoder = new TextEncoder();
-      const messageBytes = encoder.encode(messageData);
-      
-      clientRef.current.sendStreamMessage(messageBytes).catch(console.error);
+    if (clientRef.current && clientRef.current.connectionState === 'CONNECTED') {
+      try {
+        const messageData = JSON.stringify({
+          type: 'hand_raise',
+          studentId: studentId,
+          isRaised: !handRaised,
+          timestamp: Date.now()
+        });
+        
+        const encoder = new TextEncoder();
+        const messageBytes = encoder.encode(messageData);
+        
+        clientRef.current.sendStreamMessage(messageBytes).catch(() => {});
+      } catch (e) {
+        // Stream message fails safely if data channel is not open
+      }
     }
   };
 
   const sendMessage = async (): Promise<void> => {
-    if (input.trim() && clientRef.current) {
+    if (input.trim()) {
       const messageText = input.trim();
       
-      const messageData = JSON.stringify({
-        sender: studentId, // Send actual ID, display handled client-side
-        text: messageText,
-        timestamp: Date.now()
-      });
-      
-      const encoder = new TextEncoder();
-      const messageBytes = encoder.encode(messageData);
-      
-      try {
-        await clientRef.current.sendStreamMessage(messageBytes);
-        
-        setMessages(prev => [...prev, { 
-          sender: 'You', 
+      if (clientRef.current && clientRef.current.connectionState === 'CONNECTED') {
+        const messageData = JSON.stringify({
+          sender: studentId,
           text: messageText,
-          isLocal: true,
           timestamp: Date.now()
-        }]);
+        });
         
-        setInput('');
-      } catch (error) {
-        console.error('Error sending message:', error);
-        setMessages(prev => [...prev, { 
-          sender: 'You', 
-          text: messageText,
-          isLocal: true,
-          timestamp: Date.now()
-        }]);
-        setInput('');
+        const encoder = new TextEncoder();
+        const messageBytes = encoder.encode(messageData);
+        
+        try {
+          await clientRef.current.sendStreamMessage(messageBytes);
+        } catch (error) {
+          // Fallback UI chat message
+        }
       }
+
+      setMessages(prev => [...prev, { 
+        sender: 'You', 
+        text: messageText,
+        isLocal: true,
+        timestamp: Date.now()
+      }]);
+      
+      setInput('');
     }
   };
 

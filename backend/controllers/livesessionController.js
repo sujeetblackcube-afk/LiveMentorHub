@@ -14,9 +14,24 @@ import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
 const convertLocalToUTC = (dateString) => {
   if (!dateString) return null;
 
-  // If frontend already sends ISO with timezone (e.g. ...+00:00 or ...Z), convert reliably.
-  const parsed = new Date(dateString);
-  if (Number.isNaN(parsed.getTime())) return dateString;
+  // If already an ISO string with Z or timezone offset (e.g. Z or +05:30)
+  if (typeof dateString === "string" && (dateString.endsWith("Z") || dateString.match(/[+-]\d{2}:\d{2}$/))) {
+    const d = new Date(dateString);
+    return Number.isNaN(d.getTime()) ? dateString : d.toISOString();
+  }
+
+  // If datetime-local string without offset (e.g. "2026-07-19T08:55"), parse as IST (+05:30)
+  let cleanStr = String(dateString).trim();
+  if (cleanStr.includes("T") && !cleanStr.match(/[+-]\d{2}:\d{2}$/)) {
+    if (cleanStr.length === 16) cleanStr += ":00";
+    cleanStr += "+05:30";
+  }
+
+  const parsed = new Date(cleanStr);
+  if (Number.isNaN(parsed.getTime())) {
+    const fallback = new Date(dateString);
+    return Number.isNaN(fallback.getTime()) ? dateString : fallback.toISOString();
+  }
 
   return parsed.toISOString();
 };
@@ -110,7 +125,7 @@ const createSingleSession = async (sessionData, course, teacher, thumbnailPath) 
     channelName,
     token,
     uid: uid ? uid.toString() : null,
-    maxParticipants,
+    maxParticipants: parseInt(maxParticipants || 100, 10),
     isPrivate,
   });
 
@@ -229,7 +244,7 @@ export const createLiveSession = async (req, res) => {
     let thumbnailPath = null;
     if (req.file) {
       try {
-        const result = await uploadBufferToCloudinary(req.file.buffer, "thumbnails");
+        const result = await uploadBufferToCloudinary(req.file.buffer, "online_class_thumbnails");
         thumbnailPath = result.secure_url;
       } catch (uploadError) {
         return res.status(500).json({ success: false, message: "Error uploading thumbnail" });
@@ -360,7 +375,7 @@ const createBulkLiveSessions = async (req, res) => {
     let thumbnailPath = null;
     if (req.file) {
       try {
-        const result = await uploadBufferToCloudinary(req.file.buffer, "thumbnails");
+        const result = await uploadBufferToCloudinary(req.file.buffer, "online_class_thumbnails");
         thumbnailPath = result.secure_url;
       } catch (uploadError) {
         return res.status(500).json({ success: false, message: "Error uploading thumbnail" });
@@ -667,7 +682,7 @@ export const updateLiveSession = async (req, res) => {
     // Handle thumbnail upload
     if (req.file) {
       try {
-        const result = await uploadBufferToCloudinary(req.file.buffer, "thumbnails");
+        const result = await uploadBufferToCloudinary(req.file.buffer, "online_class_thumbnails");
         session.thumbnailUrl = result.secure_url;
       } catch (uploadError) {
         return res.status(500).json({ success: false, message: "Error uploading thumbnail" });

@@ -478,8 +478,9 @@ const LiveVideo = ({ session, onClose }) => {
       const messageBytes = encoder.encode(messageData);
       
       try {
-        // Send stream message to all participants
-        await clientRef.current.sendStreamMessage(messageBytes);
+        if (clientRef.current && clientRef.current.connectionState === 'CONNECTED') {
+          await clientRef.current.sendStreamMessage(messageBytes);
+        }
         
         // Add to local messages
         setMessages(prev => [...prev, { 
