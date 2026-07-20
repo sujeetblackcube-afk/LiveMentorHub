@@ -119,7 +119,7 @@ export default function LandingPage() {
                                     </Button>
                                 </a>
 
-                                <a
+                                {/* <a
                                     href="/admin"
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -131,7 +131,7 @@ export default function LandingPage() {
                                     >
                                         Admin Panel
                                     </Button>
-                                </a>
+                                </a> */}
                             </div>
 
 

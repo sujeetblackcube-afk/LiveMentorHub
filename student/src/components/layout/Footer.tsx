@@ -52,11 +52,11 @@ export function Footer() {
                     Teacher Panel
                   </a>
                 </li>
-                <li>
+                {/* <li>
                   <a href="/admin" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
                     Admin Panel
                   </a>
-                </li>
+                </li> */}
               </ul>
             </div>
           </div>

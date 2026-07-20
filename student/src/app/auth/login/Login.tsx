@@ -61,10 +61,8 @@ export default function LoginPage() {
     return allowed > 0 ? allowed : 10;
   };
 
-  const identifierDigits = normalizeDigits(identifier);
-
   const isDigitsOnly =
-    identifierDigits.length > 0 && /^[0-9]+$/.test(identifierDigits);
+    identifier.length > 0 && /^\d+$/.test(identifier);
 
   const getPhoneIdentifierValue = () => {
     const digits = normalizeDigits(identifier);
@@ -129,9 +127,9 @@ export default function LoginPage() {
   }, [isAuthenticated, router]);
 
   const [error, setError] = useState("");
+  const [showActiveSessionModal, setShowActiveSessionModal] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const executeLogin = async (forceLogout = false) => {
     if (!identifier.trim())
       return setError("Please enter your email or mobile.");
     if (!password.trim()) return setError("Please enter your password.");
@@ -141,7 +139,7 @@ export default function LoginPage() {
       const identifierValue = isDigitsOnly
         ? getPhoneIdentifierValue()
         : identifier;
-      const body = { identifier: identifierValue, password, role };
+      const body = { identifier: identifierValue, password, role, forceLogout, deviceType: "web" };
 
       const res = await fetch(`${API_AUTH_BASE}${AUTH_PATHS.login}`, {
         method: "POST",
@@ -149,6 +147,13 @@ export default function LoginPage() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
+
+      if (data?.activeSessionFound) {
+        setShowActiveSessionModal(true);
+        setLoading(false);
+        return;
+      }
+
       if (!res.ok || data?.status === false) {
         const message =
           data?.message ||
@@ -199,6 +204,16 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    executeLogin(false);
+  };
+
+  const handleConfirmForceLogout = () => {
+    setShowActiveSessionModal(false);
+    executeLogin(true);
   };
 
   const socialVariants = {
@@ -628,6 +643,44 @@ export default function LoginPage() {
             </span>
           </div>
         </motion.div>
+
+        {/* Active Session Confirmation Modal */}
+        <AnimatePresence>
+          {showActiveSessionModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-4 text-center border border-gray-100"
+              >
+                <div className="mx-auto w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center text-[#d4940a]">
+                  <UserCircle2 className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Active Session Found</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Your account is currently logged in on another device. Continuing will log you out from the other device.
+                </p>
+                <div className="flex flex-col gap-2.5 pt-2">
+                  <Button
+                    onClick={handleConfirmForceLogout}
+                    className="w-full bg-gradient-to-r from-[#d4940a] via-[#e8a020] to-[#d4940a] text-[#0d1f5c] font-bold py-3.5 rounded-xl shadow-md transition-all border-0"
+                  >
+                    Logout from other device &amp; Continue
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowActiveSessionModal(false)}
+                    className="w-full border-gray-200 text-gray-700 hover:bg-gray-50 py-3.5 rounded-xl font-semibold"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );

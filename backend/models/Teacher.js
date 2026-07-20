@@ -319,14 +319,6 @@ const Teacher = sequelize.define(
       defaultValue: "teacher",
       allowNull: false,
     },
-    activeWebToken: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    activeAppToken: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
   },
   {
     tableName: "teachers",

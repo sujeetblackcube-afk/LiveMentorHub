@@ -80,16 +80,6 @@ userId: {
   allowNull: false,
 },
 
-  activeWebToken: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
-
-  activeAppToken: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
-
 }, {
   tableName: 'parents',
   timestamps: true

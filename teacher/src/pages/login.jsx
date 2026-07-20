@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-toastify";
@@ -6,7 +6,8 @@ import { theme } from "../theme";
 import { initOneSignal, getWebPlayerId } from "../services/oneSignal";
 import SignupForm from "../components/SignupForm";
 import ForgotPassword from "../components/ForgotPassword";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ChevronDown } from "lucide-react";
+import { ALL_COUNTRIES } from "../components/PhoneNumberInput";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -17,7 +18,53 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [role, setRole] = useState("teacher");
   const [loading, setLoading] = useState(false);
-  
+  const [mobileCode, setMobileCode] = useState("+91");
+  const [showMobileCodeDropdown, setShowMobileCodeDropdown] = useState(false);
+  const [mobileCodeSearch, setMobileCodeSearch] = useState("");
+  const mobileCodeDropdownRef = useRef(null);
+
+  const normalizeDigits = (v) => v.replace(/\D/g, "");
+  const TOTAL_DIGITS = 12;
+  const getAllowedMobileDigits = (callingCode) => {
+    const countryDigits = (callingCode || "").replace(/\D/g, "").length;
+    const allowed = TOTAL_DIGITS - countryDigits;
+    return allowed > 0 ? allowed : 10;
+  };
+
+  const isDigitsOnly = identifier.length > 0 && /^\d+$/.test(identifier);
+
+  const getPhoneIdentifierValue = () => {
+    const digits = normalizeDigits(identifier);
+    if (!digits) return "";
+    return `${mobileCode}${digits}`;
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (mobileCodeDropdownRef.current && !mobileCodeDropdownRef.current.contains(event.target)) {
+        setShowMobileCodeDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedMobileCountry = useMemo(() => {
+    const savedCountry = localStorage.getItem("country");
+    return (
+      ALL_COUNTRIES.find(c => c.dialCode === mobileCode && c.name.toLowerCase() === (savedCountry || "").toLowerCase()) ||
+      ALL_COUNTRIES.find(c => c.dialCode === mobileCode)
+    );
+  }, [mobileCode]);
+
+  const filteredMobileCountries = useMemo(() => {
+    return ALL_COUNTRIES.filter(c =>
+      c.name.toLowerCase().includes(mobileCodeSearch.toLowerCase()) ||
+      c.code.toLowerCase().includes(mobileCodeSearch.toLowerCase()) ||
+      c.dialCode.includes(mobileCodeSearch)
+    );
+  }, [mobileCodeSearch]);
+
   // Auth mode: 'login', 'signup', 'forgot'
   const [authMode, setAuthMode] = useState("login");
   const [signupStep, setSignupStep] = useState("signup"); // track inner step for card sizing
@@ -44,12 +91,16 @@ const Login = () => {
     setLoading(true);
 
     try {
+      const identifierValue = isDigitsOnly
+        ? getPhoneIdentifierValue()
+        : identifier;
+
       const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ identifier, password, role }),
+        body: JSON.stringify({ identifier: identifierValue, password, role }),
       });
 
       const data = await response.json();
@@ -132,16 +183,97 @@ const Login = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="relative">
-                <div className="peer flex items-center w-full rounded-xl border-2 bg-white/50 backdrop-blur-sm px-4 py-3 text-sm text-gray-900 font-medium transition-all duration-300 border-gray-200 hover:border-gray-300 focus-within:border-[#d4940a] focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(212,148,10,0.1)]">
-                  <input
-                    type="text"
-                    placeholder="Email or Phone Number"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    className="w-full bg-transparent outline-none placeholder-gray-500"
-                    required
-                  />
+              <div className="flex items-center w-full gap-3">
+                {isDigitsOnly && (
+                  <div className="relative w-[115px] flex-shrink-0" ref={mobileCodeDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setShowMobileCodeDropdown(!showMobileCodeDropdown)}
+                      className={`w-full h-[48px] rounded-xl border-2 px-3 text-sm text-gray-700 outline-none flex items-center justify-between cursor-pointer transition-all duration-300 ${
+                        showMobileCodeDropdown
+                          ? "bg-white border-[#d4940a] shadow-[0_0_0_4px_rgba(212,148,10,0.1)]"
+                          : "bg-white/50 border-gray-200 hover:border-gray-300 hover:bg-white"
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {selectedMobileCountry ? (
+                          <img
+                            src={`https://flagcdn.com/w20/${selectedMobileCountry.code.toLowerCase()}.png`}
+                            alt={selectedMobileCountry.name}
+                            className="w-5 h-auto object-contain rounded-sm"
+                          />
+                        ) : (
+                          <span className="text-base leading-none">🏳️</span>
+                        )}
+                        <span className="font-semibold">{mobileCode}</span>
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
+                    </button>
+
+                    {showMobileCodeDropdown && (
+                      <div className="absolute z-50 mt-1 left-0 w-72 bg-white border-2 border-gray-200 rounded-xl shadow-lg p-2 space-y-2">
+                        <input
+                          type="text"
+                          placeholder="Search country/code..."
+                          value={mobileCodeSearch}
+                          onChange={(e) => setMobileCodeSearch(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-[#d4940a]"
+                          autoFocus
+                        />
+                        <div className="max-h-60 overflow-y-auto divide-y divide-gray-50 scrollbar-thin">
+                          {filteredMobileCountries.map((c, i) => (
+                            <button
+                              key={`${c.code}-${i}`}
+                              type="button"
+                              onClick={() => {
+                                setMobileCode(c.dialCode);
+                                setShowMobileCodeDropdown(false);
+                                setMobileCodeSearch("");
+                                const allowed = getAllowedMobileDigits(c.dialCode);
+                                setIdentifier((prev) => normalizeDigits(prev).slice(0, allowed));
+                              }}
+                              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2.5 transition-colors cursor-pointer bg-transparent border-0"
+                            >
+                              <img
+                                src={`https://flagcdn.com/w20/${c.code.toLowerCase()}.png`}
+                                alt={c.name}
+                                className="w-5 h-auto object-contain rounded-sm"
+                              />
+                              <span className="flex-1 text-gray-800 font-medium truncate">{c.name}</span>
+                              <span className="text-xs text-gray-500 font-semibold">{c.dialCode}</span>
+                            </button>
+                          ))}
+                          {filteredMobileCountries.length === 0 && (
+                            <div className="px-3 py-2 text-sm text-gray-500 text-center">
+                              No matches
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex-1">
+                  <div className="peer flex items-center w-full rounded-xl border-2 bg-white/50 backdrop-blur-sm px-4 py-3 text-sm text-gray-900 font-medium transition-all duration-300 border-gray-200 hover:border-gray-300 focus-within:border-[#d4940a] focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(212,148,10,0.1)]">
+                    <input
+                      type="text"
+                      placeholder="Email or Phone Number"
+                      value={identifier}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\s+/g, "");
+                        if (/^\d*$/.test(value)) {
+                          const allowed = getAllowedMobileDigits(mobileCode);
+                          setIdentifier(normalizeDigits(value).slice(0, allowed));
+                        } else {
+                          setIdentifier(value);
+                        }
+                      }}
+                      maxLength={isDigitsOnly ? getAllowedMobileDigits(mobileCode) : undefined}
+                      className="w-full bg-transparent outline-none placeholder-gray-500"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 

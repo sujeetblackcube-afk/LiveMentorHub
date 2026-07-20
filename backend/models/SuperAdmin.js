@@ -67,16 +67,6 @@ const SuperAdmin = sequelize.define('SuperAdmin', {
     defaultValue: 'superadmin',
     allowNull: false
   },
-
-  activeWebToken: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
-
-  activeAppToken: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
 }, {
   tableName: 'superadmins',
   timestamps: true

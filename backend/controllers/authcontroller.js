@@ -181,6 +181,14 @@ const studentSignup = async (req, res) => {
       });
     }
 
+    const emailInAdmin = await SuperAdmin.findOne({ where: { email } });
+    if (emailInAdmin) {
+      return res.status(400).json({
+        status: false,
+        message: "This email is already registered as an Admin. Please use a different email.",
+      });
+    }
+
     // Check if email or mobile already exists
     // Check exact match (email + mobile)
     const exactStudent = await Student.findOne({
@@ -424,6 +432,14 @@ const teacherSignup = async (req, res) => {
       });
     }
 
+    const emailInAdmin = await SuperAdmin.findOne({ where: { email } });
+    if (emailInAdmin) {
+      return res.status(400).json({
+        status: false,
+        message: "This email is already registered as an Admin. Please use a different email.",
+      });
+    }
+
     // ==============================
     // 🔍 CHECK DUPLICATES (Same as Student Logic)
     // ==============================
@@ -608,6 +624,14 @@ const parentSignup = async (req, res) => {
       });
     }
 
+    const emailInAdmin = await SuperAdmin.findOne({ where: { email } });
+    if (emailInAdmin) {
+      return res.status(400).json({
+        status: false,
+        message: "This email is already registered as an Admin. Please use a different email.",
+      });
+    }
+
     // Check if email or mobile already exists
     const existingParent = await Parent.findOne({
       where: {
@@ -714,7 +738,32 @@ const superAdminSignup = async (req, res) => {
 
     const profileImage = req.file ? req.file.filename : null;
 
-    // Check if email or phone already exists
+    // Cross-role email check
+    const emailInStudent = await Student.findOne({ where: { email } });
+    if (emailInStudent) {
+      return res.status(400).json({
+        status: false,
+        message: "This email is already registered as a Student. Please use a different email.",
+      });
+    }
+
+    const emailInTeacher = await Teacher.findOne({ where: { email } });
+    if (emailInTeacher) {
+      return res.status(400).json({
+        status: false,
+        message: "This email is already registered as a Teacher. Please use a different email.",
+      });
+    }
+
+    const emailInParent = await Parent.findOne({ where: { email } });
+    if (emailInParent) {
+      return res.status(400).json({
+        status: false,
+        message: "This email is already registered as a Parent. Please use a different email.",
+      });
+    }
+
+    // Check if email or phone already exists in SuperAdmin
     const existingAdmin = await SuperAdmin.findOne({
       where: {
         [Op.or]: [{ email }, { mobile }],
@@ -970,6 +1019,22 @@ const login = async (req, res) => {
     }
 
     // =======================
+    // SINGLE DEVICE & ACTIVE SESSION CHECK (STUDENT ONLY)
+    // =======================
+    const { forceLogout } = req.body;
+
+    if (role === "student") {
+      const hasActiveSession = Boolean(user.activeWebToken || user.activeAppToken);
+      if (hasActiveSession && !forceLogout) {
+        return res.status(200).json({
+          status: false,
+          activeSessionFound: true,
+          message: "An active session is currently logged in on another device. Do you want to log out from the other device and continue?",
+        });
+      }
+    }
+
+    // =======================
     // JWT
     // =======================
     const token = signJwt({
@@ -978,13 +1043,12 @@ const login = async (req, res) => {
       specificId,
     });
 
-    // Save the active token based on deviceType (except for superadmin to allow multi-device/multi-tab admin logins)
-    if (role !== "superadmin") {
-      if (deviceType === "web") {
-        await user.update({ activeWebToken: token });
-      } else {
-        await user.update({ activeAppToken: token });
-      }
+    // Save the active token ONLY for student role (enforces single device login for students across all devices)
+    if (role === "student") {
+      await user.update({
+        activeWebToken: token,
+        activeAppToken: token,
+      });
     }
 
     // =======================
