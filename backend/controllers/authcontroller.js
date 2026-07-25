@@ -1024,7 +1024,7 @@ const login = async (req, res) => {
     const { forceLogout } = req.body;
 
     if (role === "student") {
-      const hasActiveSession = Boolean(user.activeWebToken || user.activeAppToken);
+      const hasActiveSession = Boolean(user.isLoggedIn || user.activeToken);
       if (hasActiveSession && !forceLogout) {
         return res.status(200).json({
           status: false,
@@ -1046,8 +1046,8 @@ const login = async (req, res) => {
     // Save the active token ONLY for student role (enforces single device login for students across all devices)
     if (role === "student") {
       await user.update({
-        activeWebToken: token,
-        activeAppToken: token,
+        activeToken: token,
+        isLoggedIn: true,
       });
     }
 
@@ -1445,9 +1445,6 @@ const verifyOtp = async (req, res) => {
       });
     }
 
-    // Update otpVerified
-    await user.update({ otpVerified: true });
-
     // Generate JWT
     const specificId =
       user.studentId ||
@@ -1455,6 +1452,16 @@ const verifyOtp = async (req, res) => {
       user.parentId ||
       (role === "superadmin" ? user.userId : null);
     const token = signJwt({ userId: user.userId, role, specificId });
+
+    if (role === "student") {
+      await user.update({
+        otpVerified: true,
+        activeToken: token,
+        isLoggedIn: true,
+      });
+    } else {
+      await user.update({ otpVerified: true });
+    }
 
     res.status(200).json({
       status: true,
@@ -1472,7 +1479,32 @@ const verifyOtp = async (req, res) => {
   }
 };
 
-// Note: signup, verifyOtp, getUsers, upload are not defined in this file, but used in routes. Assuming they are missing or need to be added.
+const logout = async (req, res) => {
+  try {
+    const role = req.auth?.role;
+    const user = req.user;
+
+    if (user && role === "student") {
+      await user.update({
+        activeToken: null,
+        isLoggedIn: false,
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Logout failed",
+      reason: error.message,
+    });
+  }
+};
+
 export {
   studentSignup,
   teacherSignup,
@@ -1484,4 +1516,5 @@ export {
   forgotPassword,
   verifyForgotPasswordOtp,
   resetPassword,
+  logout,
 };

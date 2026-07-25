@@ -35,6 +35,36 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
+      // Check if JWT token has expired
+      try {
+        const payloadBase64 = token.split('.')[1];
+        if (payloadBase64) {
+          const payload = JSON.parse(atob(payloadBase64));
+          if (payload.exp && payload.exp * 1000 < Date.now()) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('role');
+
+            setIsAuthenticated(false);
+            setUser(null);
+            setRole(null);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (err) {
+        // Invalid token format
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('role');
+
+        setIsAuthenticated(false);
+        setUser(null);
+        setRole(null);
+        setLoading(false);
+        return;
+      }
+
       // ✅ Token exists (frontend-only mode)
       setIsAuthenticated(true);
 

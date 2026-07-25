@@ -16,6 +16,7 @@ export const API_FORGOT_PASSWORD_BASE = API_BASE;
 
 export const AUTH_PATHS = {
   login: "/api/auth/login",
+  logout: "/api/auth/logout",
   registerStudent: "/api/auth/register/student",
   verifyOtp: "/api/auth/verify-otp",
   resendOtp: "/api/auth/resend-otp",

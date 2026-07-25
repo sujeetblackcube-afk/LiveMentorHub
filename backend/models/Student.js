@@ -219,14 +219,14 @@ const Student = sequelize.define(
       allowNull: true,
     },
 
-    activeWebToken: {
+    activeToken: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
 
-    activeAppToken: {
-      type: DataTypes.TEXT,
-      allowNull: true,
+    isLoggedIn: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   },
   {

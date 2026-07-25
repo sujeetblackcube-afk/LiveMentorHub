@@ -31,11 +31,15 @@ export function AuthModal() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [showActiveSessionModal, setShowActiveSessionModal] = useState(false);
 
     /* ── Scroll lock ── */
     useEffect(() => {
         document.body.style.overflow = isOpen ? "hidden" : "unset";
-        if (!isOpen) setTimeout(() => setStep('request'), 300);
+        if (!isOpen) {
+            setTimeout(() => setStep('request'), 300);
+            setShowActiveSessionModal(false);
+        }
         return () => { document.body.style.overflow = "unset"; };
     }, [isOpen]);
 
@@ -65,9 +69,16 @@ export function AuthModal() {
             const res = await fetch(`${API_AUTH_BASE}${AUTH_PATHS.login}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ identifier, password, role }),
+                body: JSON.stringify({ identifier, password, role, deviceType: "web" }),
             });
             const data = await res.json();
+
+            if (data?.activeSessionFound) {
+                setShowActiveSessionModal(true);
+                setLoading(false);
+                return;
+            }
+
             if (!res.ok || data?.status === false) {
                 const message =
                     data?.message ||
@@ -89,7 +100,6 @@ export function AuthModal() {
                 studentId: studentId,
                 country: country
             });
-            // Also store studentId separately in localStorage for easier access
             if (studentId) {
                 localStorage.setItem("studentId", studentId);
             }
@@ -97,6 +107,52 @@ export function AuthModal() {
                 localStorage.setItem("country", country);
             }
             if (data.token) localStorage.setItem("cp_token", data.token);
+            toast.success("Logged in successfully!");
+            close();
+            router.push("/dashboard");
+        } catch (err: any) {
+            const message = err?.message || "Something went wrong.";
+            setError(message);
+            toast.error(message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleConfirmForceLogout = async () => {
+        setShowActiveSessionModal(false);
+        const identifier = loginEmailRef.current?.value;
+        const password = loginPasswordRef.current?.value;
+        if (!identifier || !password) return;
+
+        setLoading(true);
+        setError("");
+        try {
+            const res = await fetch(`${API_AUTH_BASE}${AUTH_PATHS.login}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ identifier, password, role, forceLogout: true, deviceType: "web" }),
+            });
+            const data = await res.json();
+            if (!res.ok || data?.status === false) {
+                const message = data?.message || "Login failed. Please check your credentials.";
+                throw new Error(message);
+            }
+
+            const userObj = data.user || data.userData || {};
+            const studentId = userObj.studentId || data.studentId || userObj.userId || data.userId || data.specificId || "";
+            const country = userObj.country || "";
+
+            login({
+                name: userObj.name || identifier.split("@")[0],
+                email: userObj.email || identifier,
+                studentId: studentId,
+                country: country
+            });
+            if (studentId) localStorage.setItem("studentId", studentId);
+            if (country) localStorage.setItem("country", country);
+            if (data.token) localStorage.setItem("cp_token", data.token);
+
             toast.success("Logged in successfully!");
             close();
             router.push("/dashboard");
@@ -463,6 +519,44 @@ export function AuthModal() {
                     </div>
                 </div>
             </div>
+
+            {/* Active Session Confirmation Modal */}
+            <AnimatePresence>
+                {showActiveSessionModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                            className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-4 text-center border border-gray-100"
+                        >
+                            <div className="mx-auto w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center text-[#d4940a]">
+                                <UserCircle2 className="w-8 h-8" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900">Active Session Found</h3>
+                            <p className="text-sm text-gray-600 leading-relaxed">
+                                Your account is currently logged in on another device. Continuing will log you out from the other device.
+                            </p>
+                            <div className="flex flex-col gap-2.5 pt-2">
+                                <Button
+                                    onClick={handleConfirmForceLogout}
+                                    className="w-full bg-gradient-to-r from-[#d4940a] via-[#e8a020] to-[#d4940a] text-[#0d1f5c] font-bold py-3.5 rounded-xl shadow-md transition-all border-0"
+                                >
+                                    Logout from other device &amp; Continue
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowActiveSessionModal(false)}
+                                    className="w-full border-gray-200 text-gray-700 hover:bg-gray-50 py-3.5 rounded-xl font-semibold"
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

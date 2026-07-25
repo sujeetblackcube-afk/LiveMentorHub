@@ -10,6 +10,25 @@ export function AuthListener() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Check token expiration on mount
+    const token = localStorage.getItem("cp_token");
+    if (token) {
+      try {
+        const payloadBase64 = token.split(".")[1];
+        if (payloadBase64) {
+          const payload = JSON.parse(atob(payloadBase64));
+          if (payload.exp && payload.exp * 1000 < Date.now()) {
+            logout();
+            toast.error("Session expired. Please log in again.");
+            window.location.href = "/student/auth/login";
+            return;
+          }
+        }
+      } catch {
+        logout();
+      }
+    }
+
     const originalFetch = window.fetch;
 
     window.fetch = async (...args) => {

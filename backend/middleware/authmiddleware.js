@@ -55,7 +55,10 @@ const authMiddleware = async (req, res, next) => {
     }
 
     // Single-device login check is restricted ONLY to student role
-    if (payload.role === "student" && user.activeWebToken !== token && user.activeAppToken !== token) {
+    if (
+      payload.role === "student" &&
+      (!user.isLoggedIn || user.activeToken !== token)
+    ) {
       return res.status(401).json({
         status: false,
         message: "Session expired or logged in from another device",

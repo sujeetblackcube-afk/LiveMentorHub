@@ -10,6 +10,14 @@ const getAuthHeaders = () => {
 
 const json = async (response) => {
   if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('role');
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
     throw new Error(`API Error: ${response.status} ${response.statusText}`);
   }
   return response.json();
