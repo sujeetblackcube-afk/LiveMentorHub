@@ -3,6 +3,7 @@ import Teacher from "../models/Teacher.js";
 import pkg from 'sequelize';
 const { Op } = pkg;
 import sequelize from "../config/db.js";
+import { getPaginatedData } from "../utils/pagination.js";
 
 // Create a new payment/payout request
 const createPayment = async (req, res) => {
@@ -105,7 +106,7 @@ const createPayment = async (req, res) => {
 // Get all payments with optional filtering
 const getAllPayments = async (req, res) => {
   try {
-    const { status, startDate, endDate, teacherId } = req.query;
+    const { status, startDate, endDate, teacherId, page, limit } = req.query;
 
     const whereClause = {};
 
@@ -134,10 +135,32 @@ const getAllPayments = async (req, res) => {
       };
     }
 
-    const payouts = await TeacherPayout.findAll({
+    const queryOptions = {
       where: whereClause,
       order: [["requestedAt", "DESC"]],
-    });
+    };
+
+    if (page) {
+      const paginatedResult = await getPaginatedData(
+        TeacherPayout,
+        queryOptions,
+        page,
+        limit || 10
+      );
+      return res.status(200).json({
+        status: true,
+        message: "Payments fetched successfully",
+        data: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const payouts = await TeacherPayout.findAll(queryOptions);
 
     return res.status(200).json({
       status: true,

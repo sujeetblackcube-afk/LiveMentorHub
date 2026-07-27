@@ -13,6 +13,7 @@ export const getPaginatedData = async (model, queryOptions = {}, page = 1, limit
   const offset = (pageNum - 1) * limitNum;
 
   const options = {
+    distinct: true,
     ...queryOptions,
     limit: limitNum,
     offset: offset,

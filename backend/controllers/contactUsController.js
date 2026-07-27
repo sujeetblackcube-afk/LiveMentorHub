@@ -2,13 +2,36 @@ import ContactUs from '../models/ContactUs.js';
 import Notification from '../models/Notifications.js';
 import SuperAdmin from '../models/SuperAdmin.js';
 import { triggerPushForNotifications } from '../config/onesignalService.js';
+import { getPaginatedData } from '../utils/pagination.js';
 
 // Get all contact messages
 export const getAllContacts = async (req, res) => {
   try {
-    const contacts = await ContactUs.findAll({
+    const { page, limit } = req.query;
+
+    const queryOptions = {
       order: [['createdAt', 'DESC']]
-    });
+    };
+
+    if (page) {
+      const paginatedResult = await getPaginatedData(
+        ContactUs,
+        queryOptions,
+        page,
+        limit || 10
+      );
+      return res.json({
+        data: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const contacts = await ContactUs.findAll(queryOptions);
     res.json(contacts);
   } catch (error) {
     console.error('Error fetching contacts:', error);

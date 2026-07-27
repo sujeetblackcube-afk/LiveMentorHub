@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Search, Eye, Trash2, Mail, Phone, MessageSquare, X, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
 import { theme } from "../theme";
+import Pagination from "../components/Pagination";
 import { getAllContacts, deleteContact, sendReply } from "../services/api";
 
 export default function ManageContactUs() {
@@ -12,20 +13,29 @@ export default function ManageContactUs() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [replyMessage, setReplyMessage] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
 
-  // Mock data - replace with actual API calls
   useEffect(() => {
     fetchContacts();
-  }, []);
+  }, [currentPage]);
 
   const fetchContacts = async () => {
     setLoading(true);
     try {
-      const response = await getAllContacts();
-      setContacts(response);
+      const response = await getAllContacts({ page: currentPage, limit: itemsPerPage });
+      setContacts(response.data || (Array.isArray(response) ? response : []));
+      if (response.pagination) {
+        setTotalPages(response.pagination.totalPages || 1);
+      } else {
+        setTotalPages(1);
+      }
     } catch (error) {
       console.error("Failed to fetch contacts:", error);
       toast.error("Failed to load contact messages");
+      setContacts([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -254,6 +264,14 @@ export default function ManageContactUs() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         )}
       </div>
 

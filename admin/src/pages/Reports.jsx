@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Download, Search, Eye, User, BookOpen, Video, FileText, Users, GraduationCap, UserCheck } from "lucide-react";
+import Pagination from "../components/Pagination";
 import {
   getTeachers,
   getTeacherById,
@@ -47,24 +48,43 @@ export default function ReportsPage() {
     }
   };
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
+
+  // Reset pagination on tab change or filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [reportType, statusFilter, courseFilter]);
+
   // Fetch data based on report type
   useEffect(() => {
     if (reportType === "parents") {
       fetchParents();
     } else if (reportType === "students") {
       fetchStudents();
+    } else if (reportType === "teachers") {
+      fetchTeachers();
     }
-  }, [reportType, statusFilter, courseFilter]);
+  }, [reportType, statusFilter, courseFilter, currentPage]);
 
   const fetchTeachers = async () => {
     try {
       setLoading(true);
-      const response = await getTeachers();
+      const params = { page: currentPage, limit: itemsPerPage };
+      const response = await getTeachers(params);
       if (response.status) {
         setTeachers(response.data || []);
+        if (response.pagination) {
+          setTotalPages(response.pagination.totalPages || 1);
+        } else {
+          setTotalPages(1);
+        }
       }
     } catch (err) {
       console.error("Error fetching teachers:", err);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -88,7 +108,7 @@ export default function ReportsPage() {
   const fetchParents = async () => {
     try {
       setLoading(true);
-      const params = {};
+      const params = { page: currentPage, limit: itemsPerPage };
       if (statusFilter) params.status = statusFilter;
       
       const response = await getAllParentsReport(params);
@@ -97,9 +117,15 @@ export default function ReportsPage() {
           data: response.data || [],
           summary: response.summary || {}
         });
+        if (response.pagination) {
+          setTotalPages(response.pagination.totalPages || 1);
+        } else {
+          setTotalPages(1);
+        }
       }
     } catch (err) {
       console.error("Error fetching parents:", err);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -108,7 +134,7 @@ export default function ReportsPage() {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const params = {};
+      const params = { page: currentPage, limit: itemsPerPage };
       if (statusFilter) params.status = statusFilter;
       if (courseFilter) params.courseCode = courseFilter;
       
@@ -118,9 +144,15 @@ export default function ReportsPage() {
           data: response.data || [],
           summary: response.summary || {}
         });
+        if (response.pagination) {
+          setTotalPages(response.pagination.totalPages || 1);
+        } else {
+          setTotalPages(1);
+        }
       }
     } catch (err) {
       console.error("Error fetching students:", err);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -658,6 +690,15 @@ export default function ReportsPage() {
         <div className="overflow-auto max-h-[500px]">
           {renderTable()}
         </div>
+        {totalPages > 1 && (
+          <div className="mt-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
 
       {/* Teacher Details Modal */}

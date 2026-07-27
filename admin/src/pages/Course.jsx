@@ -103,6 +103,7 @@ export default function Course({ status = "Active" }) {
   const getCourseSyllabus = (courseCode) => {
     return courseSyllabusMap[courseCode] || { syllabusPoints: [], syllabusUrl: "" };
   };
+  const [serverTotalPages, setServerTotalPages] = useState(1);
 
   // Helper to update syllabus in map
   const updateCourseSyllabus = (courseCode, syllabusData) => {
@@ -113,23 +114,12 @@ export default function Course({ status = "Active" }) {
   };
 
   // Calculate pagination
-  const totalPages = Math.ceil(courses.length / itemsPerPage);
-  const currentCourses = courses.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
+  const totalPages = serverTotalPages;
+  const currentCourses = courses;
 
   useEffect(() => {
     fetchCourses();
-  }, []);
-
-  useEffect(() => {
-    fetchCourses();
-  }, [status, filterType, filterDifficulty]);
-
-  useEffect(() => {
-    fetchCourses();
-  }, [searchTerm]);
+  }, [status, filterType, filterDifficulty, searchTerm, currentPage]);
 
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -180,33 +170,26 @@ export default function Course({ status = "Active" }) {
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      const params = {};
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+      };
       if (status) params.status = status;
       if (filterType) params.courseType = filterType;
       if (filterDifficulty) params.difficulty = filterDifficulty;
+      if (searchTerm) params.search = searchTerm;
+
       const response = await getAllCourses(params);
-      let filteredCourses = response.data || [];
-
-      // Client-side search filtering
-      if (searchTerm) {
-        filteredCourses = filteredCourses.filter(
-          (course) =>
-            course.courseName
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase()) ||
-            course.courseCode
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase()) ||
-            course.courseDescription
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase()),
-        );
+      setCourses(response.data || []);
+      if (response.pagination) {
+        setServerTotalPages(response.pagination.totalPages || 1);
+      } else {
+        setServerTotalPages(1);
       }
-
-      setCourses(filteredCourses);
     } catch (err) {
       console.error("Failed to fetch courses:", err);
       setCourses([]);
+      setServerTotalPages(1);
     } finally {
       setLoading(false);
     }

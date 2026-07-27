@@ -8,12 +8,13 @@ import SubscriptionBuyed from "../models/SubscriptionBuyed.js";
 import Teacher from "../models/Teacher.js";
 import Livesession from "../models/Livesession.js";
 import { getStudentProgress } from "./studentController.js";
+import { getPaginatedData } from "../utils/pagination.js";
 
 
 // Get all parents with their basic info (no student data yet - similar to getStudentReport)
 export const getAllParentsReport = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, page, limit } = req.query;
 
     // Build where clause for parents
     const parentWhere = {};
@@ -21,8 +22,7 @@ export const getAllParentsReport = async (req, res) => {
       parentWhere.status = status;
     }
 
-    // Get all parents with selected fields
-    const parents = await Parent.findAll({
+    const queryOptions = {
       attributes: [
         "userId",
         "parentId",
@@ -36,7 +36,28 @@ export const getAllParentsReport = async (req, res) => {
       ],
       where: parentWhere,
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    let parents;
+    let paginationData = null;
+
+    if (page) {
+      const paginatedResult = await getPaginatedData(
+        Parent,
+        queryOptions,
+        page,
+        limit || 10
+      );
+      parents = paginatedResult.data;
+      paginationData = {
+        totalItems: paginatedResult.totalItems,
+        totalPages: paginatedResult.totalPages,
+        currentPage: paginatedResult.currentPage,
+        limit: paginatedResult.limit,
+      };
+    } else {
+      parents = await Parent.findAll(queryOptions);
+    }
 
     // Get all student IDs grouped by parentId
     const students = await Student.findAll({
@@ -75,7 +96,7 @@ export const getAllParentsReport = async (req, res) => {
     const terminatedParents = reportData.filter((p) => p.status === "TERMINATED").length;
     const totalStudents = Object.values(studentCountMap).reduce((sum, count) => sum + count, 0);
 
-    return res.status(200).json({
+    const responseObj = {
       success: true,
       message: "All parents report fetched successfully",
       data: reportData,
@@ -86,7 +107,13 @@ export const getAllParentsReport = async (req, res) => {
         terminatedParents,
         totalStudents,
       },
-    });
+    };
+
+    if (paginationData) {
+      responseObj.pagination = paginationData;
+    }
+
+    return res.status(200).json(responseObj);
   } catch (error) {
     console.error("Get All Parents Report Error:", error);
     return res.status(500).json({
@@ -251,7 +278,7 @@ export const getParentReportById = async (req, res) => {
 // Get all students with their enrollments for report
 export const getStudentReport = async (req, res) => {
   try {
-    const { startDate, endDate, status, courseCode } = req.query;
+    const { startDate, endDate, status, courseCode, page, limit } = req.query;
 
     // Build where clause for students
     const studentWhere = {};
@@ -270,8 +297,7 @@ export const getStudentReport = async (req, res) => {
       enrollmentWhere.courseCode = courseCode;
     }
 
-    // Get all students with selected fields (excluding sensitive data)
-    const students = await Student.findAll({
+    const queryOptions = {
       attributes: [
         "userId",
         "name",
@@ -291,7 +317,28 @@ export const getStudentReport = async (req, res) => {
       ],
       where: studentWhere,
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    let students;
+    let paginationData = null;
+
+    if (page) {
+      const paginatedResult = await getPaginatedData(
+        Student,
+        queryOptions,
+        page,
+        limit || 10
+      );
+      students = paginatedResult.data;
+      paginationData = {
+        totalItems: paginatedResult.totalItems,
+        totalPages: paginatedResult.totalPages,
+        currentPage: paginatedResult.currentPage,
+        limit: paginatedResult.limit,
+      };
+    } else {
+      students = await Student.findAll(queryOptions);
+    }
 
     // Get all enrollments
     const enrollments = await Enrollment.findAll({
@@ -363,7 +410,7 @@ export const getStudentReport = async (req, res) => {
       .filter((e) => e.paymentStatus === "PAID")
       .reduce((sum, e) => sum + parseFloat(e.amountPaid || 0), 0);
 
-    return res.status(200).json({
+    const responseObj = {
       success: true,
       message: "Student report fetched successfully",
       data: reportData,
@@ -374,7 +421,13 @@ export const getStudentReport = async (req, res) => {
         pendingEnrollments,
         totalRevenue,
       },
-    });
+    };
+
+    if (paginationData) {
+      responseObj.pagination = paginationData;
+    }
+
+    return res.status(200).json(responseObj);
   } catch (error) {
     console.error("Get Student Report Error:", error);
     return res.status(500).json({

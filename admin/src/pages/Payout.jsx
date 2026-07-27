@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Plus, Search, X, Loader2, CreditCard, DollarSign, User, Calendar, FileText, CheckCircle, XCircle, Clock } from "lucide-react";
 import { toast } from "react-toastify";
 import { theme } from "../theme";
+import Pagination from "../components/Pagination";
 import {
   createPayment,
   getAllPayments,
@@ -29,6 +30,9 @@ export default function Payout() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [fullScreenLoading, setFullScreenLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchPayments();
@@ -37,30 +41,27 @@ export default function Payout() {
 
   useEffect(() => {
     fetchPayments();
-  }, [filterStatus]);
+  }, [filterStatus, currentPage]);
 
   const fetchPayments = async () => {
     setLoading(true);
     try {
-      const params = {};
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+      };
       if (filterStatus) params.status = filterStatus;
       const response = await getAllPayments(params);
-      let filteredPayments = response.data || [];
-
-      // Client-side search filtering
-      if (searchTerm) {
-        filteredPayments = filteredPayments.filter(
-          (payment) =>
-            payment.teacherName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            payment.teacherId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            payment.transactionId?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+      setPayments(response.data || []);
+      if (response.pagination) {
+        setTotalPages(response.pagination.totalPages || 1);
+      } else {
+        setTotalPages(1);
       }
-
-      setPayments(filteredPayments);
     } catch (err) {
       console.error("Failed to fetch payments:", err);
       setPayments([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -466,6 +467,14 @@ export default function Payout() {
             </div>
           ))}
         </div>
+      )}
+
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       )}
 
       {/* Popup Modal */}

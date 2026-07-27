@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, X, Loader2, Search, CreditCard, CheckCircle, XCircle, Clock } from "lucide-react";
 import { toast } from "react-toastify";
 import { theme } from "../theme";
+import Pagination from "../components/Pagination";
 import {
   createSubscription,
   getAllSubscriptions,
@@ -26,36 +27,33 @@ export default function Subscription() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [fullScreenLoading, setFullScreenLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchSubscriptions();
-  }, []);
-
-  useEffect(() => {
-    fetchSubscriptions();
-  }, [filterStatus]);
+  }, [filterStatus, currentPage]);
 
   const fetchSubscriptions = async () => {
     setLoading(true);
     try {
-      const params = {};
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+      };
       if (filterStatus) params.status = filterStatus;
       const response = await getAllSubscriptions(params);
-      let filteredSubscriptions = response.data || [];
-
-      // Client-side search filtering
-      if (searchTerm) {
-        filteredSubscriptions = filteredSubscriptions.filter(
-          (sub) =>
-            sub.planName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            sub.id.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+      setSubscriptions(response.data || []);
+      if (response.pagination) {
+        setTotalPages(response.pagination.totalPages || 1);
+      } else {
+        setTotalPages(1);
       }
-
-      setSubscriptions(filteredSubscriptions);
     } catch (err) {
       console.error("Failed to fetch subscriptions:", err);
       setSubscriptions([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -432,6 +430,14 @@ export default function Subscription() {
             </div>
           ))}
         </div>
+      )}
+
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       )}
 
       {/* Popup Modal */}

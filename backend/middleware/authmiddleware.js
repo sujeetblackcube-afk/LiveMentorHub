@@ -8,6 +8,9 @@ const authMiddleware = async (req, res, next) => {
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         status: false,
+        isDeviceActive: false,
+        isActiveDevice: false,
+        isSessionActive: false,
         message: "Access token required",
       });
     }
@@ -50,6 +53,9 @@ const authMiddleware = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({
         status: false,
+        isDeviceActive: false,
+        isActiveDevice: false,
+        isSessionActive: false,
         message: "Invalid token (user not found)",
       });
     }
@@ -61,8 +67,24 @@ const authMiddleware = async (req, res, next) => {
     ) {
       return res.status(401).json({
         status: false,
+        isDeviceActive: false,
+        isActiveDevice: false,
+        isSessionActive: false,
         message: "Session expired or logged in from another device",
       });
+    }
+
+    // Attach device status flags to JSON response for student requests
+    if (payload.role === "student") {
+      const originalJson = res.json;
+      res.json = function (body) {
+        if (body && typeof body === "object" && !Array.isArray(body)) {
+          body.isDeviceActive = true;
+          body.isActiveDevice = true;
+          body.isSessionActive = true;
+        }
+        return originalJson.call(this, body);
+      };
     }
 
     // attach data to request
@@ -74,6 +96,9 @@ const authMiddleware = async (req, res, next) => {
     console.error(error);
     return res.status(401).json({
       status: false,
+      isDeviceActive: false,
+      isActiveDevice: false,
+      isSessionActive: false,
       message: "Unauthorized or token expired",
     });
   }

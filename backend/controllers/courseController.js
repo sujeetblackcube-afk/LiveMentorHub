@@ -3,6 +3,7 @@ import Subject from "../models/Subject.js";
 import Syllabus from "../models/Syllabus.js";
 import pkg from 'sequelize';
 const { Op } = pkg;
+import { getPaginatedData } from "../utils/pagination.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -198,7 +199,7 @@ export const createCourse = async (req, res) => {
 
 export const getAllCourses = async (req, res) => {
   try {
-    const { status, courseType, difficulty, board, medium, classname, subject, category } = req.query;
+    const { status, courseType, difficulty, board, medium, classname, subject, category, page, limit } = req.query;
 
     const where = {};
     if (status) where.status = status;
@@ -210,7 +211,7 @@ export const getAllCourses = async (req, res) => {
     if (subject) where.subject = { [Op.like]: `%${subject}%` };
     if (category) where.category = { [Op.like]: `%${category}%` };
 
-    const courses = await Course.findAll({
+    const queryOptions = {
       where,
       order: [["createdAt", "DESC"]],
       include: [{
@@ -218,7 +219,28 @@ export const getAllCourses = async (req, res) => {
         as: 'syllabus',
         required: false
       }]
-    });
+    };
+
+    if (page) {
+      const paginatedResult = await getPaginatedData(
+        Course,
+        queryOptions,
+        page,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        data: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const courses = await Course.findAll(queryOptions);
 
     return res.status(200).json({
       success: true,

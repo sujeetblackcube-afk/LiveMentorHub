@@ -1077,6 +1077,9 @@ const login = async (req, res) => {
 
     return res.status(200).json({
       status: true,
+      isDeviceActive: role === "student" ? true : undefined,
+      isActiveDevice: role === "student" ? true : undefined,
+      isSessionActive: role === "student" ? true : undefined,
       message: "Login successful",
       token,
       role,
@@ -1505,6 +1508,29 @@ const logout = async (req, res) => {
   }
 };
 
+const verifyToken = async (req, res) => {
+  try {
+    const role = req.auth?.role;
+    const isStudent = role === "student";
+
+    return res.status(200).json({
+      status: true,
+      isDeviceActive: isStudent ? true : undefined,
+      isActiveDevice: isStudent ? true : undefined,
+      isSessionActive: isStudent ? true : undefined,
+      message: "Token is valid and active",
+      user: req.user,
+    });
+  } catch (error) {
+    console.error("Verify token error:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Token verification failed",
+      reason: error.message,
+    });
+  }
+};
+
 export {
   studentSignup,
   teacherSignup,
@@ -1517,4 +1543,5 @@ export {
   verifyForgotPasswordOtp,
   resetPassword,
   logout,
+  verifyToken,
 };

@@ -1,6 +1,7 @@
 import Subject from "../models/Subject.js";
 import pkg from 'sequelize';
 const { Op } = pkg;
+import { getPaginatedData } from "../utils/pagination.js";
 
 // Helper function to generate subject id globally
 const generateSubjectId = async () => {
@@ -87,19 +88,41 @@ export const createSubject = async (req, res) => {
     });
   }
 };
+
 export const getAllSubjects = async (req, res) => {
   try {
-    const { status, ForClass, language } = req.query;
+    const { status, ForClass, language, page, limit } = req.query;
 
     const where = {};
     if (status) where.status = status;
     if (ForClass) where.ForClass = ForClass;
     if (language) where.language = { [Op.like]: `%${language}%` };
 
-    const subjects = await Subject.findAll({
+    const queryOptions = {
       where,
       order: [["created_at", "DESC"]],
-    });
+    };
+
+    if (page) {
+      const paginatedResult = await getPaginatedData(
+        Subject,
+        queryOptions,
+        page,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        data: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const subjects = await Subject.findAll(queryOptions);
 
     return res.status(200).json({
       success: true,
@@ -113,6 +136,7 @@ export const getAllSubjects = async (req, res) => {
     });
   }
 };
+
 export const getSubjectById = async (req, res) => {
   try {
     const { subjectCode } = req.params;
@@ -138,6 +162,7 @@ export const getSubjectById = async (req, res) => {
     });
   }
 };
+
 export const updateSubject = async (req, res) => {
   try {
     const { subjectCode } = req.params;
@@ -179,6 +204,7 @@ export const updateSubject = async (req, res) => {
     });
   }
 };
+
 export const deleteSubject = async (req, res) => {
   try {
     const { subjectCode } = req.params;
@@ -244,4 +270,3 @@ export const updateSubjectStatus = async (req, res) => {
     });
   }
 };
-

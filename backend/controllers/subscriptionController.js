@@ -4,6 +4,7 @@ import { Teacher } from "../models/index.js";
 import Cashfree, { createCashfreeClient } from "../utils/cashfree.js";
 import pkg from 'sequelize';
 const { Op } = pkg;
+import { getPaginatedData } from "../utils/pagination.js";
 import { generateSubscriptionInvoicePDF } from "../utils/generateSubscriptionInvoicePDF.js";
 import multer from "multer";
 import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
@@ -58,15 +59,36 @@ export const createSubscription = async (req, res) => {
 // Get all subscriptions
 export const getAllSubscriptions = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, page, limit } = req.query;
 
     const where = {};
     if (status) where.status = status;
 
-    const subscriptions = await Subscription.findAll({
+    const queryOptions = {
       where,
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    if (page) {
+      const paginatedResult = await getPaginatedData(
+        Subscription,
+        queryOptions,
+        page,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        data: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const subscriptions = await Subscription.findAll(queryOptions);
 
     return res.status(200).json({
       success: true,
@@ -410,7 +432,7 @@ export const getSubscriptionsByTeacherId = async (req, res) => {
 // Get all subscriptions buyed (all records)
 export const getAllSubscriptionsBuyed = async (req, res) => {
   try {
-    const { status, paymentStatus } = req.query;
+    const { status, paymentStatus, page, limit } = req.query;
 
     await expireActiveSubscriptionsIfNeeded();
 
@@ -418,10 +440,31 @@ export const getAllSubscriptionsBuyed = async (req, res) => {
     if (status) where.status = status;
     if (paymentStatus) where.paymentStatus = paymentStatus;
 
-    const subscriptionsBuyed = await SubscriptionBuyed.findAll({
+    const queryOptions = {
       where,
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    if (page) {
+      const paginatedResult = await getPaginatedData(
+        SubscriptionBuyed,
+        queryOptions,
+        page,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        data: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const subscriptionsBuyed = await SubscriptionBuyed.findAll(queryOptions);
 
     return res.status(200).json({
       success: true,

@@ -4,6 +4,7 @@ import Course from "../models/Course.js";
 import Teacher from "../models/Teacher.js";
 import pkg from 'sequelize';
 const { Op } = pkg;
+import { getPaginatedData } from "../utils/pagination.js";
 import { generateEnrollmentPDF } from "../utils/generateEnrollmentPDF.js";
 import { v4 as uuidv4 } from "uuid";
 import multer from "multer";
@@ -502,7 +503,7 @@ export const deleteEnrollment = async (req, res) => {
 
 export const getAllEnrolledStudents = async (req, res) => {
   try {
-    const { courseCode, studentId, status, paymentStatus } = req.query;
+    const { courseCode, studentId, status, paymentStatus, page, limit } = req.query;
 
     const where = {};
     if (courseCode) where.courseCode = courseCode;
@@ -510,10 +511,31 @@ export const getAllEnrolledStudents = async (req, res) => {
     if (status) where.status = status;
     if (paymentStatus) where.paymentStatus = paymentStatus;
 
-    const enrollments = await Enrollment.findAll({
+    const queryOptions = {
       where,
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    if (page) {
+      const paginatedResult = await getPaginatedData(
+        Enrollment,
+        queryOptions,
+        page,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        data: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const enrollments = await Enrollment.findAll(queryOptions);
 
     return res.status(200).json({
       success: true,

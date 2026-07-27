@@ -3,6 +3,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
+import { getPaginatedData } from "../utils/pagination.js";
 
 export const addBanner = async (req, res) => {
   try {
@@ -52,15 +53,36 @@ export const addBanner = async (req, res) => {
 
 export const getBanners = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, page, limit } = req.query;
 
     const where = {};
     if (status) where.status = status;
 
-    const banners = await Banner.findAll({
+    const queryOptions = {
       where,
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    if (page) {
+      const paginatedResult = await getPaginatedData(
+        Banner,
+        queryOptions,
+        page,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        data: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const banners = await Banner.findAll(queryOptions);
 
     return res.status(200).json({
       success: true,

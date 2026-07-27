@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Trash2, X, Loader2, Search, UserCheck, Pencil, Eye } from "lucide-react";
 import { toast } from "react-toastify";
 import { theme } from "../theme";
+import Pagination from "../components/Pagination";
 import {
   createEnrollment,
   getAllEnrollments,
@@ -45,6 +46,9 @@ export default function Enrollment() {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterPaymentStatus, setFilterPaymentStatus] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
 
   const [teachers, setTeachers] = useState([]);
   const [isAssignTeacherOpen, setIsAssignTeacherOpen] = useState(false);
@@ -79,7 +83,6 @@ export default function Enrollment() {
   }, [courseEnrollments]);
 
   useEffect(() => {
-    fetchEnrollments();
     fetchStudents();
     fetchCourses();
     fetchTeachers();
@@ -87,34 +90,30 @@ export default function Enrollment() {
 
   useEffect(() => {
     fetchEnrollments();
-  }, [filterStatus, filterPaymentStatus]);
-
-  useEffect(() => {
-    fetchEnrollments();
-  }, [searchTerm]);
+  }, [filterStatus, filterPaymentStatus, searchTerm, currentPage]);
 
   const fetchEnrollments = async () => {
     setLoading(true);
     try {
-      const params = {};
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+      };
       if (filterStatus) params.status = filterStatus;
       if (filterPaymentStatus) params.paymentStatus = filterPaymentStatus;
+      if (searchTerm) params.search = searchTerm;
+
       const response = await getAllEnrollments(params);
-      let filteredEnrollments = response.data || [];
-
-      if (searchTerm) {
-        filteredEnrollments = filteredEnrollments.filter(
-          (enrollment) =>
-            enrollment.enrollmentCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            enrollment.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            enrollment.courseName.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+      setEnrollments(response.data || []);
+      if (response.pagination) {
+        setTotalPages(response.pagination.totalPages || 1);
+      } else {
+        setTotalPages(1);
       }
-
-      setEnrollments(filteredEnrollments);
     } catch (err) {
       console.error("Failed to fetch enrollments:", err);
       setEnrollments([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -575,6 +574,14 @@ export default function Enrollment() {
             </table>
           </div>
         </div>
+      )}
+
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       )}
 
       {/* View Details Popup */}

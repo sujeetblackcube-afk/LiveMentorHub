@@ -2,6 +2,7 @@ import Class from "../models/Class.js";
 import Subject from "../models/Subject.js";
 import pkg from 'sequelize';
 const { Op } = pkg;
+import { getPaginatedData } from "../utils/pagination.js";
 
 const createClass = async (req, res) => {
   try {
@@ -36,7 +37,7 @@ const createClass = async (req, res) => {
 
 const getAllClasses = async (req, res) => {
   try {
-    const { status, startDate, endDate } = req.query;
+    const { status, startDate, endDate, page, limit } = req.query;
 
     const whereClause = {};
 
@@ -63,10 +64,32 @@ const getAllClasses = async (req, res) => {
       };
     }
 
-    const classes = await Class.findAll({
+    const queryOptions = {
       where: whereClause,
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    if (page) {
+      const paginatedResult = await getPaginatedData(
+        Class,
+        queryOptions,
+        page,
+        limit || 10
+      );
+      return res.status(200).json({
+        status: true,
+        message: "Classes fetched successfully",
+        data: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const classes = await Class.findAll(queryOptions);
 
     return res.status(200).json({
       status: true,
