@@ -207,7 +207,7 @@ export const deleteSubscription = async (req, res) => {
 // NOTE: For real purchases, use Cashfree flow + webhook. This endpoint is kept for admin/manual creation.
 export const createSubscriptionCashfreeOrder = async (req, res) => {
   try {
-    const { teacherId, planName, durationDays, startDate, endDate, orderId } = req.body;
+    const { teacherId, planName } = req.body;
 
     if (!teacherId || !planName) {
       return res.status(400).json({ success: false, message: "teacherId and planName are required" });
@@ -218,13 +218,18 @@ export const createSubscriptionCashfreeOrder = async (req, res) => {
       return res.status(404).json({ success: false, message: "Subscription plan not found" });
     }
 
-    const finalDurationDays = durationDays ?? subscriptionPlan.durationDays;
+    const finalDurationDays = req.body.durationDays ? parseInt(req.body.durationDays, 10) : (subscriptionPlan.durationDays || 30);
 
-    if (!finalDurationDays || !startDate || !endDate) {
-      return res.status(400).json({
-        success: false,
-        message: "durationDays, startDate, and endDate are required",
-      });
+    const now = new Date();
+    const startDate = req.body.startDate ? new Date(req.body.startDate).toISOString() : now.toISOString();
+
+    let endDate;
+    if (req.body.endDate) {
+      endDate = new Date(req.body.endDate).toISOString();
+    } else {
+      const calcEnd = new Date(now);
+      calcEnd.setDate(calcEnd.getDate() + finalDurationDays);
+      endDate = calcEnd.toISOString();
     }
 
     const teacher = await Teacher.findOne({ where: { teacherId } });
@@ -242,6 +247,12 @@ export const createSubscriptionCashfreeOrder = async (req, res) => {
       const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
       returnBaseUrl = cleanOrigin.endsWith('/teacher') ? cleanOrigin : `${cleanOrigin}/teacher`;
     }
+
+    // Cashfree Production strictly requires HTTPS for return_url
+    if (process.env.CASHFREE_ENV === "PRODUCTION" && returnBaseUrl.startsWith("http://")) {
+      returnBaseUrl = returnBaseUrl.replace(/^http:\/\//i, "https://");
+    }
+
     const normalizedReturnUrl = returnBaseUrl.endsWith("/") ? returnBaseUrl : `${returnBaseUrl}/`;
 
     const request = {
@@ -263,7 +274,7 @@ export const createSubscriptionCashfreeOrder = async (req, res) => {
         durationDays: String(finalDurationDays),
         startDate: String(startDate),
         endDate: String(endDate),
-        orderId: orderId ? String(orderId) : "",
+        orderId: req.body.orderId ? String(req.body.orderId) : String(cfOrderId),
         type: "subscription",
       }
     };
@@ -278,8 +289,12 @@ export const createSubscriptionCashfreeOrder = async (req, res) => {
       cf_mode: process.env.CASHFREE_ENV === "PRODUCTION" ? "production" : "sandbox",
     });
   } catch (error) {
-    console.error("Create subscription cashfree order error:", error);
-    return res.status(500).json({ success: false, message: error.message || "Internal server error" });
+    const errorDetails = error.response?.data || error.message;
+    console.error("Create subscription cashfree order error:", errorDetails);
+    return res.status(error.response?.status || 500).json({
+      success: false,
+      message: error.response?.data?.message || error.message || "Internal server error"
+    });
   }
 };
 

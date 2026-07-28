@@ -224,18 +224,27 @@ export const createEnrollment = async (req, res) => {
 // Create Cashfree Order
 export const createCashfreeOrder = async (req, res) => {
   try {
-    const { amount, currency, studentId, courseCode } = req.body;
+    const studentId = req.body.studentId || req.user?.studentId;
+    const { courseCode } = req.body;
 
-    if (!amount || !currency || !studentId || !courseCode) {
+    if (!studentId || !courseCode) {
       return res
         .status(400)
-        .json({ success: false, message: "All fields required" });
+        .json({ success: false, message: "studentId and courseCode are required" });
     }
     
     const student = await Student.findOne({ where: { studentId } });
     if (!student) {
       return res.status(404).json({ success: false, message: "Student not found" });
     }
+
+    const course = await Course.findOne({ where: { courseCode } });
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    const amount = req.body.amount || course.discountedprice || course.originalprice || 0;
+    const currency = (req.body.currency || "INR").toUpperCase();
 
     const cfOrderId = `ENR_${Date.now()}_${studentId}`;
 
@@ -254,6 +263,12 @@ export const createCashfreeOrder = async (req, res) => {
         returnBaseUrl = "http://localhost:3000";
       }
     }
+
+    // Cashfree Production strictly requires HTTPS for return_url
+    if (process.env.CASHFREE_ENV === "PRODUCTION" && returnBaseUrl.startsWith("http://")) {
+      returnBaseUrl = returnBaseUrl.replace(/^http:\/\//i, "https://");
+    }
+
     const normalizedReturnUrl = returnBaseUrl.endsWith("/") ? returnBaseUrl : `${returnBaseUrl}/`;
 
     const request = {
@@ -288,8 +303,12 @@ export const createCashfreeOrder = async (req, res) => {
         cf_mode: process.env.CASHFREE_ENV === "PRODUCTION" ? "production" : "sandbox"
       });
   } catch (err) {
-    console.error("Cashfree create order error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    const errorDetails = err.response?.data || err.message;
+    console.error("Cashfree create order error:", errorDetails);
+    res.status(err.response?.status || 500).json({
+      success: false,
+      message: err.response?.data?.message || err.message || "Internal server error"
+    });
   }
 };
 

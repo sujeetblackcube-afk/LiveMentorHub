@@ -93,30 +93,9 @@ export default function Subscription() {
     setFullScreenLoading(true);
 
     try {
-      // Calculate start and end dates
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + selectedSubscription.durationDays);
-
-      const purchaseData = {
-        planName: selectedSubscription.planName,
-        price: selectedSubscription.price,
-        durationDays: selectedSubscription.durationDays,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        orderId: paymentData.orderId || null,
-        paymentStatus: paymentData.paymentStatus || "paid",
-        transactionId: paymentData.transactionId || null,
-        status: "active",
-      };
-
       const intentRes = await createSubscriptionCashfreeOrder({
         teacherId,
         planName: selectedSubscription.planName,
-        durationDays: selectedSubscription.durationDays,
-        startDate: purchaseData.startDate,
-        endDate: purchaseData.endDate,
-        orderId: purchaseData.orderId,
       });
 
       if (intentRes?.success && intentRes?.payment_session_id) {
