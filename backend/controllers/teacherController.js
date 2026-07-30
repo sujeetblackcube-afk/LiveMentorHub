@@ -339,6 +339,7 @@ const getTeacherProfile = async (req, res) => {
 const getTeacherCourses = async (req, res) => {
   try {
     const teacher = req.user; // From auth middleware
+    const { page, limit } = req.query;
 
     // Get course codes from teacher
     const courseCodes = teacher.courseCode
@@ -353,15 +354,37 @@ const getTeacherCourses = async (req, res) => {
       });
     }
 
-    // Fetch courses based on course codes
-    const courses = await Course.findAll({
+    const queryOptions = {
       where: {
         courseCode: {
           [Op.in]: courseCodes,
         },
       },
       attributes: ['courseCode', 'courseName', 'courseDescription', 'thumbnail', 'status', 'createdAt', 'courseType', 'rating', 'deadline', 'courseStartDate', 'courseDuration', 'totalenrollment'],
-    });
+      order: [["createdAt", "DESC"]],
+    };
+
+    if (page || limit) {
+      const paginatedResult = await getPaginatedData(
+        Course,
+        queryOptions,
+        page || 1,
+        limit || 10
+      );
+      return res.status(200).json({
+        status: true,
+        message: "Teacher courses fetched successfully",
+        data: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const courses = await Course.findAll(queryOptions);
 
     return res.status(200).json({
       status: true,
@@ -407,8 +430,9 @@ const getTeacherCourseStudents = async (req, res) => {
       });
     }
 
-    // Fetch enrollments (approved + teacher filter)
-    const enrollments = await Enrollment.findAll({
+    const { page, limit } = req.query;
+
+    const queryOptions = {
       where: {
         courseCode,
         teacherId: teacher.teacherId, // using logged-in teacher
@@ -429,7 +453,30 @@ const getTeacherCourseStudents = async (req, res) => {
         "enrollmentDate",
       ],
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    if (page || limit) {
+      const paginatedResult = await getPaginatedData(
+        Enrollment,
+        queryOptions,
+        page || 1,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        message: "Distinct students fetched successfully",
+        data: paginatedResult.data,
+        studentCount: paginatedResult.totalItems,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const enrollments = await Enrollment.findAll(queryOptions);
 
     // Make students distinct by studentId
     const uniqueStudentsMap = new Map();
@@ -460,7 +507,7 @@ const getTeacherCourseStudents = async (req, res) => {
 const getTeacherLiveSessions = async (req, res) => {
   try {
     const { teacherId } = req.params;
-    const { status } = req.query;
+    const { status, page, limit } = req.query;
 
     // Update session statuses based on current time
     const currentTime = new Date();
@@ -498,10 +545,32 @@ const getTeacherLiveSessions = async (req, res) => {
       whereClause.status = status;
     }
 
-    const liveSessions = await Livesession.findAll({
+    const queryOptions = {
       where: whereClause,
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    if (page || limit) {
+      const paginatedResult = await getPaginatedData(
+        Livesession,
+        queryOptions,
+        page || 1,
+        limit || 10
+      );
+      return res.status(200).json({
+        status: true,
+        message: "Live sessions fetched successfully",
+        data: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const liveSessions = await Livesession.findAll(queryOptions);
 
     return res.status(200).json({
       status: true,

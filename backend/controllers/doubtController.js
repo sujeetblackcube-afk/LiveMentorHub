@@ -2,6 +2,7 @@ import { Doubt, Student, Course, Teacher, Enrollment, Notification } from '../mo
 import { triggerPushForNotifications } from '../config/onesignalService.js';
 import pkg from 'sequelize';
 const { Op } = pkg;
+import { getPaginatedData } from '../utils/pagination.js';
 
 export const createDoubt = async (req, res) => {
   try {
@@ -206,6 +207,7 @@ export const updateDoubt = async (req, res) => {
 export const getDoubtsByCourseCode = async (req, res) => {
   try {
     const { teacherId } = req.params;
+    const { page, limit } = req.query;
 
     // Validate required fields
     if (!teacherId) {
@@ -215,15 +217,32 @@ export const getDoubtsByCourseCode = async (req, res) => {
       });
     }
 
-    // console.log('Fetching doubts for teacherId:', teacherId);
-
-    // Fetch doubts directly by teacherId from Doubt table
-    const doubts = await Doubt.findAll({
+    const queryOptions = {
       where: { teacherId: teacherId },
       order: [['createdAt', 'DESC']]
-    });
+    };
 
-    // console.log('Fetched doubts count:', doubts.length);
+    if (page || limit) {
+      const paginatedResult = await getPaginatedData(
+        Doubt,
+        queryOptions,
+        page || 1,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        message: 'Doubts fetched successfully',
+        data: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        }
+      });
+    }
+
+    const doubts = await Doubt.findAll(queryOptions);
 
     res.status(200).json({
       success: true,

@@ -17,7 +17,7 @@ import { useAuth } from "@/store/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "@/components/layout/Footer";
 import { SyllabusSection } from './SyllabusSection';
-import { cn } from "@/lib/utils";
+import { cn, downloadFile } from "@/lib/utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -473,12 +473,10 @@ export default function CourseDetailsPage() {
                                                                     View
                                                                 </a>
                                                             )}
-                                                            <a
-                                                                href={item.contentUrl}
-                                                                download
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="shrink-0 h-10 px-4 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center text-sm font-medium hover:bg-gray-200 transition-all shadow-sm"
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => downloadFile(item.contentUrl, item.title || "media", item.contentType)}
+                                                                className="shrink-0 h-10 px-4 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center text-sm font-medium hover:bg-gray-200 transition-all shadow-sm cursor-pointer"
                                                             >
                                                                 <Download className="h-4 w-4 mr-1" />
                                                                 Download

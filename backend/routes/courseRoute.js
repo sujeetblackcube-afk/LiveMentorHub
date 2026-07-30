@@ -16,7 +16,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // Create a new course
-router.post("/", uploadThumbnail.single('thumbnail'), createCourse);
+router.post("/", uploadThumbnail.fields([{ name: 'thumbnail', maxCount: 1 }, { name: 'introVideo', maxCount: 1 }]), createCourse);
 
 // Get all courses
 router.get("/", getAllCourses);
@@ -28,7 +28,7 @@ router.get("/count", getCourseCount);
 router.get("/:courseCode", getCourseById);
 
 // Update a course
-router.put("/:courseCode", uploadThumbnail.single('thumbnail'), updateCourse);
+router.put("/:courseCode", uploadThumbnail.fields([{ name: 'thumbnail', maxCount: 1 }, { name: 'introVideo', maxCount: 1 }]), updateCourse);
 
 // Delete a course
 router.delete("/:courseCode", deleteCourse);

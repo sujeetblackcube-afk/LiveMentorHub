@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { theme } from "../theme";
 import { getTeacherPayoutTransactions } from "../services/api.js";
 import { ArrowLeft, DollarSign, Calendar, CreditCard, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import Pagination from "../components/Pagination";
 
 export default function Earnings() {
   const navigate = useNavigate();
@@ -11,17 +12,28 @@ export default function Earnings() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
+
   useEffect(() => {
     fetchTransactions();
-  }, [statusFilter]);
+  }, [statusFilter, currentPage]);
 
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const response = await getTeacherPayoutTransactions(statusFilter);
+      const response = await getTeacherPayoutTransactions(statusFilter, { page: currentPage, limit: itemsPerPage });
       if (response.status) {
         setTransactions(response.data || []);
         setSummary(response.summary || { totalAmount: 0, transactionCount: 0 });
+        if (response.pagination) {
+          setTotalPages(response.pagination.totalPages || 1);
+        }
       }
     } catch (error) {
       console.error("Error fetching transactions:", error);
@@ -298,6 +310,7 @@ export default function Earnings() {
             </table>
           </div>
         )}
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </div>
     </main>
   );

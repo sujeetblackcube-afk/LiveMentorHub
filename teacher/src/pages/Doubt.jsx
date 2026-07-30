@@ -4,6 +4,7 @@ import { theme } from '../theme';
 import { getDoubtsByTeacherId, updateDoubt } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Search, MessageCircle, BookOpen, User, Clock, Send, X } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
 const Doubt = () => {
   const [doubts, setDoubts] = useState([]);
@@ -13,11 +14,14 @@ const Doubt = () => {
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
   const { user } = useAuth();
 
   useEffect(() => {
     fetchDoubts();
-  }, []);
+  }, [user, currentPage]);
 
   useEffect(() => {
     const filtered = doubts.filter(doubt => {
@@ -30,17 +34,17 @@ const Doubt = () => {
 
   const fetchDoubts = async () => {
     try {
-      // console.log('User object:', user);
       const teacherId = user?.teacherId;
-      // console.log('Teacher ID:', teacherId);
       if (!teacherId) {
         toast.error('Teacher ID not found. Please login again.');
         return;
       }
-      // console.log('Calling getDoubtsByTeacherId with:', teacherId);
-      const response = await getDoubtsByTeacherId(teacherId);
-      // console.log('API response:', response);
-      setDoubts(response.data);
+      setLoading(true);
+      const response = await getDoubtsByTeacherId(teacherId, { page: currentPage, limit: itemsPerPage });
+      setDoubts(response.data || []);
+      if (response.pagination) {
+        setTotalPages(response.pagination.totalPages || 1);
+      }
     } catch (error) {
       console.error('Error fetching doubts:', error);
       toast.error('Failed to fetch doubts');
@@ -383,6 +387,7 @@ const Doubt = () => {
                 </tbody>
               </table>
             </div>
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         )}
       </div>

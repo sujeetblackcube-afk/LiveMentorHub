@@ -3,6 +3,7 @@ import Course from '../models/Course.js';
 import pkg from 'sequelize';
 const { Op } = pkg;
 import multer from "multer";
+import path from "path";
 import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
 
 const validateCourseExists = async (courseCode, courseName = null) => {
@@ -23,20 +24,37 @@ const upload = multer({
     fileSize: 100 * 1024 * 1024, // 100MB limit for syllabus docs
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = [
+    const allowedMimeTypes = [
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX
-      'application/msword' // DOC
+      'application/msword', // DOC
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
     ];
-    if (allowedTypes.includes(file.mimetype)) {
+    const ext = file.originalname ? path.extname(file.originalname).toLowerCase().replace('.', '') : '';
+    const allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
+
+    if (allowedMimeTypes.includes(file.mimetype) || allowedExtensions.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only PDF and DOC/DOCX files are allowed.'), false);
+      const fileExtDisplay = ext ? `.${ext}` : (file.originalname || 'unknown');
+      cb(new Error(`File format '${fileExtDisplay}' is not supported. Please upload a PDF, DOC, DOCX, JPG, or PNG file.`), false);
     }
   },
 });
 
-export const uploadSyllabusFile = upload.single('file');
+export const uploadSyllabusFile = (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message || 'File upload failed',
+      });
+    }
+    next();
+  });
+};
 
 export const addUpdateSyllabus = async (req, res) => {
   try {

@@ -8,6 +8,7 @@ import Notification from "../models/Notifications.js";
 import { triggerPushForNotifications } from "../config/onesignalService.js";
 import pkg from 'sequelize';
 const { Op } = pkg;
+import { getPaginatedData } from "../utils/pagination.js";
 // Controller to create a new test
 export const createTest = async (req, res) => {
   try {
@@ -163,7 +164,7 @@ export const createTest = async (req, res) => {
 // Controller to get all tests
 export const getAllTests = async (req, res) => {
   try {
-    const { teacherId, courseCode, isPublished } = req.query;
+    const { teacherId, courseCode, isPublished, page, limit } = req.query;
 
     // Build where clause
     const whereClause = {};
@@ -180,10 +181,32 @@ export const getAllTests = async (req, res) => {
       whereClause.isPublished = isPublished === "true";
     }
 
-    const tests = await Test.findAll({
+    const queryOptions = {
       where: whereClause,
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    if (page || limit) {
+      const paginatedResult = await getPaginatedData(
+        Test,
+        queryOptions,
+        page || 1,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        count: paginatedResult.totalItems,
+        tests: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const tests = await Test.findAll(queryOptions);
 
     res.status(200).json({
       success: true,

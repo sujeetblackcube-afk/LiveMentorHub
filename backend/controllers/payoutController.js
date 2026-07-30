@@ -248,7 +248,7 @@ const getTeacherPayoutTransactions = async (req, res) => {
   try {
     const teacher = req.user;
     const teacherId = teacher.teacherId;
-    const { status } = req.query;
+    const { status, page, limit } = req.query;
 
     const whereClause = {
       teacherId: teacherId,
@@ -258,10 +258,37 @@ const getTeacherPayoutTransactions = async (req, res) => {
       whereClause.status = status;
     }
 
-    const transactions = await TeacherPayout.findAll({
+    const queryOptions = {
       where: whereClause,
       order: [["requestedAt", "DESC"]],
-    });
+    };
+
+    if (page || limit) {
+      const paginatedResult = await getPaginatedData(
+        TeacherPayout,
+        queryOptions,
+        page || 1,
+        limit || 10
+      );
+      const totalAmount = paginatedResult.data.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+      return res.status(200).json({
+        status: true,
+        message: "Transactions fetched successfully",
+        data: paginatedResult.data,
+        summary: {
+          totalAmount: totalAmount,
+          transactionCount: paginatedResult.totalItems,
+        },
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const transactions = await TeacherPayout.findAll(queryOptions);
 
     const totalAmount = transactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
 

@@ -24,15 +24,19 @@ const Course = sequelize.define(
       allowNull: false,
     },
     rating: {
-    type: DataTypes.FLOAT,
-    defaultValue: 0,
-    allowNull: true
-  },
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
+      allowNull: true,
+    },
     courseDescription: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
     thumbnail: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    introVideo: {
       type: DataTypes.STRING,
       allowNull: true,
     },
@@ -73,7 +77,7 @@ const Course = sequelize.define(
     medium: DataTypes.STRING,
     classname: DataTypes.STRING,
     subject: DataTypes.STRING,
-    subjectCode:  DataTypes.STRING(50),
+    subjectCode: DataTypes.STRING(50),
     
     stream: {
       type: DataTypes.STRING,

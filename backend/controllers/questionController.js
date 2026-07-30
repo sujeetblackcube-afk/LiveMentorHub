@@ -1,6 +1,8 @@
 import Question from "../models/Question.js";
 import multer from "multer";
+import path from "path";
 import * as XLSX from "xlsx";
+import { getPaginatedData } from "../utils/pagination.js";
 
 // Configure multer for file upload
 const storage = multer.memoryStorage();
@@ -10,21 +12,36 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = [
+    const allowedMimeTypes = [
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
       "application/vnd.ms-excel", // .xls
       "text/csv", // .csv
+      "application/csv",
     ];
-    if (allowedTypes.includes(file.mimetype)) {
+    const ext = file.originalname ? path.extname(file.originalname).toLowerCase().replace('.', '') : '';
+    const allowedExtensions = ['xlsx', 'xls', 'csv'];
+
+    if (allowedMimeTypes.includes(file.mimetype) || allowedExtensions.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error("Invalid file type. Only Excel and CSV files are allowed."), false);
+      const fileExtDisplay = ext ? `.${ext}` : (file.originalname || 'unknown');
+      cb(new Error(`File format '${fileExtDisplay}' is not supported. Please upload an Excel (.xlsx, .xls) or CSV (.csv) file.`), false);
     }
   }
 });
 
 // Export upload middleware
-export const uploadExcel = upload.single("file");
+export const uploadExcel = (req, res, next) => {
+  upload.single("file")(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message || "File upload failed",
+      });
+    }
+    next();
+  });
+};
 
 // Controller to create a single question
 export const createQuestion = async (req, res) => {
@@ -100,7 +117,7 @@ export const createQuestion = async (req, res) => {
 // Controller to get all questions
 export const getAllQuestions = async (req, res) => {
   try {
-    const { teacherId, questionType, difficultyLevel, isActive } = req.query;
+    const { teacherId, questionType, difficultyLevel, isActive, page, limit } = req.query;
 
     // Build where clause
     const whereClause = {};
@@ -121,10 +138,32 @@ export const getAllQuestions = async (req, res) => {
       whereClause.isActive = isActive === 'true';
     }
 
-    const questions = await Question.findAll({
+    const queryOptions = {
       where: whereClause,
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    if (page || limit) {
+      const paginatedResult = await getPaginatedData(
+        Question,
+        queryOptions,
+        page || 1,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        count: paginatedResult.totalItems,
+        questions: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        }
+      });
+    }
+
+    const questions = await Question.findAll(queryOptions);
 
     res.status(200).json({
       success: true,

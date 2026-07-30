@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
 import { theme } from '../theme';
-import { createLiveSession } from '../services/api';
+import { createLiveSession, getTeacherCourses } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { getImageUrl, DEFAULT_BANNER_IMAGE } from '../utils/image';
+import Pagination from '../components/Pagination';
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
@@ -24,22 +25,23 @@ const Courses = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
+
   useEffect(() => {
     fetchCourses();
-  }, []);
+  }, [currentPage]);
 
   const fetchCourses = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/teachers/courses`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      setLoading(true);
+      const result = await getTeacherCourses({ page: currentPage, limit: itemsPerPage });
+      if (result.status) {
+        setCourses(result.data || []);
+        if (result.pagination) {
+          setTotalPages(result.pagination.totalPages || 1);
         }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setCourses(result.data);
       } else {
         toast.error('Failed to fetch courses');
       }
@@ -249,6 +251,8 @@ const Courses = () => {
             ))}
           </div>
         )}
+
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
         {/* MODAL */}
         {showModal && (

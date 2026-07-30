@@ -38,6 +38,7 @@ export default function Course({ status = "Active" }) {
     courseType: "",
     courseDescription: "",
     thumbnail: null,
+    introVideo: null,
     difficulty: "",
     mrp: "",
     discountedprice: "",
@@ -98,6 +99,8 @@ export default function Course({ status = "Active" }) {
   const [savingSyllabus, setSavingSyllabus] = useState(false);
   const [localFilePreview, setLocalFilePreview] = useState(null);
   const fileInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   // Helper to get syllabus for a course code
   const getCourseSyllabus = (courseCode) => {
@@ -749,6 +752,32 @@ const handleUpdateSyllabusFile = async (e) => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 };
+
+const handleUpdateIntroVideoFile = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('video/')) {
+    toast.error('Please select a valid video file');
+    return;
+  }
+
+  setUploadingVideo(true);
+  try {
+    const response = await editCourse(currentCourse.courseCode, { introVideo: file });
+    if (response && response.data) {
+      setCurrentCourse(response.data);
+      setCourses(prev => prev.map(c => c.courseCode === currentCourse.courseCode ? response.data : c));
+      toast.success("Course intro video uploaded successfully!");
+    }
+  } catch (err) {
+    console.error("Failed to upload intro video:", err);
+    toast.error("Failed to upload intro video");
+  } finally {
+    setUploadingVideo(false);
+    if (videoInputRef.current) videoInputRef.current.value = "";
+  }
+};
 // Fix the handleSyllabusEdit function to always fetch fresh data
 const handleSyllabusEdit = async (course) => {
   setCurrentCourse(course);
@@ -1325,6 +1354,34 @@ const handleSyllabusEdit = async (course) => {
                     </div>
                   ) : null}
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Course Intro Video (Optional)
+                  </label>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) =>
+                      setFormData({ ...formData, introVideo: e.target.files[0] })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  {formData.introVideo ? (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Selected Video: {formData.introVideo.name}
+                    </p>
+                  ) : editingCourse && editingCourse.introVideo ? (
+                    <div className="mt-2 space-y-1">
+                      <video
+                        src={editingCourse.introVideo.startsWith('http') ? editingCourse.introVideo : `${BACKEND_BASE_URL}${editingCourse.introVideo}`}
+                        controls
+                        className="h-24 w-full object-cover rounded-md border border-gray-200"
+                      />
+                      <span className="text-xs text-gray-500 block">Current Intro Video</span>
+                    </div>
+                  ) : null}
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Course Start Date*
@@ -1781,6 +1838,42 @@ const handleSyllabusEdit = async (course) => {
               className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
             >
               {savingSyllabus ? "Uploading..." : "Upload"}
+            </button>
+          </div>
+        </div>
+
+        {/* Intro Video Section */}
+        <div className="border-t pt-4" style={{ borderColor: theme.colors.border }}>
+          <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.textPrimary }}>
+            Course Intro / Syllabus Video
+          </label>
+
+          {currentCourse?.introVideo ? (
+            <div className="mb-3">
+              <video
+                src={currentCourse.introVideo.startsWith('http') ? currentCourse.introVideo : `${BACKEND_BASE_URL}${currentCourse.introVideo}`}
+                controls
+                className="w-full max-h-48 rounded-lg border object-cover"
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400 mb-2">No intro video uploaded yet.</p>
+          )}
+
+          <div className="flex items-center gap-3">
+            <input
+              ref={videoInputRef}
+              type="file"
+              accept="video/*"
+              onChange={handleUpdateIntroVideoFile}
+              className="hidden"
+            />
+            <button
+              onClick={() => videoInputRef.current?.click()}
+              disabled={uploadingVideo}
+              className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
+            >
+              {uploadingVideo ? "Uploading Video..." : currentCourse?.introVideo ? "Replace Intro Video" : "Upload Intro Video"}
             </button>
           </div>
         </div>
