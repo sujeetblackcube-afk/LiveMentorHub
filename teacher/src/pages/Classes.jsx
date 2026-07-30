@@ -4,6 +4,8 @@ import {
   updateLiveSession,
   startLiveSession,
   deleteLiveSession,
+  createLiveSession,
+  getTeacherCourses,
   BACKEND_BASE_URL,
 } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
@@ -11,6 +13,7 @@ import { toast } from "react-toastify";
 import { theme } from "../theme.js";
 import LiveVideo from "../components/LiveVideo";
 import { getImageUrl, DEFAULT_BANNER_IMAGE } from "../utils/image";
+import ClassCreationModal from "../components/ClassCreationModal";
 
 const Classes = () => {
   const { user } = useAuth();
@@ -18,9 +21,12 @@ const Classes = () => {
   const [sessions, setSessions] = useState([]);
   const [filteredSessions, setFilteredSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [availableCourses, setAvailableCourses] = useState([]);
   const [liveSession, setLiveSession] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingSession, setEditingSession] = useState(null);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  
   const [editForm, setEditForm] = useState({
     courseCode: "",
     title: "",
@@ -36,6 +42,97 @@ const Classes = () => {
     { id: "ongoing", label: "Ongoing Classes" },
     { id: "completed", label: "Completed Classes" },
   ];
+
+  const [sessionData, setSessionData] = useState({
+    courseCode: "",
+    title: "",
+    description: "",
+    startTime: "",
+    endTime: "",
+    maxParticipants: 100,
+    isPrivate: false,
+  });
+  const [thumbnail, setThumbnail] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmitSession = async (e) => {
+    e.preventDefault();
+    
+    if (sessionData.startTime) {
+      if (new Date(sessionData.startTime) < new Date()) {
+        toast.error("Start time cannot be in the past");
+        return;
+      }
+    }
+    
+    if (sessionData.startTime && sessionData.endTime) {
+      if (new Date(sessionData.endTime) <= new Date(sessionData.startTime)) {
+        toast.error("End time must be after start time");
+        return;
+      }
+    }
+
+    if (!sessionData.courseCode) {
+      toast.error("Please select a course");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("courseCode", sessionData.courseCode);
+      formData.append("teacherId", user.teacherId);
+      formData.append("title", sessionData.title);
+      formData.append("description", sessionData.description);
+      formData.append("startTime", sessionData.startTime);
+      formData.append("endTime", sessionData.endTime);
+      formData.append("maxParticipants", sessionData.maxParticipants || 100);
+      formData.append("isPrivate", sessionData.isPrivate);
+      
+      if (thumbnail) {
+        formData.append("thumbnail", thumbnail); 
+      }
+
+      await createLiveSession(formData);
+
+      toast.success("Session created successfully");
+      setIsScheduleModalOpen(false);
+      
+      setSessionData({
+        courseCode: "",
+        title: "",
+        description: "",
+        startTime: "",
+        endTime: "",
+        maxParticipants: 100,
+        isPrivate: false,
+      });
+      setThumbnail(null);
+      
+      refreshSessions();
+    } catch (error) {
+      console.error("Error creating session:", error);
+      toast.error("Failed to create session");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Fetch teacher's allocated courses for the dropdown
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await getTeacherCourses(user.teacherId);
+        setAvailableCourses(response.data || response || []);
+      } catch (error) {
+        console.error("Failed to fetch courses:", error);
+      }
+    };
+
+    if (user?.teacherId) {
+      fetchCourses();
+    }
+  }, [user]);
 
   useEffect(() => {
     const fetchSessions = async () => {
@@ -77,7 +174,6 @@ const Classes = () => {
     setFilteredSessions(data.data || []);
   };
 
-  // Helper function to format date WITH timezone conversion
   const formatDate = (isoString) => {
     if (!isoString) return "N/A";
     const d = new Date(isoString);
@@ -89,7 +185,6 @@ const Classes = () => {
     });
   };
 
-  // Helper function to format time WITH timezone conversion (HH:MM AM/PM)
   const formatTime = (isoString) => {
     if (!isoString) return "N/A";
     const d = new Date(isoString);
@@ -101,28 +196,14 @@ const Classes = () => {
     });
   };
 
-  // Helper function to format full datetime WITH conversion
   const formatDateTime = (isoString) => {
     if (!isoString) return "N/A";
     return `${formatDate(isoString)}, ${formatTime(isoString)}`;
   };
 
-  // Helper for edit form - convert UTC to local datetime-local
-  const formatForEditInput = (isoString) => {
-    if (!isoString) return "";
-    // For edit form, we need to convert UTC to local time
-    const date = new Date(isoString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-
   return (
     <div
-      className="h-screen flex flex-col"
+      className="h-screen flex flex-col relative"
       style={{ backgroundColor: theme.colors.background }}
     >
       {/* ================= HEADER (FIXED) ================= */}
@@ -134,18 +215,19 @@ const Classes = () => {
         }}
       >
         <div className="p-5">
-          <h1
-            className="text-3xl font-bold text-center"
-            style={{
-              background: theme.gradients.primary,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            Classes
-          </h1>
+          <div className="flex justify-center items-center relative">
+            <h1
+              className="text-3xl font-bold text-center"
+              style={{
+                background: theme.gradients.primary,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              Classes
+            </h1>
+          </div>
 
-          {/* Tabs */}
           <div className="mt-6 flex justify-center gap-3 flex-wrap">
             {tabs.map((tab) => (
               <button
@@ -176,7 +258,6 @@ const Classes = () => {
             ))}
           </div>
 
-          {/* Search */}
           {activeTab === "completed" && (
             <div className="mt-4 max-w-md mx-auto">
               <input
@@ -196,7 +277,7 @@ const Classes = () => {
       </div>
 
       {/* ================= SCROLLABLE CARD SECTION ================= */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 pb-24">
         {loading ? (
           <div className="flex justify-center items-center h-full">
             <p style={{ color: theme.colors.primary }}>
@@ -248,11 +329,9 @@ const Classes = () => {
                   <p style={{ color: theme.colors.primary }}>
                     {session.courseName}
                   </p>
-                  {/* FIXED: Using string manipulation instead of Date object */}
                   <p style={{ color: theme.colors.textSecondary }}>
                     {formatDateTime(session.startTime)}
                   </p>
-                  {/* Optional: Show end time if needed */}
                   <p style={{ color: theme.colors.textSecondary }}>
                     End: {formatDateTime(session.endTime)}
                   </p>
@@ -331,6 +410,17 @@ const Classes = () => {
         )}
       </div>
 
+      <button
+        onClick={() => setIsScheduleModalOpen(true)}
+        className="fixed bottom-15 right-15 z-50 px-6 py-3.5 rounded-full font-bold text-white shadow-2xl transition-all duration-300 hover:scale-105 flex items-center gap-2"
+        style={{ 
+          background: theme.gradients.primary || '#3b82f6',
+          boxShadow: `0 10px 25px ${theme.colors.shadow || 'rgba(0,0,0,0.3)'}`
+        }}
+      >
+        <span className="text-xl leading-none">+</span> Schedule Class
+      </button>
+
       {liveSession && (
         <LiveVideo
           session={liveSession}
@@ -338,6 +428,20 @@ const Classes = () => {
             setLiveSession(null);
             refreshSessions();
           }}
+        />
+      )}
+
+      {isScheduleModalOpen && (
+        <ClassCreationModal
+          isActive={isScheduleModalOpen} 
+          onClose={() => setIsScheduleModalOpen(false)} 
+          sessionData={sessionData} 
+          setSessionData={setSessionData} 
+          setThumbnail={setThumbnail} 
+          isSubmitting={isSubmitting} 
+          handleSubmitSession={handleSubmitSession}
+          allowCourseSelection={true}
+          courses={availableCourses}
         />
       )}
 
@@ -426,25 +530,6 @@ const Classes = () => {
                   className="w-full p-2 border rounded"
                 />
               </div>
-              {/* Max Participants input commented out as requested */}
-              {/* 
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Max Participants
-                </label>
-                <input
-                  type="number"
-                  value={editForm.maxParticipants || 100}
-                  onChange={(e) =>
-                    setEditForm({
-                      ...editForm,
-                      maxParticipants: e.target.value,
-                    })
-                  }
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-              */}
               <div className="mb-4">
                 <label className="flex items-center">
                   <input

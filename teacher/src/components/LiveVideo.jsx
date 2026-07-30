@@ -233,6 +233,7 @@ const LiveVideo = ({ session, onClose }) => {
             // Decode the message
             const text = new TextDecoder().decode(message);
             const msgData = JSON.parse(text);
+            console.log(msgData)
             
             if (msgData.type === 'hand_raise') {
               const remoteDiv = document.getElementById(`remote-${remoteUser.uid}`);
