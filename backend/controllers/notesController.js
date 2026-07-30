@@ -1,8 +1,10 @@
 import multer from "multer";
+import path from "path";
 import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
 import NotesMedia from "../models/NotesMedia.js";
 import Course from "../models/Course.js";
 import Teacher from "../models/Teacher.js";
+import { getPaginatedData } from "../utils/pagination.js";
 
 // Configure multer with memory storage
 const upload = multer({
@@ -11,20 +13,42 @@ const upload = multer({
     fileSize: 500 * 1024 * 1024, // 500MB limit
   },
   fileFilter: (req, file, cb) => {
-    // Allow images, PDFs, videos
-    const allowedTypes = [
+    // Allow images, PDFs, documents, videos
+    const allowedMimeTypes = [
       'image/jpeg',
+      'image/jpg',
       'image/png',
       'image/gif',
+      'image/webp',
+      'image/bmp',
       'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'text/plain',
       'video/mp4',
       'video/avi',
       'video/mov',
+      'video/quicktime',
+      'video/x-msvideo',
+      'video/mkv',
+      'video/webm',
+      'video/3gpp',
     ];
-    if (allowedTypes.includes(file.mimetype)) {
+
+    const ext = file.originalname ? path.extname(file.originalname).toLowerCase().replace('.', '') : '';
+    const allowedExtensions = [
+      'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp',
+      'pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt',
+      'mp4', 'avi', 'mov', 'mkv', 'webm', '3gp'
+    ];
+
+    if (allowedMimeTypes.includes(file.mimetype) || allowedExtensions.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only images, PDFs, and videos are allowed.'), false);
+      const fileExtDisplay = ext ? `.${ext}` : (file.originalname || 'unknown');
+      cb(new Error(`The file format '${fileExtDisplay}' is not supported. Please upload a valid image (JPG, PNG, GIF, WEBP), PDF or document (PDF, DOCX, PPTX), or video file (MP4, MOV, AVI, MKV).`), false);
     }
   },
 });
@@ -109,7 +133,17 @@ export const addNotes = async (req, res) => {
   }
 };
 
-export const uploadNotesFile = upload.single('file');
+export const uploadNotesFile = (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message || 'File upload failed'
+      });
+    }
+    next();
+  });
+};
 
 export const deleteNote = async (req, res) => {
   try {
@@ -148,7 +182,7 @@ export const deleteNote = async (req, res) => {
 
 export const getNotes = async (req, res) => {
   try {
-    const { courseCode, teacherId, courseType, contentType } = req.query;
+    const { courseCode, teacherId, courseType, contentType, page, limit } = req.query;
 
     if (!courseCode || !teacherId) {
       return res.status(400).json({
@@ -187,10 +221,31 @@ export const getNotes = async (req, res) => {
       whereClause.contentType = mappedContentType;
     }
 
-    const notes = await NotesMedia.findAll({
+    const queryOptions = {
       where: whereClause,
       order: [['createdAt', 'DESC']]
-    });
+    };
+
+    if (page || limit) {
+      const paginatedResult = await getPaginatedData(
+        NotesMedia,
+        queryOptions,
+        page || 1,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        notes: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        }
+      });
+    }
+
+    const notes = await NotesMedia.findAll(queryOptions);
 
     res.status(200).json({
       success: true,

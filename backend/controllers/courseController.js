@@ -122,18 +122,51 @@ export const createCourse = async (req, res) => {
     // Format code with sequential number (up to 8 digits as requested)
     const courseCode = `${prefix}${dateStr}${String(nextNumber).padStart(8, "0")}`;
 
-    // Handle thumbnail upload to Cloudinary
+    // Handle thumbnail and introVideo uploads to Cloudinary
     let thumbnailPath = null;
-    if (req.file) {
-      try {
-        const result = await uploadBufferToCloudinary(req.file.buffer, 'courses', 'image');
-        thumbnailPath = result.secure_url;
-      } catch (uploadError) {
-        console.error('Error uploading thumbnail to Cloudinary:', uploadError);
-        return res.status(500).json({
-          success: false,
-          message: 'Error uploading course thumbnail to Cloudinary',
-        });
+    let introVideoPath = null;
+
+    if (req.files) {
+      if (req.files.thumbnail && req.files.thumbnail[0]) {
+        try {
+          const result = await uploadBufferToCloudinary(req.files.thumbnail[0].buffer, 'courses', 'image');
+          thumbnailPath = result.secure_url;
+        } catch (uploadError) {
+          console.error('Error uploading thumbnail to Cloudinary:', uploadError);
+          return res.status(500).json({
+            success: false,
+            message: 'Error uploading course thumbnail to Cloudinary',
+          });
+        }
+      }
+
+      if (req.files.introVideo && req.files.introVideo[0]) {
+        try {
+          const result = await uploadBufferToCloudinary(req.files.introVideo[0].buffer, 'courses/videos', 'video');
+          introVideoPath = result.secure_url;
+        } catch (uploadError) {
+          console.error('Error uploading intro video to Cloudinary:', uploadError);
+          return res.status(500).json({
+            success: false,
+            message: 'Error uploading course intro video to Cloudinary',
+          });
+        }
+      }
+    } else if (req.file) {
+      if (req.file.mimetype.startsWith('video/')) {
+        try {
+          const result = await uploadBufferToCloudinary(req.file.buffer, 'courses/videos', 'video');
+          introVideoPath = result.secure_url;
+        } catch (uploadError) {
+          console.error('Error uploading intro video to Cloudinary:', uploadError);
+        }
+      } else {
+        try {
+          const result = await uploadBufferToCloudinary(req.file.buffer, 'courses', 'image');
+          thumbnailPath = result.secure_url;
+        } catch (uploadError) {
+          console.error('Error uploading thumbnail to Cloudinary:', uploadError);
+        }
       }
     }
     // Generate global course id
@@ -164,6 +197,7 @@ export const createCourse = async (req, res) => {
       courseType,
       courseDescription,
       thumbnail: thumbnailPath,
+      introVideo: introVideoPath,
       difficulty,
       mrp,
       deadline,
@@ -293,17 +327,48 @@ export const updateCourse = async (req, res) => {
       });
     }
 
-    // Handle thumbnail upload to Cloudinary
-    if (req.file) {
-      try {
-        const result = await uploadBufferToCloudinary(req.file.buffer, 'courses', 'image');
-        course.thumbnail = result.secure_url;
-      } catch (uploadError) {
-        console.error('Error uploading thumbnail to Cloudinary:', uploadError);
-        return res.status(500).json({
-          success: false,
-          message: 'Error uploading course thumbnail to Cloudinary',
-        });
+    // Handle thumbnail & introVideo upload to Cloudinary
+    if (req.files) {
+      if (req.files.thumbnail && req.files.thumbnail[0]) {
+        try {
+          const result = await uploadBufferToCloudinary(req.files.thumbnail[0].buffer, 'courses', 'image');
+          course.thumbnail = result.secure_url;
+        } catch (uploadError) {
+          console.error('Error uploading thumbnail to Cloudinary:', uploadError);
+          return res.status(500).json({
+            success: false,
+            message: 'Error uploading course thumbnail to Cloudinary',
+          });
+        }
+      }
+
+      if (req.files.introVideo && req.files.introVideo[0]) {
+        try {
+          const result = await uploadBufferToCloudinary(req.files.introVideo[0].buffer, 'courses/videos', 'video');
+          course.introVideo = result.secure_url;
+        } catch (uploadError) {
+          console.error('Error uploading intro video to Cloudinary:', uploadError);
+          return res.status(500).json({
+            success: false,
+            message: 'Error uploading course intro video to Cloudinary',
+          });
+        }
+      }
+    } else if (req.file) {
+      if (req.file.mimetype.startsWith('video/')) {
+        try {
+          const result = await uploadBufferToCloudinary(req.file.buffer, 'courses/videos', 'video');
+          course.introVideo = result.secure_url;
+        } catch (uploadError) {
+          console.error('Error uploading intro video to Cloudinary:', uploadError);
+        }
+      } else {
+        try {
+          const result = await uploadBufferToCloudinary(req.file.buffer, 'courses', 'image');
+          course.thumbnail = result.secure_url;
+        } catch (uploadError) {
+          console.error('Error uploading thumbnail to Cloudinary:', uploadError);
+        }
       }
     }
 
@@ -312,6 +377,7 @@ export const updateCourse = async (req, res) => {
       "courseName",
       "courseType",
       "courseDescription",
+      "introVideo",
       "difficulty",
       // ✅ these are the real DB columns used in Course model
       "mrp",
@@ -443,14 +509,14 @@ export const updateCourseStatus = async (req, res) => {
   }
 };
 
-// Multer configuration for Cloudinary thumbnail uploads
+// Multer configuration for Cloudinary uploads (images & intro videos)
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
+  if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
     cb(null, true);
   } else {
-    cb(new Error('Only image files are allowed!'), false);
+    cb(new Error('Only image and video files are allowed!'), false);
   }
 };
 
@@ -476,7 +542,7 @@ export const uploadThumbnail = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
+    fileSize: 100 * 1024 * 1024 // 100MB limit for video upload
   }
 });
 

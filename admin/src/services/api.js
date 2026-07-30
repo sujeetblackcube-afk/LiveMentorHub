@@ -18,7 +18,16 @@ const json = async (response) => {
         window.location.href = '/login';
       }
     }
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+    try {
+      const errorData = await response.json();
+      if (errorData && (errorData.message || errorData.error)) {
+        errorMessage = errorData.message || errorData.error;
+      }
+    } catch (e) {
+      // Ignore JSON parse errors
+    }
+    throw new Error(errorMessage);
   }
   return response.json();
 };
@@ -224,6 +233,8 @@ export const createCourse = async (courseData) => {
     if (courseData[key] !== null && courseData[key] !== undefined) {
       if (key === 'thumbnail' && courseData[key] instanceof File) {
         formData.append('thumbnail', courseData[key]);
+      } else if (key === 'introVideo' && courseData[key] instanceof File) {
+        formData.append('introVideo', courseData[key]);
       } else {
         formData.append(key, courseData[key]);
       }
@@ -249,6 +260,8 @@ export const editCourse = async (courseCode, courseData) => {
     if (courseData[key] !== null && courseData[key] !== undefined) {
       if (key === 'thumbnail' && courseData[key] instanceof File) {
         formData.append('thumbnail', courseData[key]);
+      } else if (key === 'introVideo' && courseData[key] instanceof File) {
+        formData.append('introVideo', courseData[key]);
       } else {
         formData.append(key, courseData[key]);
       }

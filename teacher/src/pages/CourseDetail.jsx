@@ -13,6 +13,7 @@ import {
 } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { getImageUrl, DEFAULT_BANNER_IMAGE } from "../utils/image";
+import { downloadFile } from "../utils/download";
 
 const CourseDetail = () => {
   const { courseCode } = useParams();
@@ -135,7 +136,7 @@ const CourseDetail = () => {
       });
       fetchAssignments();
     } catch (error) {
-      toast.error("Failed to create assignment");
+      toast.error(error?.message || "Failed to create assignment");
     } finally {
       setCreatingAssignment(false);
     }
@@ -174,6 +175,19 @@ const CourseDetail = () => {
       return;
     }
 
+    const file = uploadData.file;
+    const ext = file.name ? file.name.split('.').pop().toLowerCase() : '';
+    const allowedExtensions = [
+      'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp',
+      'pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt',
+      'mp4', 'avi', 'mov', 'mkv', 'webm', '3gp'
+    ];
+
+    if (ext && !allowedExtensions.includes(ext)) {
+      toast.error(`File format '.${ext}' is not supported. Please select a valid file like JPG, PNG, PDF, DOCX, or MP4.`);
+      return;
+    }
+
     setUploading(true);
     try {
       const formData = new FormData();
@@ -199,7 +213,7 @@ const CourseDetail = () => {
       setUploadData({ title: "", description: "", file: null });
       fetchNotes(); // refresh
     } catch (error) {
-      toast.error("Upload failed");
+      toast.error(error?.message || "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -814,15 +828,13 @@ const CourseDetail = () => {
                                           >
                                             👁️ View
                                           </a>
-                                          <a
-                                            href={item.contentUrl}
-                                            download
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="ml-2 px-3 py-1.5 text-white text-xs rounded-lg hover:opacity-80 transition-all transform hover:scale-105 inline-block bg-gray-600"
+                                          <button
+                                            type="button"
+                                            onClick={() => downloadFile(item.contentUrl, item.title || "document", item.contentType)}
+                                            className="ml-2 px-3 py-1.5 text-white text-xs rounded-lg hover:opacity-80 transition-all transform hover:scale-105 inline-block bg-gray-600 cursor-pointer"
                                           >
                                             ⬇️ Download
-                                          </a>
+                                          </button>
                                         </>
                                       )}
                                       {item.contentType === "IMAGE" && (
@@ -838,15 +850,13 @@ const CourseDetail = () => {
                                           >
                                             👁️ View
                                           </a>
-                                          <a
-                                            href={item.contentUrl}
-                                            download
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="ml-2 px-3 py-1.5 text-white text-xs rounded-lg hover:opacity-80 transition-all transform hover:scale-105 inline-block bg-gray-600"
+                                          <button
+                                            type="button"
+                                            onClick={() => downloadFile(item.contentUrl, item.title || "image", item.contentType)}
+                                            className="ml-2 px-3 py-1.5 text-white text-xs rounded-lg hover:opacity-80 transition-all transform hover:scale-105 inline-block bg-gray-600 cursor-pointer"
                                           >
                                             ⬇️ Download
-                                          </a>
+                                          </button>
                                         </>
                                       )}
                                       {item.contentType === "RECORDED_VIDEO" && (
@@ -862,15 +872,13 @@ const CourseDetail = () => {
                                           >
                                             ▶️ Watch
                                           </a>
-                                          <a
-                                            href={item.contentUrl}
-                                            download
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="ml-2 px-3 py-1.5 text-white text-xs rounded-lg hover:opacity-80 transition-all transform hover:scale-105 inline-block bg-gray-600"
+                                          <button
+                                            type="button"
+                                            onClick={() => downloadFile(item.contentUrl, item.title || "video", item.contentType)}
+                                            className="ml-2 px-3 py-1.5 text-white text-xs rounded-lg hover:opacity-80 transition-all transform hover:scale-105 inline-block bg-gray-600 cursor-pointer"
                                           >
                                             ⬇️ Download
-                                          </a>
+                                          </button>
                                         </>
                                       )}
                                     </td>

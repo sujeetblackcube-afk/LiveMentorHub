@@ -18,7 +18,16 @@ const json = async (response) => {
         window.location.href = '/login';
       }
     }
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+    try {
+      const errorData = await response.json();
+      if (errorData && (errorData.message || errorData.error)) {
+        errorMessage = errorData.message || errorData.error;
+      }
+    } catch (e) {
+      // Ignore JSON parse errors
+    }
+    throw new Error(errorMessage);
   }
   return response.json();
 };
@@ -27,13 +36,15 @@ export const getBanners = async (params = {}) => {
   const url = `${BASE_URL}/banners${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
-export const getTeacherCourseStudents = async (courseCode) => {
-  const url = `${BASE_URL}/teachers/courses/${courseCode}/students`;
+export const getTeacherCourseStudents = async (courseCode, params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const url = `${BASE_URL}/teachers/courses/${courseCode}/students${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
-export const getTeacherCourses = async () => {
-  const url = `${BASE_URL}/teachers/courses`;
+export const getTeacherCourses = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const url = `${BASE_URL}/teachers/courses${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
@@ -185,12 +196,10 @@ export const updateDoubt = async (id, updateData) => {
   }).then(json);
 };
 
-export const getDoubtsByTeacherId = async (teacherId) => {
-  // console.log('getDoubtsByTeacherId called with teacherId:', teacherId);
-  const url = `${BASE_URL}/doubts/${teacherId}`;
-  // console.log('API URL:', url);
+export const getDoubtsByTeacherId = async (teacherId, params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const url = `${BASE_URL}/doubts/${teacherId}${query ? `?${query}` : ""}`;
   const result = await fetch(url, { headers: getAuthHeaders() }).then(json);
-  // console.log('API result:', result);
   return result;
 };
 
@@ -208,12 +217,14 @@ export const createAssignment = async (teacherId, courseCode, data, file) => {
   return fetch(url, { method: 'POST', headers: getAuthHeaders(), body: formData }).then(json);
 };
 
-export const getAssignments = async (teacherId, courseCode = null) => {
+export const getAssignments = async (teacherId, courseCode = null, params = {}) => {
   // Backend expects teacherId in query params based on controller
-  let url = `${BASE_URL}/assignments?teacherId=${encodeURIComponent(teacherId)}`;
-  if (courseCode) {
-    url += `&courseCode=${encodeURIComponent(courseCode)}`;
-  }
+  const queryObj = { teacherId };
+  if (courseCode) queryObj.courseCode = courseCode;
+  if (params.page) queryObj.page = params.page;
+  if (params.limit) queryObj.limit = params.limit;
+  const query = new URLSearchParams(queryObj).toString();
+  const url = `${BASE_URL}/assignments?${query}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
@@ -470,11 +481,13 @@ export const getTotalEarningsByTeacher = async () => {
 };
 
 // Get all payout transactions for the authenticated teacher
-export const getTeacherPayoutTransactions = async (status = null) => {
-  let url = `${BASE_URL}/payouts/transactions`;
+export const getTeacherPayoutTransactions = async (status = null, params = {}) => {
+  const queryObj = { ...params };
   if (status && status !== 'all') {
-    url += `?status=${encodeURIComponent(status)}`;
+    queryObj.status = status;
   }
+  const query = new URLSearchParams(queryObj).toString();
+  const url = `${BASE_URL}/payouts/transactions${query ? `?${query}` : ''}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 

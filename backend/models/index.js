@@ -48,12 +48,14 @@ Enrollment.belongsTo(Student, { foreignKey: 'studentId', targetKey: 'studentId' 
 // Sync models function
 const syncModels = async () => {
   try {
-    // Ensure DB columns for activeToken and isLoggedIn exist on students table
+    // Ensure DB columns exist for students, courses, and syllabus tables
     await sequelize.query(`
       ALTER TABLE "students" ADD COLUMN IF NOT EXISTS "activeToken" TEXT;
       ALTER TABLE "students" ADD COLUMN IF NOT EXISTS "isLoggedIn" BOOLEAN DEFAULT FALSE;
       ALTER TABLE "students" DROP COLUMN IF EXISTS "activeWebToken";
       ALTER TABLE "students" DROP COLUMN IF EXISTS "activeAppToken";
+      ALTER TABLE "courses" ADD COLUMN IF NOT EXISTS "introVideo" TEXT;
+      ALTER TABLE "syllabus" ADD COLUMN IF NOT EXISTS "introVideoUrl" TEXT;
     `).catch((err) => {
       console.warn("DB migration query notice:", err.message);
     });

@@ -23,6 +23,10 @@ const Syllabus = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true
     },
+    introVideoUrl: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     syllabusPoints: {
       type: DataTypes.JSON,
       defaultValue: []

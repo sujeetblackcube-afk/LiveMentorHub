@@ -100,4 +100,17 @@ app.get('/', (req, res) => {
   res.send('Server is running ✅');
 });
 
+// Express Error Handler Middleware (Catches Multer & API errors)
+app.use((err, req, res, next) => {
+  if (err) {
+    console.error('API Error:', err.message);
+    const statusCode = err.status || err.statusCode || (err.name === 'MulterError' || err.message?.includes('not supported') || err.message?.includes('Invalid file') ? 400 : 500);
+    return res.status(statusCode).json({
+      success: false,
+      message: err.message || 'An error occurred during processing.'
+    });
+  }
+  next();
+});
+
 export default app;

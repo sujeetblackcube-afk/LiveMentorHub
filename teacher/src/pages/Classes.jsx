@@ -13,6 +13,7 @@ import { toast } from "react-toastify";
 import { theme } from "../theme.js";
 import LiveVideo from "../components/LiveVideo";
 import { getImageUrl, DEFAULT_BANNER_IMAGE } from "../utils/image";
+import Pagination from "../components/Pagination";
 import ClassCreationModal from "../components/ClassCreationModal";
 
 const Classes = () => {
@@ -42,6 +43,14 @@ const Classes = () => {
     { id: "ongoing", label: "Ongoing Classes" },
     { id: "completed", label: "Completed Classes" },
   ];
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
 
   const [sessionData, setSessionData] = useState({
     courseCode: "",
@@ -140,9 +149,14 @@ const Classes = () => {
       try {
         const data = await getTeacherLiveSessions(user.teacherId, {
           status: activeTab,
+          page: currentPage,
+          limit: itemsPerPage,
         });
         setSessions(data.data || []);
         setFilteredSessions(data.data || []);
+        if (data.pagination) {
+          setTotalPages(data.pagination.totalPages || 1);
+        }
       } catch (error) {
         toast.error("Failed to fetch sessions");
       } finally {
@@ -151,7 +165,7 @@ const Classes = () => {
     };
 
     if (user?.teacherId) fetchSessions();
-  }, [user, activeTab]);
+  }, [user, activeTab, currentPage]);
 
   useEffect(() => {
     if (activeTab === "completed") {
@@ -408,6 +422,8 @@ const Classes = () => {
             ))}
           </div>
         )}
+
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </div>
 
       <button

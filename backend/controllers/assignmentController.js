@@ -1,4 +1,5 @@
 import multer from "multer";
+import path from "path";
 import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
 import Assignment from "../models/Assignment.js";
 import AssignmentSubmission from "../models/AssignmentSubmission.js";
@@ -8,6 +9,7 @@ import Enrollment from "../models/Enrollment.js";
 import Login from "../models/Login.js";
 import Notification from "../models/Notifications.js";
 import { triggerPushForNotifications } from "../config/onesignalService.js";
+import { getPaginatedData } from "../utils/pagination.js";
 
 // Configure multer with memory storage for Cloudinary upload
 const upload = multer({
@@ -17,26 +19,43 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     // Allow images, PDFs, videos, documents
-    const allowedTypes = [
+    const allowedMimeTypes = [
       "image/jpeg",
+      "image/jpg",
       "image/png",
       "image/gif",
+      "image/webp",
       "application/pdf",
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
       "text/plain",
       "video/mp4",
       "video/avi",
       "video/mov",
+      "video/quicktime",
+      "video/x-msvideo",
+      "video/mkv",
+      "video/webm",
     ];
-    if (allowedTypes.includes(file.mimetype)) {
+
+    const ext = file.originalname ? path.extname(file.originalname).toLowerCase().replace('.', '') : '';
+    const allowedExtensions = [
+      'jpg', 'jpeg', 'png', 'gif', 'webp',
+      'pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt',
+      'mp4', 'avi', 'mov', 'mkv', 'webm'
+    ];
+
+    if (allowedMimeTypes.includes(file.mimetype) || allowedExtensions.includes(ext)) {
       cb(null, true);
     } else {
+      const fileExtDisplay = ext ? `.${ext}` : (file.originalname || 'unknown');
       cb(
         new Error(
-          "Invalid file type. Only images, PDFs, videos, and documents are allowed.",
+          `The file format '${fileExtDisplay}' is not supported. Please upload supported file types like PDF, DOCX, PPTX, JPG, PNG, or MP4.`
         ),
-        false,
+        false
       );
     }
   },
@@ -179,14 +198,24 @@ export const addAssignment = async (req, res) => {
 };
 
 // Export the upload middleware
-export const uploadAssignmentFile = upload.single("file");
+export const uploadAssignmentFile = (req, res, next) => {
+  upload.single("file")(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message || "File upload failed",
+      });
+    }
+    next();
+  });
+};
 
 //changed
 // Controller to get assignments - supports filtering by teacherId and optionally by courseCode
 export const getAssignments = async (req, res) => {
   try {
-    // Get teacherId and courseCode from query params
-    const { teacherId, courseCode } = req.query;
+    // Get teacherId, courseCode, page, limit from query params
+    const { teacherId, courseCode, page, limit } = req.query;
 
     if (!teacherId) {
       return res.status(400).json({
@@ -205,10 +234,31 @@ export const getAssignments = async (req, res) => {
       whereClause.courseCode = courseCode;
     }
 
-    const assignments = await Assignment.findAll({
+    const queryOptions = {
       where: whereClause,
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    if (page || limit) {
+      const paginatedResult = await getPaginatedData(
+        Assignment,
+        queryOptions,
+        page || 1,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        assignments: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const assignments = await Assignment.findAll(queryOptions);
 
     res.status(200).json({
       success: true,
