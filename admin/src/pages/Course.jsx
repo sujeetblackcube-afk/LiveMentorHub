@@ -968,221 +968,180 @@ const handleSyllabusEdit = async (course) => {
           No courses found.
         </div>
       ) : (
-        <div
-          className="rounded-lg shadow-md overflow-hidden overflow-x-auto"
-          style={{ backgroundColor: theme.colors.card }}
-        >
-          <table className="w-full min-w-full">
-            <thead
-              style={{
-                backgroundColor: theme.colors.secondary,
-                borderColor: theme.colors.border,
-              }}
-              className="border-b"
-            >
-              <tr>
-                <th
-                  className="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  Course Name
-                </th>
-                <th
-                  className="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  Code
-                </th>
-                <th
-                  className="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider hidden sm:table-cell"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  Type
-                </th>
-                <th
-                  className="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider hidden md:table-cell"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  Difficulty
-                </th>
-                <th
-                  className="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider hidden lg:table-cell"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  Price
-                </th>
-                <th
-                  className="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider hidden xl:table-cell"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  Total Enrollment
-                </th>
-                <th
-                  className="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider hidden xl:table-cell"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  Syllabus
-                </th>
-                <th
-                  className="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  Status
-                </th>
-                <th
-                  className="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody
-              style={{
-                backgroundColor: theme.colors.card,
-                borderColor: theme.colors.border,
-              }}
-              className="divide-y"
-            >
-              {currentCourses.map((course) => (
-                <tr
-                  key={course.courseCode}
-                  className="hover:bg-gray-50 cursor-pointer"
-                  onClick={() =>
-                    navigate(`/course/profile/${course.courseCode}`)
-                  }
-                >
-                  <td className="px-6 py-4 max-w-[250px]">
-                    <div
-                      className="text-sm font-medium text-gray-900 truncate"
-                      title={course.courseName}
-                    >
-                      {course.courseName}
-                    </div>
-                    {course.courseDescription && (
-                      <div
-                        className="text-sm text-gray-500 line-clamp-2"
-                        title={course.courseDescription}
-                      >
-                        {course.courseDescription}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {course.courseCode}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {course.courseType}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {course.difficulty}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {course.discountedprice
-                      ? `₹${course.discountedprice}`
-                      : "-"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
-                    {course.totalenrollment || 0}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
-  <div className="flex items-center gap-2">
-    
-    {getCourseSyllabus(course.courseCode).syllabusPoints &&
-    getCourseSyllabus(course.courseCode).syllabusPoints.length > 0 ? (
-      <button
-        type="button"
-        className="text-blue-600 hover:underline text-sm"
-        onClick={(e) => {
-          e.stopPropagation();
-          handleViewSyllabus(course.courseCode);
-        }}
-      >
-        View Syllabus
-      </button>
-    ) : (
-      <span className="text-gray-500 text-sm">No syllabus</span>
-    )}
-
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        handleSyllabusEdit(course);
-      }}
-      className="p-1 hover:bg-gray-200 rounded-full"
-      style={{ color: theme.colors.primary }}
-      title="Edit syllabus"
-    >
-      <Pencil className="w-4 h-4" />
-    </button>
-
-  </div>
-</td>
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {course.status === "Active" ? (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusChange(course, "Inactive");
-                          }}
-                          disabled={updatingId === course.courseCode}
-                          className="px-3 py-1 text-sm font-medium rounded text-white bg-green-500 hover:bg-green-600 transition-colors"
-                        >
-                          Active
-                        </button>
-                      ) : (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusChange(course, "Active");
-                          }}
-                          disabled={updatingId === course.courseCode}
-                          className="px-3 py-1 text-sm font-medium rounded text-white bg-red-500 hover:bg-red-600 transition-colors"
-                        >
-                          Inactive
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditCourse(course);
-                        }}
-                        className="hover:opacity-80"
-                        style={{ color: theme.colors.primary }}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteCourse(course.courseCode);
-                        }}
-                        className="hover:opacity-80"
-                        style={{ color: theme.colors.danger }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+        <div className="bg-white rounded-lg border">
+          <div className="overflow-x-auto h-[70vh] overflow-y-auto relative">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-500 sticky top-0 z-10">
+                <tr className="whitespace-nowrap">
+                  <th className="px-6 py-4 text-left font-medium">Course Name</th>
+                  <th className="px-6 py-4 text-left font-medium">Code</th>
+                  <th className="px-6 py-4 text-left font-medium hidden sm:table-cell">Type</th>
+                  <th className="px-6 py-4 text-left font-medium hidden md:table-cell">Difficulty</th>
+                  <th className="px-6 py-4 text-left font-medium hidden lg:table-cell">Price</th>
+                  <th className="px-6 py-4 text-left font-medium hidden xl:table-cell">Total Enrollment</th>
+                  <th className="px-6 py-4 text-left font-medium hidden xl:table-cell">Syllabus</th>
+                  <th className="px-6 py-4 text-left font-medium">Status</th>
+                  <th className="px-6 py-4 text-left font-medium">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {currentCourses.map((course) => (
+                  <tr
+                    key={course.courseCode}
+                    className="border-t hover:bg-gray-50 cursor-pointer whitespace-nowrap"
+                    onClick={() => navigate(`/course/profile/${course.courseCode}`)}
+                  >
+                    <td className="px-6 py-4 max-w-[250px]">
+                      <div className="text-sm font-medium text-gray-900 truncate" title={course.courseName}>
+                        {course.courseName}
+                      </div>
+                      {course.courseDescription && (
+                        <div className="text-xs text-gray-500 line-clamp-2" title={course.courseDescription}>
+                          {course.courseDescription}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{course.courseCode}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 hidden sm:table-cell">{course.courseType}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 hidden md:table-cell">{course.difficulty}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 hidden lg:table-cell">
+                      {course.discountedprice ? `₹${course.discountedprice}` : "-"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 hidden xl:table-cell">
+                      {course.totalenrollment || 0}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 hidden xl:table-cell">
+                      <div className="flex items-center gap-2">
+                        {getCourseSyllabus(course.courseCode).syllabusPoints &&
+                        getCourseSyllabus(course.courseCode).syllabusPoints.length > 0 ? (
+                          <button
+                            type="button"
+                            className="text-blue-600 hover:underline text-sm font-medium"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewSyllabus(course.courseCode);
+                            }}
+                          >
+                            View Syllabus
+                          </button>
+                        ) : (
+                          <span className="text-gray-500 text-sm">No syllabus</span>
+                        )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSyllabusEdit(course);
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded-full"
+                          style={{ color: theme.colors.primary }}
+                          title="Edit syllabus"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        {course.status === "Active" ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusChange(course, "Inactive");
+                            }}
+                            disabled={updatingId === course.courseCode}
+                            className="px-3 py-1 text-xs font-semibold rounded text-white bg-green-500 hover:bg-green-600 transition-colors"
+                          >
+                            Active
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusChange(course, "Active");
+                            }}
+                            disabled={updatingId === course.courseCode}
+                            className="px-3 py-1 text-xs font-semibold rounded text-white bg-red-500 hover:bg-red-600 transition-colors"
+                          >
+                            Inactive
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditCourse(course);
+                          }}
+                          className="hover:opacity-80"
+                          style={{ color: theme.colors.primary }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCourse(course.courseCode);
+                          }}
+                          className="hover:opacity-80"
+                          style={{ color: theme.colors.danger }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Footer */}
+          <div className="flex justify-between items-center px-4 py-3 text-sm text-gray-600 border-t bg-white">
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50 text-gray-700 cursor-pointer"
+              >
+                &lt;
+              </button>
+
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1;
+                if (page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1 border rounded cursor-pointer ${
+                        currentPage === page ? "bg-indigo-600 text-white font-medium" : "hover:bg-gray-50 text-gray-700"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                }
+                if (page === 2 && currentPage > 3) return <span key="dots1">...</span>;
+                if (page === totalPages - 1 && currentPage < totalPages - 2) return <span key="dots2">...</span>;
+                return null;
+              })}
+
+              <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50 text-gray-700 cursor-pointer"
+              >
+                &gt;
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Popup Modal */}

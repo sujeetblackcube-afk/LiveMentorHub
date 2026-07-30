@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, Trash2, X, Loader2, Search, UserCheck, Pencil, Eye } from "lucide-react";
+import { Plus, Trash2, X, Loader2, Search, UserCheck, Pencil, Eye, UserPlus } from "lucide-react";
 import { toast } from "react-toastify";
 import { theme } from "../theme";
 import Pagination from "../components/Pagination";
@@ -64,6 +64,20 @@ export default function Enrollment() {
   // NEW: Track students grouped by teacher assignment status
   const [studentsWithoutTeacher, setStudentsWithoutTeacher] = useState([]);
   const [studentsWithTeacher, setStudentsWithTeacher] = useState([]);
+  // Quick Assign Teacher states
+  const [isQuickAssignOpen, setIsQuickAssignOpen] = useState(false);
+  const [quickAssignEnrollment, setQuickAssignEnrollment] = useState(null);
+  const [quickAssignTeacherId, setQuickAssignTeacherId] = useState("");
+  const [quickAssignLoading, setQuickAssignLoading] = useState(false);
+  // Refs for scroll-to-top functionality
+  const unassignedListRef = React.useRef(null);
+  const assignedListRef = React.useRef(null);
+
+  // Auto-scroll list containers to top when course/students change
+  useEffect(() => {
+    if (unassignedListRef.current) unassignedListRef.current.scrollTop = 0;
+    if (assignedListRef.current) assignedListRef.current.scrollTop = 0;
+  }, [assignTeacherData.courseCode, courseEnrollments]);
 
   // Process enrollments into two groups when courseEnrollments changes
   useEffect(() => {
@@ -437,6 +451,94 @@ export default function Enrollment() {
     }
   };
 
+  // Quick Assign Teacher for individual enrollment row (Filters teachers by course subject)
+  const getFilteredTeachersForEnrollment = (enrollment) => {
+    if (!enrollment) return { filtered: teachers, isFiltered: false, subjectName: "" };
+
+    const course = courses.find((c) => c.courseCode === enrollment.courseCode);
+    const subjectName = course?.subject || enrollment.courseName || "";
+    const courseCode = enrollment.courseCode || "";
+    const courseName = enrollment.courseName || course?.courseName || "";
+
+    const terms = [subjectName, courseCode, courseName].filter(Boolean);
+
+    const containsTerm = (fieldVal) => {
+      if (!fieldVal) return false;
+      let list = [];
+      if (Array.isArray(fieldVal)) {
+        list = fieldVal;
+      } else if (typeof fieldVal === "string") {
+        try {
+          const parsed = JSON.parse(fieldVal);
+          list = Array.isArray(parsed) ? parsed : [fieldVal];
+        } catch (e) {
+          list = [fieldVal];
+        }
+      }
+      return list.some((item) =>
+        terms.some(
+          (t) =>
+            String(item).toLowerCase().includes(t.toLowerCase()) ||
+            t.toLowerCase().includes(String(item).toLowerCase())
+        )
+      );
+    };
+
+    const matched = teachers.filter(
+      (t) =>
+        containsTerm(t.subjectsCanTeach) ||
+        containsTerm(t.coursename) ||
+        containsTerm(t.courseCode)
+    );
+
+    if (matched.length > 0) {
+      return { filtered: matched, isFiltered: true, subjectName };
+    }
+
+    return { filtered: teachers, isFiltered: false, subjectName };
+  };
+
+  const handleOpenQuickAssign = (enrollment) => {
+    setQuickAssignEnrollment(enrollment);
+    setQuickAssignTeacherId(enrollment.teacherId || "");
+    setIsQuickAssignOpen(true);
+  };
+
+  const handleCloseQuickAssign = () => {
+    setIsQuickAssignOpen(false);
+    setQuickAssignEnrollment(null);
+    setQuickAssignTeacherId("");
+  };
+
+  const handleSaveQuickAssign = async () => {
+    if (!quickAssignTeacherId) {
+      toast.error("Please select a teacher");
+      return;
+    }
+    setQuickAssignLoading(true);
+    try {
+      await updateTeacherIdInEnrollments(
+        quickAssignTeacherId,
+        [quickAssignEnrollment.studentId],
+        quickAssignEnrollment.courseCode
+      );
+      toast.success("Teacher assigned successfully!");
+      setEnrollments((prev) =>
+        prev.map((e) =>
+          e.enrollmentCode === quickAssignEnrollment.enrollmentCode
+            ? { ...e, teacherId: quickAssignTeacherId }
+            : e
+        )
+      );
+      handleCloseQuickAssign();
+    } catch (err) {
+      console.error("Failed to assign teacher:", err);
+      toast.error(err.response?.data?.message || "Failed to assign teacher.");
+    } finally {
+      setQuickAssignLoading(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "APPROVED": return "bg-green-500";
@@ -511,50 +613,73 @@ export default function Enrollment() {
       ) : enrollments.length === 0 ? (
         <div className="text-center py-10">No enrollments found.</div>
       ) : (
-        <div className="rounded-lg shadow-md overflow-hidden" style={{ backgroundColor: theme.colors.card }}>
-          <div className="overflow-auto max-h-[500px]">
-            <table className="w-full min-w-full">
-              <thead style={{ backgroundColor: theme.colors.secondary }}>
-                <tr>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase">Enrollment Code</th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase">Student</th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase">Course</th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase">Status</th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase">Payment Status</th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase">Teacher</th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase">Amount Paid</th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase">Actions</th>
+        <div className="bg-white rounded-lg border">
+          <div className="overflow-x-auto h-[70vh] overflow-y-auto relative">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-500 sticky top-0 z-10">
+                <tr className="whitespace-nowrap">
+                  <th className="px-6 py-4 text-left font-medium">Enrollment Code</th>
+                  <th className="px-6 py-4 text-left font-medium">Student</th>
+                  <th className="px-6 py-4 text-left font-medium">Course</th>
+                  <th className="px-6 py-4 text-center font-medium">Status</th>
+                  <th className="px-6 py-4 text-center font-medium">Payment Status</th>
+                  <th className="px-6 py-4 text-left font-medium">Teacher</th>
+                  <th className="px-6 py-4 text-left font-medium">Amount Paid</th>
+                  <th className="px-6 py-4 text-left font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {enrollments.map((enrollment) => (
-                  <tr key={enrollment.id} style={{ borderBottom: `1px solid ${theme.colors.border}` }}>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <tr key={enrollment.id} className="border-t hover:bg-gray-50 whitespace-nowrap">
+                    <td className="px-6 py-4 text-sm font-medium">
                       <button onClick={() => handleViewEnrollment(enrollment.enrollmentCode)} className="text-blue-600 hover:underline flex items-center gap-1" title="View Details">
                         <Eye className="w-4 h-4" /> {enrollment.enrollmentCode}
                       </button>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => navigate(`/students/profile/${enrollment.studentId}`)}>
-                      <div className="text-sm font-medium">{enrollment.studentName}</div>
-                      <div className="text-sm">{enrollment.studentEmail}</div>
+                    <td className="px-6 py-4 cursor-pointer" onClick={() => navigate(`/students/profile/${enrollment.studentId}`)}>
+                      <div className="text-sm font-medium text-gray-800 hover:text-indigo-600">{enrollment.studentName}</div>
+                      <div className="text-xs text-gray-500">{enrollment.studentEmail}</div>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => navigate(`/course/profile/${enrollment.courseCode}`)}>
-                      <div className="text-sm font-medium">{enrollment.courseName}</div>
-                      <div className="text-sm">{enrollment.courseCode}</div>
+                    <td className="px-6 py-4 cursor-pointer" onClick={() => navigate(`/course/profile/${enrollment.courseCode}`)}>
+                      <div className="text-sm font-medium text-gray-800 hover:text-indigo-600">{enrollment.courseName}</div>
+                      <div className="text-xs text-gray-500">{enrollment.courseCode}</div>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full text-white ${getStatusColor(enrollment.status)}`}>{enrollment.status}</span>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full text-white ${getStatusColor(enrollment.status)}`}>{enrollment.status}</span>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full text-white ${getPaymentStatusColor(enrollment.paymentStatus)}`}>{enrollment.paymentStatus}</span>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full text-white ${getPaymentStatusColor(enrollment.paymentStatus)}`}>{enrollment.paymentStatus}</span>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm">
-                      {enrollment.teacherId ? teachers.find(t => t.teacherId === enrollment.teacherId)?.teacherName || enrollment.teacherId : "-"}
+                    <td className="px-6 py-4 text-sm">
+                      {enrollment.teacherId ? (
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-gray-800">
+                            {teachers.find((t) => t.teacherId === enrollment.teacherId)?.name ||
+                              teachers.find((t) => t.teacherId === enrollment.teacherId)?.teacherName ||
+                              enrollment.teacherId}
+                          </span>
+                          <button
+                            onClick={() => handleOpenQuickAssign(enrollment)}
+                            className="text-gray-400 hover:text-blue-600 transition-colors p-1"
+                            title="Change Teacher"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleOpenQuickAssign(enrollment)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-all shadow-sm cursor-pointer"
+                        >
+                          <UserPlus className="w-3.5 h-3.5 text-blue-600" />
+                          Select Teacher
+                        </button>
+                      )}
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-6 py-4 text-sm text-gray-700">
                       {enrollment.amountPaid ? `${enrollment.currency} ${enrollment.amountPaid}` : "-"}
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 text-sm font-medium">
                       <div className="flex gap-2 items-center">
                         <button onClick={() => handleEditEnrollment(enrollment.enrollmentCode)} style={{ color: theme.colors.primary }} title="Edit">
                           <Pencil className="w-4 h-4" />
@@ -573,15 +698,51 @@ export default function Enrollment() {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
 
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
+          {/* Pagination Footer */}
+          <div className="flex justify-between items-center px-4 py-3 text-sm text-gray-600 border-t bg-white">
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50 text-gray-700 cursor-pointer"
+              >
+                &lt;
+              </button>
+
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1;
+                if (page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1 border rounded cursor-pointer ${
+                        currentPage === page ? "bg-indigo-600 text-white font-medium" : "hover:bg-gray-50 text-gray-700"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                }
+                if (page === 2 && currentPage > 3) return <span key="dots1">...</span>;
+                if (page === totalPages - 1 && currentPage < totalPages - 2) return <span key="dots2">...</span>;
+                return null;
+              })}
+
+              <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50 text-gray-700 cursor-pointer"
+              >
+                &gt;
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* View Details Popup */}
@@ -843,7 +1004,7 @@ export default function Enrollment() {
                             Select All Unassigned
                           </button>
                         </div>
-                        <div className="border rounded-md max-h-48 overflow-y-auto mb-3">
+                        <div ref={unassignedListRef} className="border rounded-md max-h-56 overflow-y-auto scroll-smooth mb-3">
                           <div className="grid grid-cols-1 gap-1 p-2">
                             {studentsWithoutTeacher.map((enrollment) => (
                               <div 
@@ -862,11 +1023,11 @@ export default function Enrollment() {
                                   checked={assignTeacherData.studentIds.includes(enrollment.studentId)} 
                                   onChange={() => handleStudentSelect(enrollment.studentId)} 
                                 />
-                                <div className="flex-1">
-                                  <div className="text-sm font-medium">{enrollment.studentName}</div>
-                                  <div className="text-xs text-gray-500">{enrollment.studentEmail}</div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium truncate">{enrollment.studentName}</div>
+                                  <div className="text-xs text-gray-500 truncate">{enrollment.studentEmail}</div>
                                 </div>
-                                <span className="text-xs text-green-600 font-medium">Unassigned</span>
+                                <span className="text-xs text-green-600 font-medium shrink-0">Unassigned</span>
                               </div>
                             ))}
                           </div>
@@ -895,10 +1056,11 @@ export default function Enrollment() {
                             Select All for Update
                           </button>
                         </div>
-                        <div className="border rounded-md max-h-48 overflow-y-auto">
+                        <div ref={assignedListRef} className="border rounded-md max-h-56 overflow-y-auto scroll-smooth">
                           <div className="grid grid-cols-1 gap-1 p-2">
                             {studentsWithTeacher.map((enrollment) => {
                               const assignedTeacher = teachers.find(t => t.teacherId === enrollment.teacherId);
+                              const teacherDisplayName = assignedTeacher?.name || assignedTeacher?.teacherName || enrollment.teacherId;
                               return (
                                 <div 
                                   key={enrollment.id} 
@@ -916,12 +1078,12 @@ export default function Enrollment() {
                                     checked={assignTeacherData.studentIds.includes(enrollment.studentId)} 
                                     onChange={() => handleStudentSelect(enrollment.studentId)} 
                                   />
-                                  <div className="flex-1">
-                                    <div className="text-sm font-medium">{enrollment.studentName}</div>
-                                    <div className="text-xs text-gray-500">{enrollment.studentEmail}</div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium truncate">{enrollment.studentName}</div>
+                                    <div className="text-xs text-gray-500 truncate">{enrollment.studentEmail}</div>
                                   </div>
-                                  <div className="text-xs text-blue-600 font-medium">
-                                    {assignedTeacher?.name || assignedTeacher?.teacherName || enrollment.teacherId}
+                                  <div className="text-xs text-blue-600 font-medium truncate max-w-[180px] text-right shrink-0" title={teacherDisplayName}>
+                                    {teacherDisplayName}
                                   </div>
                                 </div>
                               );
@@ -953,6 +1115,104 @@ export default function Enrollment() {
           </div>
         </div>
       )}
+
+      {/* Quick Assign Teacher Modal */}
+      {isQuickAssignOpen && quickAssignEnrollment && (() => {
+        const { filtered: matchingTeachers, isFiltered, subjectName } = getFilteredTeachersForEnrollment(quickAssignEnrollment);
+
+        return (
+          <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <div className="w-full max-w-md rounded-xl shadow-xl overflow-hidden bg-white">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-800">Select Teacher</h2>
+                  <p className="text-xs text-gray-500">Assign a teacher for this student</p>
+                </div>
+                <button onClick={handleCloseQuickAssign} className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Content Body */}
+              <div className="px-6 py-5 space-y-4">
+                {/* Enrollment & Auto-detected Subject Banner */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm space-y-1">
+                  <p className="text-gray-700">
+                    <strong className="text-gray-900">Student:</strong> {quickAssignEnrollment.studentName} ({quickAssignEnrollment.studentId})
+                  </p>
+                  <p className="text-gray-700">
+                    <strong className="text-gray-900">Course:</strong> {quickAssignEnrollment.courseName} ({quickAssignEnrollment.courseCode})
+                  </p>
+                  {subjectName && (
+                    <div className="pt-1.5 flex items-center gap-2">
+                      <span className="text-xs font-semibold text-blue-800 bg-blue-100 px-2.5 py-0.5 rounded-full border border-blue-200">
+                        Subject: {subjectName}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Teacher Selection Dropdown */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Teachers Teaching {subjectName ? subjectName : "Course"} *
+                    </label>
+                    {isFiltered ? (
+                      <span className="text-xs text-green-700 font-medium">
+                        ✓ {matchingTeachers.length} teacher(s) found
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-500">
+                        Showing all teachers
+                      </span>
+                    )}
+                  </div>
+
+                  <select
+                    value={quickAssignTeacherId}
+                    onChange={(e) => setQuickAssignTeacherId(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                  >
+                    <option value="">-- Choose Teacher --</option>
+                    {matchingTeachers.map((t) => (
+                      <option key={t.teacherId} value={t.teacherId}>
+                        {t.name || t.teacherName || t.teacherId} ({t.teacherId})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {isFiltered && (
+                  <p className="text-xs text-gray-500 italic">
+                    Teachers are automatically filtered based on <strong>{subjectName}</strong>.
+                  </p>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+                <button
+                  onClick={handleCloseQuickAssign}
+                  className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-white text-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveQuickAssign}
+                  disabled={quickAssignLoading || !quickAssignTeacherId}
+                  className="px-4 py-2 text-sm font-medium text-white rounded-lg flex items-center gap-2 disabled:opacity-50 transition-colors"
+                  style={{ backgroundColor: theme.colors.primary }}
+                >
+                  {quickAssignLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {quickAssignLoading ? "Assigning..." : "Confirm Assignment"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

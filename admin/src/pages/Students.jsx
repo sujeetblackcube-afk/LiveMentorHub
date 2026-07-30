@@ -362,7 +362,7 @@ export default function Students() {
             <thead className="bg-gray-50 text-gray-500 text-center sticky top-0 z-10">
               <tr className="whitespace-nowrap">
                 <th className="px-8 py-4">S.No</th>
-                <th className="px-8 py-4">Student</th>
+                <th className="px-8 py-4 text-left">Student</th>
                 <th className="px-8 py-4">Student ID</th>
                 <th className="px-8 py-4">Email</th>
                 <th className="px-8 py-4">Mobile</th>
@@ -418,12 +418,12 @@ export default function Students() {
                     >
                       <td className="px-8 py-4 whitespace-nowrap text-center">{globalIndex + 1}</td>
 
-                      <td className="px-8 py-4 whitespace-nowrap">
+                      <td className="px-8 py-4 whitespace-nowrap text-left">
                         <div
                           onClick={() =>
                             navigate(`/students/profile/${s.studentId}`)
                           }
-                          className="flex items-center justify-center gap-3 cursor-pointer"
+                          className="flex items-center justify-start gap-3 cursor-pointer"
                         >
                           <Avatar name={s.name} image={s.profileImage} />
                           <span className="font-medium">{s.name}</span>

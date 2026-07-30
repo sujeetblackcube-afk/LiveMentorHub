@@ -44,9 +44,9 @@ const SmallAvatar = ({ name, image }) => {
   const imageUrl = getImageUrl(image);
 
   return imageUrl ? (
-    <img src={imageUrl} alt={name || 'Student'} className="w-8 h-8 rounded-full object-cover border-2 border-white -ml-2 first:ml-0" />
+    <img src={imageUrl} alt={name || 'Student'} className="w-7 h-7 rounded-full object-cover border border-gray-200 shrink-0" />
   ) : (
-    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold border-2 border-white -ml-2 first:ml-0">
+    <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-white text-[10px] font-semibold shrink-0">
       {initials}
     </div>
   );
@@ -352,26 +352,28 @@ export default function ApprovedParents() {
                       </td>
 
                       <td className="px-8 py-5 font-medium">{p.parentId}</td>
-                      {/* Students Column - Show all student images */}
-                  <td className="px-4 py-5">
+                      {/* Students Column - Show student image along with student name */}
+                  <td className="px-6 py-4">
                     {p.students && p.students.length > 0 ? (
                       <div 
-                        className="flex items-center gap-1 cursor-pointer hover:opacity-80"
+                        className="flex flex-col gap-1.5 cursor-pointer"
                         onClick={() => handleStudentClick(p.students)}
-                        title="Click to view all students"
+                        title="Click to view all student details"
                       >
-                        <div className="flex -space-x-2">
-                          {p.students.slice(0, 3).map((student, idx) => (
+                        {p.students.slice(0, 2).map((student, idx) => (
+                          <div key={idx} className="flex items-center gap-2 hover:opacity-80">
                             <SmallAvatar 
-                              key={idx} 
                               name={student.name} 
                               image={student.profileImage} 
                             />
-                          ))}
-                        </div>
-                        {p.students.length > 3 && (
-                          <span className="ml-2 text-xs text-gray-500 font-medium">
-                            +{p.students.length - 3}
+                            <span className="text-xs font-medium text-gray-800 hover:text-indigo-600 truncate max-w-[150px]">
+                              {student.name}
+                            </span>
+                          </div>
+                        ))}
+                        {p.students.length > 2 && (
+                          <span className="text-[11px] text-blue-600 font-medium hover:underline">
+                            +{p.students.length - 2} more
                           </span>
                         )}
                       </div>
