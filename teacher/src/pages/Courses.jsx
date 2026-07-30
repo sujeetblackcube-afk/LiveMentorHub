@@ -5,11 +5,8 @@ import { theme } from '../theme';
 import { createLiveSession, getTeacherCourses } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { getImageUrl, DEFAULT_BANNER_IMAGE } from '../utils/image';
-<<<<<<< HEAD
 import { ClassCreationModal } from '../components/ClassCreationModal';
-=======
 import Pagination from '../components/Pagination';
->>>>>>> main
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);

@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import { theme } from '../theme';
 import {
   createTest,
+  createQuestion,
   getAllTests,
   getTestById,
   updateTest,
@@ -51,6 +52,80 @@ const Test = () => {
     maxAttempts: 1,
     isPublished: true
   });
+
+  // enables creation of question
+  
+  const [showCreateQuestionModal, setShowCreateQuestionModal] = useState(false);
+  const [questionFormData, setQuestionFormData] = useState({
+    questionText: '',
+    questionType: 'MCQ',
+    optionA: '',
+    optionB: '',
+    optionC: '',
+    optionD: '',
+    correctAnswer: '',
+    answerText: '',
+    difficultyLevel: 'easy',
+    marks: 1
+  });
+  const [questionSubmitting, setQuestionSubmitting] = useState(false);
+
+  const handleQuestionInputChange = (e) => {
+    const { name, value } = e.target;
+    setQuestionFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleInlineCreateQuestion = async (e) => {
+    e.preventDefault();
+    if (!questionFormData.questionText) {
+      toast.error('Question text is required');
+      return;
+    }
+    if (questionFormData.questionType === 'MCQ') {
+      if (!questionFormData.optionA || !questionFormData.optionB || !questionFormData.optionC || !questionFormData.optionD || !questionFormData.correctAnswer) {
+        toast.error('All MCQ fields are required');
+        return;
+      }
+    }
+    if (questionFormData.questionType === 'TEXT') {
+      if (!questionFormData.answerText) {
+        toast.error('Answer text is required for TEXT type');
+        return;
+      }
+    }
+    try {
+      setQuestionSubmitting(true);
+      const teacherId = user?.teacherId;
+      const response = await createQuestion({ ...questionFormData, teacherId });
+      if (response.success) {
+        toast.success('Question created and added successfully');
+        const newQuestion = response.question || response.data;
+        if (newQuestion) {
+          setSelectedQuestions(prev => [...prev, newQuestion]);
+        }
+        setQuestionFormData({
+          questionText: '',
+          questionType: 'MCQ',
+          optionA: '',
+          optionB: '',
+          optionC: '',
+          optionD: '',
+          correctAnswer: '',
+          answerText: '',
+          difficultyLevel: 'easy',
+          marks: 1
+        });
+        setShowCreateQuestionModal(false);
+        if (fetchQuestions) fetchQuestions();
+      } else {
+        toast.error(response.message || 'Failed to create question');
+      }
+    } catch (error) {
+      toast.error('Error creating question');
+    } finally {
+      setQuestionSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     if (teacherId) {
@@ -140,6 +215,7 @@ const Test = () => {
       setLoading(true);
       const response = await getAllTests({ teacherId });
       if (response.success) {
+        console.log(response)
         setTests(response.tests || []);
       }
     } catch (error) {
@@ -252,10 +328,7 @@ const Test = () => {
       toast.error('End time is required');
       return;
     }
-    if (selectedQuestions.length === 0) {
-      toast.error('Please select at least one question');
-      return;
-    }
+  
     try {
       setSubmitting(true);
       const totalMarks = selectedQuestions.reduce((sum, q) => sum + (q.marks || 0), 0);
@@ -286,6 +359,7 @@ const Test = () => {
     try {
       const response = await getTestById(testId);
       if (response.success && response.test) {
+        console.log(response)
         const test = response.test;
         setSelectedTest(test);
         setFormData({
@@ -316,10 +390,7 @@ const Test = () => {
       toast.error('Please fill all required fields');
       return;
     }
-    if (selectedQuestions.length === 0) {
-      toast.error('Please select at least one question');
-      return;
-    }
+  
     try {
       setSubmitting(true);
       const totalMarks = selectedQuestions.reduce((sum, q) => sum + (q.marks || 0), 0);
@@ -645,291 +716,481 @@ const Test = () => {
 
         {/* Create/Edit Tab */}
         {(activeTab === 'create' || activeTab === 'edit') && (
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-              <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6" style={{ background: theme.colors.primary }}>
-                <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3">
-                  <Plus size={20} className="sm:w-6 sm:h-6 md:w-7 md:h-7" />
-                  {activeTab === 'create' ? 'Create New Test' : 'Edit Test'}
-                </h2>
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+          <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6" style={{ background: theme.colors.primary }}>
+            <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3">
+              <Plus size={20} className="sm:w-6 sm:h-6 md:w-7 md:h-7" />
+              {activeTab === 'create' ? 'Create New Test' : 'Edit Test'}
+            </h2>
+          </div>
+          
+          <form onSubmit={activeTab === 'create' ? handleCreateTest : handleUpdateTest} className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>Test Title *</label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none focus:ring-2 text-sm sm:text-base"
+                  style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                  placeholder="Enter test title"
+                  required
+                />
               </div>
-              
-              <form onSubmit={activeTab === 'create' ? handleCreateTest : handleUpdateTest} className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>Test Title *</label>
-                    <input
-                      type="text"
-                      name="title"
-                      value={formData.title}
-                      onChange={handleInputChange}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none focus:ring-2 text-sm sm:text-base"
-                      style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
-                      placeholder="Enter test title"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>Course Code *</label>
-                    <select
-                      name="courseCode"
-                      value={formData.courseCode}
-                      onChange={handleInputChange}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none text-sm sm:text-base"
-                      style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
-                      required
-                    >
-                      <option value="">Select a course</option>
-                      {teacherCourses.map(course => (
-                        <option key={course.id} value={course.courseCode}>
-                          {course.courseName} ({course.courseCode})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>Course Code *</label>
+                <select
+                  name="courseCode"
+                  value={formData.courseCode}
+                  onChange={handleInputChange}
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none text-sm sm:text-base"
+                  style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                  required
+                >
+                  <option value="">Select a course</option>
+                  {teacherCourses.map(course => (
+                    <option key={course.id} value={course.courseCode}>
+                      {course.courseName} ({course.courseCode})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>Description</label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none text-sm sm:text-base"
-                    style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
-                    placeholder="Enter test description"
-                  />
-                </div>
+            <div>
+              <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>Description</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows={3}
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none text-sm sm:text-base"
+                style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                placeholder="Enter test description"
+              />
+            </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>Duration (minutes) *</label>
-                    <input
-                      type="number"
-                      name="durationMinutes"
-                      value={formData.durationMinutes}
-                      onChange={handleInputChange}
-                      min="1"
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none text-sm sm:text-base"
-                      style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>Max Attempts</label>
-                    <input
-                      type="number"
-                      name="maxAttempts"
-                      value={formData.maxAttempts}
-                      onChange={handleInputChange}
-                      min="1"
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none text-sm sm:text-base"
-                      style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
-                    />
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>Duration (minutes) *</label>
+                <input
+                  type="number"
+                  name="durationMinutes"
+                  value={formData.durationMinutes}
+                  onChange={handleInputChange}
+                  min="1"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none text-sm sm:text-base"
+                  style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>Max Attempts</label>
+                <input
+                  type="number"
+                  name="maxAttempts"
+                  value={formData.maxAttempts}
+                  onChange={handleInputChange}
+                  min="1"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none text-sm sm:text-base"
+                  style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                />
+              </div>
+            </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>Start Time *</label>
-                    <input
-                      type="datetime-local"
-                      name="startTime"
-                      value={formData.startTime}
-                      onChange={handleInputChange}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none text-sm sm:text-base"
-                      style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>End Time *</label>
-                    <input
-                      type="datetime-local"
-                      name="endTime"
-                      value={formData.endTime}
-                      onChange={handleInputChange}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none text-sm sm:text-base"
-                      style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
-                      required
-                    />
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>Start Time *</label>
+                <input
+                  type="datetime-local"
+                  name="startTime"
+                  value={formData.startTime}
+                  onChange={handleInputChange}
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none text-sm sm:text-base"
+                  style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>End Time *</label>
+                <input
+                  type="datetime-local"
+                  name="endTime"
+                  value={formData.endTime}
+                  onChange={handleInputChange}
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:outline-none text-sm sm:text-base"
+                  style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                  required
+                />
+              </div>
+            </div>
 
-                {/* Question Selection - Dropdown opens ABOVE */}
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>
-                    Select Questions * <span className="text-sm font-normal">(Select at least one question)</span>
-                  </label>
-                  
-                  <div className="relative" ref={dropdownRef}>
-                    <div
-                      ref={dropdownButtonRef}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl cursor-pointer min-h-[50px] flex flex-wrap gap-2"
-                      style={{ borderColor: theme.colors.border }}
-                      onClick={() => {
-                        if (questions.length === 0) {
-                          toast.warning('No questions available. Please create questions first.');
-                          return;
-                        }
-                        setShowQuestionDropdown(!showQuestionDropdown);
-                      }}
-                    >
-                      {selectedQuestions.length === 0 ? (
-                        <span className="text-gray-400 text-sm sm:text-base">Click to select questions</span>
-                      ) : (
-                        selectedQuestions.map(q => (
-                          <span
-                            key={q.id}
-                            className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm"
-                            style={{ backgroundColor: theme.colors.primary, color: 'white' }}
-                          >
-                            {q.questionText?.substring(0, 25)}...
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); removeQuestion(q.id); }}
-                              className="ml-1 sm:ml-2 hover:text-red-200"
-                            >
-                              <X size={12} className="sm:w-3.5 sm:h-3.5" />
-                            </button>
-                          </span>
-                        ))
-                      )}
-                    </div>
-
-                    {showQuestionDropdown && (
-                      <div 
-                        className={`absolute z-20 w-full mt-1 border-2 rounded-xl shadow-lg bg-white ${
-                          dropdownPosition === 'above' ? 'bottom-full mb-1' : 'top-full mt-1'
-                        }`}
-                        style={{ borderColor: theme.colors.border }}
+            {/* Question Selection & Creation Option */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+  <button
+    type="button"
+    onClick={() => setShowCreateQuestionModal(true)}
+    className="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-lg text-white flex items-center gap-1 transition hover:opacity-90"
+    style={{ backgroundColor: theme.colors.primary }}
+  >
+    <Plus size={14} />
+    Create New Question
+  </button>
+</div>
+<br></br>
+              <div className="relative" ref={dropdownRef}>
+                <div
+                  ref={dropdownButtonRef}
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl cursor-pointer min-h-[50px] flex flex-wrap gap-2"
+                  style={{ borderColor: theme.colors.border }}
+                  onClick={() => {
+                    if (questions.length === 0) {
+                      toast.warning('No questions available. Please create questions first.');
+                      return;
+                    }
+                    setShowQuestionDropdown(!showQuestionDropdown);
+                  }}
+                >
+                  {selectedQuestions.length === 0 ? (
+                    <span className="text-gray-400 text-sm sm:text-base">Click to select already posted questions</span>
+                  ) : (
+                    selectedQuestions.map(q => (
+                      <span
+                        key={q.id}
+                        className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm"
+                        style={{ backgroundColor: theme.colors.primary, color: 'white' }}
                       >
-                        <div className="p-2 border-b" style={{ borderColor: theme.colors.border }}>
-                          <div className="relative">
-                            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: theme.colors.textSecondary }} />
-                            <input
-                              type="text"
-                              placeholder="Search questions..."
-                              value={searchTerm}
-                              onChange={(e) => setSearchTerm(e.target.value)}
-                              className="w-full pl-9 pr-3 py-2 border-2 rounded-lg text-sm"
-                              style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="max-h-60 overflow-y-auto">
-                          {loadingQuestions ? (
-                            <div className="p-4 text-center">
-                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 mx-auto" style={{ borderColor: theme.colors.primary }}></div>
-                              <p className="mt-2 text-sm" style={{ color: theme.colors.textSecondary }}>Loading questions...</p>
-                            </div>
-                          ) : filteredQuestions.length === 0 ? (
-                            <div className="p-4 text-center">
-                              {questions.length === 0 ? (
-                                <>
-                                  <p className="text-sm" style={{ color: theme.colors.textSecondary }}>No questions found</p>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setShowQuestionDropdown(false);
-                                      // Navigate to question creation
-                                      window.location.href = '/questions';
-                                    }}
-                                    className="mt-2 text-sm text-blue-600 hover:underline"
-                                  >
-                                    Create a question first →
-                                  </button>
-                                </>
-                              ) : (
-                                <p className="text-sm" style={{ color: theme.colors.textSecondary }}>No questions match your search</p>
-                              )}
-                            </div>
-                          ) : (
-                            filteredQuestions.map(question => {
-                              const isSelected = selectedQuestions.some(q => q.id === question.id);
-                              return (
-                                <div
-                                  key={question.id}
-                                  className="p-2 sm:p-3 cursor-pointer border-b hover:bg-gray-50"
-                                  style={{ borderColor: theme.colors.border, backgroundColor: isSelected ? theme.colors.secondary : 'transparent' }}
-                                  onClick={() => toggleQuestionSelection(question)}
-                                >
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-xs sm:text-sm font-medium break-words" style={{ color: theme.colors.textPrimary }}>
-                                        {question.questionText || 'Untitled Question'}
-                                      </p>
-                                      <div className="flex flex-wrap gap-1 sm:gap-2 mt-1 sm:mt-2">
-                                        <span className="text-xs px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap" style={{ backgroundColor: '#DBEAFE', color: '#1E40AF' }}>
-                                          {question.questionType || 'Unknown'}
-                                        </span>
-                                        <span className="text-xs px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap" style={{ 
-                                          backgroundColor: question.difficultyLevel === 'easy' ? '#D1FAE5' : question.difficultyLevel === 'medium' ? '#FEF3C7' : '#FEE2E2', 
-                                          color: question.difficultyLevel === 'easy' ? '#065F46' : question.difficultyLevel === 'medium' ? '#92400E' : '#991B1B' 
-                                        }}>
-                                          {question.difficultyLevel || 'medium'}
-                                        </span>
-                                        <span className="text-xs" style={{ color: theme.colors.textSecondary }}>
-                                          Marks: {question.marks || 0}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="ml-2 flex-shrink-0">
-                                      {isSelected ? (
-                                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.colors.primary }}>
-                                          <Check size={12} className="sm:w-4 sm:h-4 text-white" />
-                                        </div>
-                                      ) : (
-                                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2" style={{ borderColor: theme.colors.border }}></div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-
-                        <div className="p-2 border-t" style={{ borderColor: theme.colors.border }}>
-                          <button
-                            type="button"
-                            onClick={handleDoneSelection}
-                            className="w-full px-3 sm:px-4 py-2 rounded-lg text-white font-medium text-sm sm:text-base"
-                            style={{ backgroundColor: theme.colors.primary }}
-                          >
-                            Done ({selectedQuestions.length} selected)
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {selectedQuestions.length > 0 && (
-                    <div className="mt-2 text-xs sm:text-sm" style={{ color: theme.colors.textSecondary }}>
-                      Selected {selectedQuestions.length} questions • Total Marks: {selectedQuestions.reduce((sum, q) => sum + (q.marks || 0), 0)}
-                    </div>
+                        {q.questionText?.substring(0, 25)}...
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); removeQuestion(q.id); }}
+                          className="ml-1 sm:ml-2 hover:text-red-200"
+                        >
+                          <X size={12} className="sm:w-3.5 sm:h-3.5" />
+                        </button>
+                      </span>
+                    ))
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-white font-semibold disabled:opacity-50 hover:shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
-                    style={{ background: theme.colors.primary }}
+                {showQuestionDropdown && (
+                  <div 
+                    className={`absolute z-20 w-full mt-1 border-2 rounded-xl shadow-lg bg-white ${
+                      dropdownPosition === 'above' ? 'bottom-full mb-1' : 'top-full mt-1'
+                    }`}
+                    style={{ borderColor: theme.colors.border }}
                   >
-                    {submitting ? 'Saving...' : activeTab === 'create' ? 'Create Test' : 'Update Test'}
-                  </button>
+                    <div className="p-2 border-b" style={{ borderColor: theme.colors.border }}>
+                      <div className="relative">
+                        <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: theme.colors.textSecondary }} />
+                        <input
+                          type="text"
+                          placeholder="Search questions..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 border-2 rounded-lg text-sm"
+                          style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="max-h-60 overflow-y-auto">
+                      {loadingQuestions ? (
+                        <div className="p-4 text-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 mx-auto" style={{ borderColor: theme.colors.primary }}></div>
+                          <p className="mt-2 text-sm" style={{ color: theme.colors.textSecondary }}>Loading questions...</p>
+                        </div>
+                      ) : filteredQuestions.length === 0 ? (
+                        <div className="p-4 text-center">
+                          <p className="text-sm" style={{ color: theme.colors.textSecondary }}>No questions found</p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowQuestionDropdown(false);
+                              setShowCreateQuestionModal(true);
+                            }}
+                            className="mt-2 text-sm font-semibold hover:underline"
+                            style={{ color: theme.colors.primary }}
+                          >
+                            + Create a new question now
+                          </button>
+                        </div>
+                      ) : (
+                        filteredQuestions.map(question => {
+                          const isSelected = selectedQuestions.some(q => q.id === question.id);
+                          return (
+                            <div
+                              key={question.id}
+                              className="p-2 sm:p-3 cursor-pointer border-b hover:bg-gray-50"
+                              style={{ borderColor: theme.colors.border, backgroundColor: isSelected ? theme.colors.secondary : 'transparent' }}
+                              onClick={() => toggleQuestionSelection(question)}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs sm:text-sm font-medium break-words" style={{ color: theme.colors.textPrimary }}>
+                                    {question.questionText || 'Untitled Question'}
+                                  </p>
+                                  <div className="flex flex-wrap gap-1 sm:gap-2 mt-1 sm:mt-2">
+                                    <span className="text-xs px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap" style={{ backgroundColor: '#DBEAFE', color: '#1E40AF' }}>
+                                      {question.questionType || 'Unknown'}
+                                    </span>
+                                    <span className="text-xs px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap" style={{ 
+                                      backgroundColor: question.difficultyLevel === 'easy' ? '#D1FAE5' : question.difficultyLevel === 'medium' ? '#FEF3C7' : '#FEE2E2', 
+                                      color: question.difficultyLevel === 'easy' ? '#065F46' : question.difficultyLevel === 'medium' ? '#92400E' : '#991B1B' 
+                                    }}>
+                                      {question.difficultyLevel || 'medium'}
+                                    </span>
+                                    <span className="text-xs" style={{ color: theme.colors.textSecondary }}>
+                                      Marks: {question.marks || 0}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="ml-2 flex-shrink-0">
+                                  {isSelected ? (
+                                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.colors.primary }}>
+                                      <Check size={12} className="sm:w-4 sm:h-4 text-white" />
+                                    </div>
+                                  ) : (
+                                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2" style={{ borderColor: theme.colors.border }}></div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    <div className="p-2 border-t" style={{ borderColor: theme.colors.border }}>
+                      <button
+                        type="button"
+                        onClick={handleDoneSelection}
+                        className="w-full px-3 sm:px-4 py-2 rounded-lg text-white font-medium text-sm sm:text-base"
+                        style={{ backgroundColor: theme.colors.primary }}
+                      >
+                        Done ({selectedQuestions.length} selected)
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {selectedQuestions.length > 0 && (
+                <div className="mt-2 text-xs sm:text-sm" style={{ color: theme.colors.textSecondary }}>
+                  Selected {selectedQuestions.length} questions • Total Marks: {selectedQuestions.reduce((sum, q) => sum + (q.marks || 0), 0)}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-white font-semibold disabled:opacity-50 hover:shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
+                style={{ background: theme.colors.primary }}
+              >
+                {submitting ? 'Saving...' : activeTab === 'create' ? 'Create Test' : 'Update Test'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setActiveTab('list'); resetForm(); setSelectedTest(null); }}
+                className="px-4 sm:px-6 py-3 sm:py-4 rounded-xl font-semibold border-2 text-sm sm:text-base"
+                style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      
+
+        {/* Modal for Creating Question Inline */}
+        {showCreateQuestionModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
+            <div 
+              className="w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden my-8"
+              style={{ backgroundColor: '#ffffff' }}
+            >
+              <div 
+                className="p-4 sm:p-5 flex items-center justify-between"
+                style={{ backgroundColor: theme.colors.primary }}
+              >
+                <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                  <Plus size={20} />
+                  Create New Question
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateQuestionModal(false)}
+                  className="p-1 hover:bg-white/20 rounded-full transition text-white"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleInlineCreateQuestion} className="p-4 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+                <div>
+                  <label className="block text-sm font-semibold mb-1" style={{ color: theme.colors.textPrimary }}>Question Text *</label>
+                  <textarea
+                    name="questionText"
+                    value={questionFormData.questionText}
+                    onChange={handleQuestionInputChange}
+                    rows={3}
+                    className="w-full px-3 py-2 border-2 rounded-xl focus:outline-none text-sm"
+                    style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                    placeholder="Enter question text"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-sm font-semibold mb-1" style={{ color: theme.colors.textPrimary }}>Question Type</label>
+                    <select
+                      name="questionType"
+                      value={questionFormData.questionType}
+                      onChange={handleQuestionInputChange}
+                      className="w-full px-3 py-2 border-2 rounded-xl focus:outline-none text-sm"
+                      style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                    >
+                      <option value="MCQ">MCQ</option>
+                      <option value="TEXT">Text</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1" style={{ color: theme.colors.textPrimary }}>Difficulty Level</label>
+                    <select
+                      name="difficultyLevel"
+                      value={questionFormData.difficultyLevel}
+                      onChange={handleQuestionInputChange}
+                      className="w-full px-3 py-2 border-2 rounded-xl focus:outline-none text-sm"
+                      style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                    >
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1" style={{ color: theme.colors.textPrimary }}>Marks</label>
+                    <input
+                      type="number"
+                      name="marks"
+                      value={questionFormData.marks}
+                      onChange={handleQuestionInputChange}
+                      min="1"
+                      className="w-full px-3 py-2 border-2 rounded-xl focus:outline-none text-sm"
+                      style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                    />
+                  </div>
+                </div>
+
+                {questionFormData.questionType === 'MCQ' ? (
+                  <div className="space-y-3 pt-2">
+                    <p className="text-sm font-semibold" style={{ color: theme.colors.textPrimary }}>MCQ Options & Correct Answer</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium mb-1" style={{ color: theme.colors.textSecondary }}>Option A *</label>
+                        <input
+                          type="text"
+                          name="optionA"
+                          value={questionFormData.optionA}
+                          onChange={handleQuestionInputChange}
+                          className="w-full px-3 py-2 border-2 rounded-xl text-sm"
+                          style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                          placeholder="Option A"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1" style={{ color: theme.colors.textSecondary }}>Option B *</label>
+                        <input
+                          type="text"
+                          name="optionB"
+                          value={questionFormData.optionB}
+                          onChange={handleQuestionInputChange}
+                          className="w-full px-3 py-2 border-2 rounded-xl text-sm"
+                          style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                          placeholder="Option B"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1" style={{ color: theme.colors.textSecondary }}>Option C *</label>
+                        <input
+                          type="text"
+                          name="optionC"
+                          value={questionFormData.optionC}
+                          onChange={handleQuestionInputChange}
+                          className="w-full px-3 py-2 border-2 rounded-xl text-sm"
+                          style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                          placeholder="Option C"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1" style={{ color: theme.colors.textSecondary }}>Option D *</label>
+                        <input
+                          type="text"
+                          name="optionD"
+                          value={questionFormData.optionD}
+                          onChange={handleQuestionInputChange}
+                          className="w-full px-3 py-2 border-2 rounded-xl text-sm"
+                          style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                          placeholder="Option D"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-1 mt-2" style={{ color: theme.colors.textPrimary }}>Correct Option *</label>
+                      <select
+                        name="correctAnswer"
+                        value={questionFormData.correctAnswer}
+                        onChange={handleQuestionInputChange}
+                        className="w-full px-3 py-2 border-2 rounded-xl focus:outline-none text-sm"
+                        style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                      >
+                        <option value="">Select correct option</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="pt-2">
+                    <label className="block text-sm font-semibold mb-1" style={{ color: theme.colors.textPrimary }}>Model Answer Text *</label>
+                    <textarea
+                      name="answerText"
+                      value={questionFormData.answerText}
+                      onChange={handleQuestionInputChange}
+                      rows={3}
+                      className="w-full px-3 py-2 border-2 rounded-xl focus:outline-none text-sm"
+                      style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                      placeholder="Enter model answer"
+                    />
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: theme.colors.border }}>
                   <button
                     type="button"
-                    onClick={() => { setActiveTab('list'); resetForm(); setSelectedTest(null); }}
-                    className="px-4 sm:px-6 py-3 sm:py-4 rounded-xl font-semibold border-2 text-sm sm:text-base"
-                    style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}
+                    onClick={() => setShowCreateQuestionModal(false)}
+                    className="px-4 py-2 rounded-xl font-semibold text-sm transition"
+                    style={{ backgroundColor: theme.colors.secondary, color: theme.colors.textPrimary }}
                   >
                     Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={questionSubmitting}
+                    className="px-5 py-2 rounded-xl text-white font-semibold text-sm transition flex items-center gap-2 disabled:opacity-50"
+                    style={{ backgroundColor: theme.colors.primary }}
+                  >
+                    {questionSubmitting ? 'Creating...' : 'Create & Select Question'}
                   </button>
                 </div>
               </form>
@@ -937,32 +1198,13 @@ const Test = () => {
           </div>
         )}
       </div>
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="p-4 sm:p-6" style={{ background: '#EF4444' }}>
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                  <Trash2 size={20} className="sm:w-5 sm:h-5" />
-                  Confirm Delete
-                </h2>
-                <button onClick={() => setShowDeleteConfirm(null)} className="text-white hover:text-white/80 text-xl sm:text-2xl">×</button>
-              </div>
-            </div>
-            <div className="p-4 sm:p-6">
-              <p className="mb-4 sm:mb-6 text-sm sm:text-base" style={{ color: theme.colors.textPrimary }}>Are you sure you want to delete this test? This action cannot be undone.</p>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <button onClick={() => handleDeleteTest(showDeleteConfirm)} className="px-4 py-2.5 sm:py-3 rounded-xl text-white font-medium text-sm sm:text-base" style={{ background: '#EF4444' }}>Delete</button>
-                <button onClick={() => setShowDeleteConfirm(null)} className="px-4 py-2.5 sm:py-3 rounded-xl font-medium border-2 text-sm sm:text-base" style={{ borderColor: theme.colors.border, color: theme.colors.textPrimary }}>Cancel</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+    )}
+    </div>
     </div>
   );
-};
+}
+ 
+   
+  
 
 export default Test;

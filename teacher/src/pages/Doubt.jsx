@@ -41,12 +41,17 @@ const Doubt = () => {
       }
       setLoading(true);
       const response = await getDoubtsByTeacherId(teacherId, { page: currentPage, limit: itemsPerPage });
-      setDoubts(response.data || []);
+
+      // Sort doubts by createdAt in descending order (most recent first)
+      const sortedDoubts = (response.data || []).sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      setDoubts(sortedDoubts);
       if (response.pagination) {
         setTotalPages(response.pagination.totalPages || 1);
       }
     } catch (error) {
-      console.error('Error fetching doubts:', error);
       toast.error('Failed to fetch doubts');
     } finally {
       setLoading(false);
@@ -76,7 +81,6 @@ const Doubt = () => {
       setReplyText('');
       fetchDoubts();
     } catch (error) {
-      console.error('Error updating doubt:', error);
       toast.error('Failed to send reply');
     } finally {
       setIsSubmitting(false);
@@ -186,15 +190,6 @@ const Doubt = () => {
                       style={{ borderColor: theme.colors.primary }}
                     >
                       <div className="flex items-center">
-                        <MessageCircle size={18} className="mr-2" />
-                        ID
-                      </div>
-                    </th>
-                    <th
-                      className="px-4 py-4 text-left font-bold text-white border-r"
-                      style={{ borderColor: theme.colors.primary }}
-                    >
-                      <div className="flex items-center">
                         <User size={18} className="mr-2" />
                         Student ID
                       </div>
@@ -223,7 +218,7 @@ const Doubt = () => {
                     >
                       <div className="flex items-center">
                         <MessageCircle size={18} className="mr-2" />
-                        Doubt
+                        Doubt Title
                       </div>
                     </th>
                     <th
@@ -269,15 +264,6 @@ const Doubt = () => {
                       }}
                     >
                       <td
-                        className="px-4 py-3 font-semibold border-r text-center"
-                        style={{
-                          color: theme.colors.textPrimary,
-                          borderColor: theme.colors.border
-                        }}
-                      >
-                        {doubt.id}
-                      </td>
-                      <td
                         className="px-4 py-3 font-medium border-r"
                         style={{
                           color: theme.colors.textPrimary,
@@ -317,8 +303,11 @@ const Doubt = () => {
                         }}
                       >
                         <div className="max-w-xs">
-                          <p className="font-medium text-sm">{doubt.doubtTitle}</p>
-                          <p className="text-xs mt-1" style={{ color: theme.colors.textSecondary }}>{doubt.doubtText}</p>
+                          <p className="font-medium text-sm">
+                            {doubt.doubtTitle && doubt.doubtTitle.length > 40
+                              ? `${doubt.doubtTitle.substring(0, 40)}...`
+                              : doubt.doubtTitle}
+                          </p>
                         </div>
                       </td>
                       <td
@@ -371,7 +360,7 @@ const Doubt = () => {
                       >
                         {doubt.status !== 'replied' ? (
                           <button
-                            onClick={() => setReplyingTo(doubt.id)}
+                            onClick={() => setReplyingTo(doubt)}
                             className="px-4 py-2 rounded-xl text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition"
                             style={{ backgroundColor: theme.colors.primary }}
                           >
@@ -392,7 +381,6 @@ const Doubt = () => {
         )}
       </div>
 
-      {/* REPLY MODAL */}
       {replyingTo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div 
@@ -418,6 +406,51 @@ const Doubt = () => {
               </button>
             </div>
             <div className="p-6">
+              {/* Doubt Details Display */}
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label
+                    className="block text-xs font-semibold mb-1 uppercase tracking-wider"
+                    style={{ color: theme.colors.textSecondary }}
+                  >
+                    Title
+                  </label>
+                  <div
+                    className="p-3 rounded-xl border"
+                    style={{
+                      backgroundColor: theme.colors.secondary,
+                      borderColor: theme.colors.border,
+                      color: theme.colors.textPrimary
+                    }}
+                  >
+                    <p className="font-semibold text-sm">
+                      {replyingTo.doubtTitle}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    className="block text-xs font-semibold mb-1 uppercase tracking-wider"
+                    style={{ color: theme.colors.textSecondary }}
+                  >
+                    Doubt
+                  </label>
+                  <div
+                    className="p-3 rounded-xl border max-h-32 overflow-y-auto"
+                    style={{
+                      backgroundColor: theme.colors.secondary,
+                      borderColor: theme.colors.border,
+                      color: theme.colors.textSecondary
+                    }}
+                  >
+                    <p className="text-sm">
+                      {replyingTo.doubtText || 'No detailed description provided.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <label
                 className="block text-sm font-medium mb-2"
                 style={{ color: theme.colors.textPrimary }}
@@ -453,7 +486,7 @@ const Doubt = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleReply(replyingTo)}
+                  onClick={() => handleReply(replyingTo.id)}
                   disabled={isSubmitting}
                   className="px-6 py-2 rounded-xl text-white font-semibold flex items-center gap-2 hover:opacity-90 transition disabled:opacity-50"
                   style={{ backgroundColor: theme.colors.primary }}
