@@ -5,6 +5,7 @@ import Pagination from './Pagination';
 import { Users, Video, VideoOff, Mic, MicOff, MessageCircle, Hand, X } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE, LIVESESSION_PATHS } from "@/lib/api";
+import { useAuth } from "@/store/useAuth";
 
 // Types and Interfaces
 interface LiveSession {
@@ -64,6 +65,7 @@ interface GridStyle {
 interface StudentLiveVideoProps {
   sessionId: string;
   studentId: string;
+  studentName?: string;
   onClose: () => void;
 }
 
@@ -83,8 +85,38 @@ interface IAgoraRTCClient {
 const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({ 
   sessionId, 
   studentId, 
+  studentName,
   onClose 
 }) => {
+  const { user } = useAuth();
+
+  const getEffectiveStudentName = (): string => {
+    if (studentName && studentName.trim()) return studentName.trim();
+    if (user?.name && user.name.trim()) return user.name.trim();
+    if (typeof window !== "undefined") {
+      const storedName = localStorage.getItem("userName") || localStorage.getItem("studentName");
+      if (storedName && storedName.trim()) return storedName.trim();
+      try {
+        const authStorage = localStorage.getItem("auth-storage");
+        if (authStorage) {
+          const parsed = JSON.parse(authStorage);
+          if (parsed?.state?.user?.name) return parsed.state.user.name;
+        }
+      } catch (e) {}
+    }
+    if (studentId) {
+      const match = studentId.match(/^([a-zA-Z\s]+)\d{10,}$/);
+      if (match && match[1]) {
+        const rawName = match[1];
+        return rawName.charAt(0).toUpperCase() + rawName.slice(1);
+      }
+      return studentId;
+    }
+    return 'Student';
+  };
+
+  const effectiveStudentName = getEffectiveStudentName();
+
   const localVideoRef = useRef<HTMLDivElement>(null);
   const remoteContainerRef = useRef<HTMLDivElement>(null);
 
@@ -107,9 +139,13 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
   const getDisplayName = (sender: string, isLocal: boolean): string => {
     if (isLocal) return 'You';
     
-    // Default student messages to 'Student', teacher fallback
     if (sender !== 'Teacher' && !sender.toLowerCase().includes('teacher')) {
-      return 'Student';
+      const match = sender.match(/^([a-zA-Z\s]+)\d{10,}$/);
+      if (match && match[1]) {
+        const rawName = match[1];
+        return rawName.charAt(0).toUpperCase() + rawName.slice(1);
+      }
+      return sender || 'Student';
     }
     
     return 'Teacher';
@@ -535,6 +571,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
         const messageData = JSON.stringify({
           type: 'hand_raise',
           studentId: studentId,
+          studentName: effectiveStudentName,
           isRaised: !handRaised,
           timestamp: Date.now()
         });
@@ -555,7 +592,8 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
       
       if (clientRef.current && (clientRef.current as any).connectionState === 'CONNECTED') {
         const messageData = JSON.stringify({
-          sender: studentId,
+          sender: effectiveStudentName,
+          studentId: studentId,
           text: messageText,
           timestamp: Date.now()
         });

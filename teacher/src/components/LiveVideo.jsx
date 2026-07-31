@@ -25,6 +25,20 @@ const LiveVideo = ({ session, onClose }) => {
 
   const STUDENTS_PER_PAGE = 4;
 
+  // Helper to format sender name (e.g. convert praveen2026071708511169 to Praveen)
+  const formatSenderName = (sender) => {
+    if (!sender) return 'Student';
+    if (sender === 'You' || sender === 'Teacher' || sender.startsWith('You (')) return sender;
+    
+    const match = sender.match(/^([a-zA-Z\s]+)\d{10,}$/);
+    if (match && match[1]) {
+      const rawName = match[1];
+      return rawName.charAt(0).toUpperCase() + rawName.slice(1);
+    }
+    
+    return sender;
+  };
+
   // Improved grid layout function for better visual arrangement
   const getGridStyle = (count) => {
     if (count === 0) return { gridTemplateColumns: '1fr', gridTemplateRows: '1fr' };
@@ -237,9 +251,10 @@ const LiveVideo = ({ session, onClose }) => {
             if (msgData.type === 'hand_raise') {
               const remoteDiv = document.getElementById(`remote-${remoteUser.uid}`);
               const handIconId = `hand-${remoteUser.uid}`;
+              const displayName = formatSenderName(msgData.studentName || msgData.sender || msgData.studentId || 'A student');
               
               if (msgData.isRaised) {
-                toast.info(`A student raised a hand!`);
+                toast.info(`${displayName} raised a hand!`);
                 
                 if (remoteDiv && !document.getElementById(handIconId)) {
                   const handIcon = document.createElement('div');
@@ -262,7 +277,7 @@ const LiveVideo = ({ session, onClose }) => {
 
             // Add message to state
             setMessages(prev => [...prev, { 
-              sender: msgData.sender || 'Student', 
+              sender: formatSenderName(msgData.sender) || 'Student', 
               text: msgData.text,
               isLocal: false
             }]);
@@ -716,7 +731,7 @@ const LiveVideo = ({ session, onClose }) => {
               ) : (
                 messages.map((msg, index) => (
                   <div key={index} className="bg-white/10 rounded-lg p-3">
-                    <span className="text-purple-400 font-semibold text-sm">{msg.sender}: </span>
+                    <span className="text-purple-400 font-semibold text-sm">{formatSenderName(msg.sender)}: </span>
                     <span className="text-white">{msg.text}</span>
                   </div>
                 ))

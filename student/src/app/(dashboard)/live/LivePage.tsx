@@ -360,6 +360,7 @@ export default function LivePage() {
         <StudentLiveVideo
           sessionId={selectedSession.sessionId}
           studentId={selectedSession.studentId}
+          studentName={user?.name}
           onClose={handleCloseLiveVideo}
         />
       )}
