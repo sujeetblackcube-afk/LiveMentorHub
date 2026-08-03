@@ -150,63 +150,47 @@ export default function ManageContactUs() {
       </div>
 
       {/* Contact Messages Table */}
-      <div className="rounded-lg shadow-sm overflow-hidden" style={{ backgroundColor: theme.colors.card }}>
-        {loading ? (
-          <div className="text-center py-8 sm:py-10">
-            <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin mx-auto mb-2" style={{ color: theme.colors.primary }} />
-            <p style={{ color: theme.colors.textSecondary }}>Loading contact messages...</p>
-          </div>
-        ) : filteredContacts.length === 0 ? (
-          <div className="text-center py-8 sm:py-10" style={{ color: theme.colors.textSecondary }}>
-            No contact messages found.
-          </div>
-        ) : (
-          <div className="overflow-auto max-h-[500px]">
-            <table className="w-full min-w-full">
-              <thead style={{ backgroundColor: theme.colors.secondary, borderColor: theme.colors.border }} className="border-b">
-                <tr>
-                  <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: theme.colors.textSecondary }}>
-                    Contact Info
-                  </th>
-                  <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider hidden sm:table-cell" style={{ color: theme.colors.textSecondary }}>
-                    Role
-                  </th>
-                  <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider hidden md:table-cell" style={{ color: theme.colors.textSecondary }}>
-                    Subject
-                  </th>
-                  <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider hidden lg:table-cell" style={{ color: theme.colors.textSecondary }}>
-                    Status
-                  </th>
-                  <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider hidden xl:table-cell" style={{ color: theme.colors.textSecondary }}>
-                    Date
-                  </th>
-                  <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: theme.colors.textSecondary }}>
-                    Actions
-                  </th>
+      {loading ? (
+        <div className="text-center py-8 sm:py-10">
+          <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin mx-auto mb-2" style={{ color: theme.colors.primary }} />
+          <p style={{ color: theme.colors.textSecondary }}>Loading contact messages...</p>
+        </div>
+      ) : filteredContacts.length === 0 ? (
+        <div className="text-center py-8 sm:py-10" style={{ color: theme.colors.textSecondary }}>
+          No contact messages found.
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg border">
+          <div className="overflow-x-auto h-[70vh] overflow-y-auto relative">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-500 sticky top-0 z-10">
+                <tr className="whitespace-nowrap">
+                  <th className="px-6 py-4 text-left font-medium">Contact Info</th>
+                  <th className="px-6 py-4 text-left font-medium hidden sm:table-cell">Role</th>
+                  <th className="px-6 py-4 text-left font-medium hidden md:table-cell">Subject</th>
+                  <th className="px-6 py-4 text-left font-medium hidden lg:table-cell">Status</th>
+                  <th className="px-6 py-4 text-left font-medium hidden xl:table-cell">Date</th>
+                  <th className="px-6 py-4 text-left font-medium">Actions</th>
                 </tr>
               </thead>
-              <tbody style={{ backgroundColor: theme.colors.card, borderColor: theme.colors.border }} className="divide-y">
+              <tbody className="divide-y">
                 {filteredContacts.map((contact) => (
-                  <tr key={contact.id} className="hover:opacity-80" style={{ borderColor: theme.colors.border }}>
-                    <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4">
+                  <tr key={contact.id} className="hover:bg-gray-50 border-t whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.colors.primary }}>
-                          <span className="text-xs sm:text-sm font-medium text-white">
-                            {contact.name.charAt(0).toUpperCase()}
-                          </span>
+                        <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 rounded-full flex items-center justify-center text-white font-medium" style={{ backgroundColor: theme.colors.primary }}>
+                          {contact.name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="ml-2 sm:ml-4">
-                          <div className="text-xs sm:text-sm font-medium" style={{ color: theme.colors.textPrimary }}>
-                            {contact.name}
-                          </div>
-                          <div className="text-xs sm:text-sm" style={{ color: theme.colors.textSecondary }}>{contact.email}</div>
-                          <div className="text-xs sm:text-sm sm:hidden" style={{ color: theme.colors.textSecondary }}>{contact.phone}</div>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-gray-900">{contact.name}</div>
+                          <div className="text-xs text-gray-500">{contact.email}</div>
+                          <div className="text-xs text-gray-500 sm:hidden">{contact.phone}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4 hidden sm:table-cell">
+                    <td className="px-6 py-4 hidden sm:table-cell">
                       <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        className={`px-2.5 py-1 text-xs font-medium rounded-full ${
                           contact.role === 'student' ? 'bg-blue-100 text-blue-800' :
                           contact.role === 'teacher' ? 'bg-purple-100 text-purple-800' :
                           contact.role === 'parent' ? 'bg-orange-100 text-orange-800' :
@@ -216,46 +200,38 @@ export default function ManageContactUs() {
                         {contact.role || 'N/A'}
                       </span>
                       {contact.specificId && (
-                        <div className="text-xs mt-1" style={{ color: theme.colors.textSecondary }}>
-                          ID: {contact.specificId}
-                        </div>
+                        <div className="text-xs text-gray-500 mt-1">ID: {contact.specificId}</div>
                       )}
                     </td>
-                    <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4 hidden md:table-cell">
-                      <div className="text-xs sm:text-sm" style={{ color: theme.colors.textPrimary }}>{contact.subject}</div>
-                      <div className="text-xs sm:text-sm truncate max-w-xs" style={{ color: theme.colors.textSecondary }}>
-                        {contact.message}
-                      </div>
+                    <td className="px-6 py-4 hidden md:table-cell">
+                      <div className="text-sm font-medium text-gray-900">{contact.subject}</div>
+                      <div className="text-xs text-gray-500 truncate max-w-xs">{contact.message}</div>
                     </td>
-                    <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4 hidden lg:table-cell">
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                          contact.status
-                        )}`}
-                      >
+                    <td className="px-6 py-4 hidden lg:table-cell">
+                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(contact.status)}`}>
                         {contact.status}
                       </span>
                     </td>
-                    <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4 hidden xl:table-cell text-xs sm:text-sm" style={{ color: theme.colors.textSecondary }}>
+                    <td className="px-6 py-4 hidden xl:table-cell text-xs text-gray-500">
                       {formatDate(contact.createdAt)}
                     </td>
-                    <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-4 text-sm font-medium">
-                      <div className="flex gap-1 sm:gap-2">
+                    <td className="px-6 py-4 text-sm font-medium">
+                      <div className="flex gap-2">
                         <button
                           onClick={() => handleViewContact(contact)}
                           style={{ color: theme.colors.primary }}
-                          className="hover:opacity-80"
+                          className="hover:opacity-80 p-1"
                           title="View Details"
                         >
-                          <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <Eye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteContact(contact.id)}
                           style={{ color: theme.colors.danger }}
-                          className="hover:opacity-80"
+                          className="hover:opacity-80 p-1"
                           title="Delete"
                         >
-                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -264,16 +240,52 @@ export default function ManageContactUs() {
               </tbody>
             </table>
           </div>
-        )}
 
-        {totalPages > 1 && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        )}
-      </div>
+          {/* Pagination Footer */}
+          <div className="flex justify-between items-center px-4 py-3 text-sm text-gray-600 border-t bg-white">
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50 text-gray-700 cursor-pointer"
+              >
+                &lt;
+              </button>
+
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1;
+                if (page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1 border rounded cursor-pointer ${
+                        currentPage === page ? "bg-indigo-600 text-white font-medium" : "hover:bg-gray-50 text-gray-700"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                }
+                if (page === 2 && currentPage > 3) return <span key="dots1">...</span>;
+                if (page === totalPages - 1 && currentPage < totalPages - 2) return <span key="dots2">...</span>;
+                return null;
+              })}
+
+              <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50 text-gray-700 cursor-pointer"
+              >
+                &gt;
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal for Contact Details and Reply */}
       {isModalOpen && selectedContact && (

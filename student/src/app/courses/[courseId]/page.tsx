@@ -481,7 +481,6 @@ export default function CourseDetailsPage() {
                                                                 <Download className="h-4 w-4 mr-1" />
                                                                 Download
                                                             </button>
-
                                                         </div>
                                                     </div>
                                                 ))}

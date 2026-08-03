@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import Pagination from './Pagination';
 import { Users, Video, VideoOff, Mic, MicOff, MessageCircle, Hand, X } from 'lucide-react';
 import axios from 'axios';
+import { useAuth } from "@/store/useAuth";
 import { API_BASE, LIVESESSION_PATHS } from "@/lib/api";
-import { useAuth } from '@/store/useAuth';
 
 // Types and Interfaces
 interface LiveSession {
@@ -56,6 +56,7 @@ interface GridStyle {
 interface StudentLiveVideoProps {
   sessionId: string;
   studentId: string;
+  studentName?: string;
   onClose: () => void;
 }
 
@@ -74,8 +75,38 @@ interface IAgoraRTCClient {
 const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({ 
   sessionId, 
   studentId, 
+  studentName,
   onClose 
 }) => {
+  const { user } = useAuth();
+
+  const getEffectiveStudentName = (): string => {
+    if (studentName && studentName.trim()) return studentName.trim();
+    if (user?.name && user.name.trim()) return user.name.trim();
+    if (typeof window !== "undefined") {
+      const storedName = localStorage.getItem("userName") || localStorage.getItem("studentName");
+      if (storedName && storedName.trim()) return storedName.trim();
+      try {
+        const authStorage = localStorage.getItem("auth-storage");
+        if (authStorage) {
+          const parsed = JSON.parse(authStorage);
+          if (parsed?.state?.user?.name) return parsed.state.user.name;
+        }
+      } catch (e) {}
+    }
+    if (studentId) {
+      const match = studentId.match(/^([a-zA-Z\s]+)\d{10,}$/);
+      if (match && match[1]) {
+        const rawName = match[1];
+        return rawName.charAt(0).toUpperCase() + rawName.slice(1);
+      }
+      return studentId;
+    }
+    return 'Student';
+  };
+
+  const effectiveStudentName = getEffectiveStudentName();
+
   const localVideoRef = useRef<HTMLDivElement>(null);
   const remoteContainerRef = useRef<HTMLDivElement>(null);
 
@@ -94,12 +125,16 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
   const [isMicOn, setIsMicOn] = useState<boolean>(true);
   const [handRaised, setHandRaised] = useState<boolean>(false);
 
-  const user = useAuth((state) => state.user) || { name: 'Guest' };
-
   const getDisplayName = (sender: string, isLocal: boolean): string => {
     if (isLocal) return 'You';
+    
     if (sender !== 'Teacher' && !sender.toLowerCase().includes('teacher')) {
-      return 'Student';
+      const match = sender.match(/^([a-zA-Z\s]+)\d{10,}$/);
+      if (match && match[1]) {
+        const rawName = match[1];
+        return rawName.charAt(0).toUpperCase() + rawName.slice(1);
+      }
+      return sender || 'Student';
     }
     return 'Teacher';
   };
@@ -402,7 +437,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
             const studentMetadata = JSON.stringify({
               type: 'student_info',
               studentId: studentId,
-              name: user.name,
+              name: effectiveStudentName || user?.name || 'Student',
               timestamp: Date.now()
             });
             const encoder = new TextEncoder();
@@ -459,7 +494,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
       setRemoteUsers([]);
       setCurrentPage(1);
     };
-  }, [session, renderRemoteVideo, studentId, user.name]);
+  }, [session, renderRemoteVideo, studentId, user?.name]);
 
   const toggleCamera = (): void => {
     const videoTrack = tracksRef.current.find(
@@ -500,7 +535,8 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
         const messageData = JSON.stringify({
           type: 'hand_raise',
           studentId: studentId,
-          name: user.name,
+          studentName: effectiveStudentName,
+          name: effectiveStudentName || user?.name || 'Student',
           isRaised: !handRaised,
           timestamp: Date.now()
         });
@@ -520,8 +556,9 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
       
       if (clientRef.current && (clientRef.current as any).connectionState === 'CONNECTED') {
         const messageData = JSON.stringify({
-          sender: studentId,
-          name: user.name,
+          sender: effectiveStudentName,
+          studentId: studentId,
+          name: effectiveStudentName || user?.name || 'Student',
           text: messageText,
           timestamp: Date.now()
         });
@@ -649,7 +686,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
           )}
           <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-sm px-3 py-1.5 rounded-full flex items-center gap-2">
             {isMicOn ? <Mic className="w-3 h-3" /> : <MicOff className="w-3 h-3 text-red-400" />}
-            {user.name}
+            {user?.name || effectiveStudentName}
           </div>
           {handRaised && (
             <div className="absolute top-2 right-2 bg-yellow-500 p-1.5 rounded-full animate-pulse">
