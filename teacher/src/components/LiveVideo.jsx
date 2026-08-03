@@ -23,6 +23,9 @@ const LiveVideo = ({ session, onClose }) => {
   const [isMicOn, setIsMicOn] = useState(true);
   const screenTrackRef = useRef(null);
 
+  // Store student names by uid received via Agora stream messages: { [uid]: string }
+  const [studentNames, setStudentNames] = useState({});
+
   const STUDENTS_PER_PAGE = 4;
 
   // Helper to format sender name (e.g. convert praveen2026071708511169 to Praveen)
@@ -43,7 +46,6 @@ const LiveVideo = ({ session, onClose }) => {
   const getGridStyle = (count) => {
     if (count === 0) return { gridTemplateColumns: '1fr', gridTemplateRows: '1fr' };
     
-    // For 1-4 students, use specific layouts
     if (count === 1) {
       return { gridTemplateColumns: '1fr', gridTemplateRows: '1fr' };
     }
@@ -57,64 +59,54 @@ const LiveVideo = ({ session, onClose }) => {
       return { gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 1fr)' };
     }
     
-    // For more than 4, use 2x2 grid per page
     return { gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 1fr)' };
   };
 
-  // Calculate pagination
   const totalPages = Math.ceil(remoteUsersCount / STUDENTS_PER_PAGE);
   const startIndex = (currentPage - 1) * STUDENTS_PER_PAGE;
   const endIndex = startIndex + STUDENTS_PER_PAGE;
   
-  // Get current page users for grid calculation
   const currentPageUsers = remoteUsers.slice(startIndex, endIndex);
   const currentPageUsersCount = currentPageUsers.length;
   
-  // Get grid style based on current page user count
   const gridStyle = getGridStyle(currentPageUsersCount);
 
-  // Reset to page 1 if remote users count changes and current page is out of bounds
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(1);
     }
   }, [remoteUsersCount, totalPages, currentPage]);
 
-  // Memoized function to render remote video
   const renderRemoteVideo = useCallback((remoteUser, container) => {
     if (remoteUser.videoTrack) {
       remoteUser.videoTrack.play(container, { fit: 'cover' });
     }
   }, []);
 
-  // Clear remote container and re-render only current page users
   const renderCurrentPageUsers = useCallback(() => {
     if (!remoteContainerRef.current) return;
     
-    // Clear existing video elements
     remoteContainerRef.current.innerHTML = '';
     
-    // Get users for current page
     const usersToRender = remoteUsers.slice(startIndex, endIndex);
     
-    // Render each user in the current page
     usersToRender.forEach((remoteUser) => {
       if (remoteUser.videoTrack) {
         const remoteDiv = document.createElement('div');
         remoteDiv.id = `remote-${remoteUser.uid}`;
         remoteDiv.className = 'relative w-full h-full bg-gray-800 rounded-lg overflow-hidden';
         
-        // Add user info overlay
+        // Name overlay at top-left
         const infoDiv = document.createElement('div');
-        infoDiv.className = 'absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-sm px-2 py-1 rounded flex items-center gap-1';
-        infoDiv.innerHTML = `<span class="w-2 h-2 bg-green-500 rounded-full"></span> Student`;
+        infoDiv.className = 'absolute top-2 left-2 bg-black bg-opacity-60 text-white text-sm px-2 py-1 rounded flex items-center gap-1 z-10';
+        const studentName = studentNames[remoteUser.uid] || 'Student';
+        infoDiv.innerHTML = `<span class="font-semibold">${studentName}</span>`;
         remoteDiv.appendChild(infoDiv);
 
         if (remoteContainerRef.current) {
           remoteContainerRef.current.appendChild(remoteDiv);
         }
 
-        // Add delay to ensure div is ready for video play
         setTimeout(() => {
           if (remoteUser.videoTrack && remoteDiv) {
             renderRemoteVideo(remoteUser, remoteDiv);
@@ -122,27 +114,20 @@ const LiveVideo = ({ session, onClose }) => {
         }, 100);
       }
     });
-  }, [remoteUsers, startIndex, endIndex, renderRemoteVideo]);
+  }, [remoteUsers, startIndex, endIndex, renderRemoteVideo, studentNames]);
 
-  // Re-render when page changes
   useEffect(() => {
     if (remoteUsersCount > 0) {
       renderCurrentPageUsers();
     }
   }, [currentPage, renderCurrentPageUsers, remoteUsersCount]);
 
-  // Effect to handle remote users changes without re-rendering all
+  // Re-render when student names update
   useEffect(() => {
-    if (remoteUsersCount > 0 && currentPageUsersCount > 0) {
-      // Only update if we're on the correct page for the new user
-      const lastUserIndex = remoteUsers.length - 1;
-      const lastUserPage = Math.floor(lastUserIndex / STUDENTS_PER_PAGE) + 1;
-      
-      if (lastUserPage === currentPage) {
-        renderCurrentPageUsers();
-      }
+    if (remoteUsersCount > 0) {
+      renderCurrentPageUsers();
     }
-  }, [remoteUsers.length, remoteUsersCount, currentPage, currentPageUsersCount, renderCurrentPageUsers]);
+  }, [studentNames, remoteUsersCount, currentPage, renderCurrentPageUsers]);
 
   useEffect(() => {
     if (!session) return;
@@ -163,7 +148,6 @@ const LiveVideo = ({ session, onClose }) => {
 
         clientRef.current = client;
 
-        // 🔥 USER PUBLISHED
         userPublishedHandler = async (remoteUser, mediaType) => {
           if (!mounted) return;
           try {
@@ -175,9 +159,7 @@ const LiveVideo = ({ session, onClose }) => {
               setRemoteUsersCount(newCount);
               toast.info('A student joined the session');
               
-              // Add user to remoteUsers array - use functional update to avoid stale state
               setRemoteUsers(prev => {
-                // Check if user already exists
                 const exists = prev.some(u => u.uid === remoteUser.uid);
                 if (exists) return prev;
                 return [...prev, remoteUser];
@@ -187,17 +169,17 @@ const LiveVideo = ({ session, onClose }) => {
               remoteDiv.id = `remote-${remoteUser.uid}`;
               remoteDiv.className = 'relative w-full h-full bg-gray-800 rounded-lg overflow-hidden';
               
-              // Add user info overlay
+              // Name overlay at top-left
               const infoDiv = document.createElement('div');
-              infoDiv.className = 'absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-sm px-2 py-1 rounded flex items-center gap-1';
-              infoDiv.innerHTML = `<span class="w-2 h-2 bg-green-500 rounded-full"></span> Student`;
+              infoDiv.className = 'absolute top-2 left-2 bg-black bg-opacity-60 text-white text-sm px-2 py-1 rounded flex items-center gap-1 z-10';
+              const studentName = studentNames[remoteUser.uid] || 'Student';
+              infoDiv.innerHTML = `<span class="font-semibold">${studentName}</span>`;
               remoteDiv.appendChild(infoDiv);
 
               if (remoteContainerRef.current && mounted) {
                 remoteContainerRef.current.appendChild(remoteDiv);
               }
 
-              // Add delay to ensure div is ready for video play
               setTimeout(() => {
                 if (mounted && remoteUser.videoTrack) {
                   remoteUser.videoTrack.play(remoteDiv, { fit: 'cover' });
@@ -215,7 +197,6 @@ const LiveVideo = ({ session, onClose }) => {
           }
         };
 
-        // 🔥 USER UNPUBLISHED
         userUnpublishedHandler = (remoteUser) => {
           const remoteDiv = document.getElementById(`remote-${remoteUser.uid}`);
           if (remoteDiv) remoteDiv.remove();
@@ -223,11 +204,9 @@ const LiveVideo = ({ session, onClose }) => {
           const newCount = Math.max(0, client.remoteUsers.length);
           setRemoteUsersCount(newCount);
           
-          // Remove user from remoteUsers array
           setRemoteUsers(prev => prev.filter(u => u.uid !== remoteUser.uid));
         };
 
-        // 🔥 USER LEFT
         userLeftHandler = (remoteUser) => {
           toast.info('A student left the session');
           const remoteDiv = document.getElementById(`remote-${remoteUser.uid}`);
@@ -236,18 +215,25 @@ const LiveVideo = ({ session, onClose }) => {
           const newCount = Math.max(0, client.remoteUsers.length - 1);
           setRemoteUsersCount(newCount);
           
-          // Remove user from remoteUsers array
           setRemoteUsers(prev => prev.filter(u => u.uid !== remoteUser.uid));
         };
 
-        // 🔥 STREAM MESSAGE - Receive messages from students
+        // 🔥 STREAM MESSAGE - Receive messages, hand raises, and student info from students via Agora
         client.on('stream-message', (remoteUser, message) => {
           if (!mounted) return;
           try {
-            // Decode the message
             const text = new TextDecoder().decode(message);
             const msgData = JSON.parse(text);
             
+            // Handle student name/info broadcasted via stream message
+            if (msgData.type === 'student_info' && msgData.name) {
+              setStudentNames(prev => ({
+                ...prev,
+                [remoteUser.uid]: msgData.name,
+              }));
+              return;
+            }
+
             if (msgData.type === 'hand_raise') {
               const remoteDiv = document.getElementById(`remote-${remoteUser.uid}`);
               const handIconId = `hand-${remoteUser.uid}`;
@@ -272,7 +258,7 @@ const LiveVideo = ({ session, onClose }) => {
                   existingHand.remove();
                 }
               }
-              return; // Do not add hand raise as a chat message
+              return;
             }
 
             // Add message to state
@@ -282,7 +268,6 @@ const LiveVideo = ({ session, onClose }) => {
               isLocal: false
             }]);
           } catch (error) {
-            // If not JSON, treat as plain text
             try {
               const text = new TextDecoder().decode(message);
               setMessages(prev => [...prev, { 
@@ -300,7 +285,6 @@ const LiveVideo = ({ session, onClose }) => {
         client.on('user-unpublished', userUnpublishedHandler);
         client.on('user-left', userLeftHandler);
 
-        // Join channel
         if (!mounted) return;
         await client.join(
           session.appId,
@@ -309,7 +293,6 @@ const LiveVideo = ({ session, onClose }) => {
           session.uid
         );
 
-        // Handle existing remote users on rejoin
         if (!mounted) return;
         const existingUsers = client.remoteUsers;
         setRemoteUsers(existingUsers);
@@ -326,10 +309,11 @@ const LiveVideo = ({ session, onClose }) => {
             remoteDiv.id = `remote-${remoteUser.uid}`;
             remoteDiv.className = 'relative w-full h-full bg-gray-800 rounded-lg overflow-hidden';
 
-            // Add user info overlay
+            // Name overlay at top-left
             const infoDiv = document.createElement('div');
-            infoDiv.className = 'absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-sm px-2 py-1 rounded flex items-center gap-1';
-            infoDiv.innerHTML = `<span class="w-2 h-2 bg-green-500 rounded-full"></span> Student`;
+            infoDiv.className = 'absolute top-2 left-2 bg-black bg-opacity-60 text-white text-sm px-2 py-1 rounded flex items-center gap-1 z-10';
+            const studentName = studentNames[remoteUser.uid] || 'Student';
+            infoDiv.innerHTML = `<span class="font-semibold">${studentName}</span>`;
             remoteDiv.appendChild(infoDiv);
 
             if (remoteContainerRef.current) {
@@ -376,7 +360,6 @@ const LiveVideo = ({ session, onClose }) => {
       } catch (error) {
         console.error('Agora Init Error:', error);
         if (error.message && (error.message.includes('cancel token canceled') || error.message.includes('OPERATION_ABORTED'))) {
-          // console.log('Agora operation aborted - likely due to component unmount or session change');
           return;
         }
         if (mounted) {
@@ -387,7 +370,6 @@ const LiveVideo = ({ session, onClose }) => {
     };
 
     const handleBeforeUnload = () => {
-      // Synchronous cleanup for beforeunload
       tracksRef.current.forEach((track) => {
         if (track) {
           track.stop();
@@ -407,7 +389,6 @@ const LiveVideo = ({ session, onClose }) => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       mounted = false;
 
-      // Stop & close tracks
       tracksRef.current.forEach((track) => {
         if (track) {
           track.stop();
@@ -416,12 +397,10 @@ const LiveVideo = ({ session, onClose }) => {
       });
       tracksRef.current = [];
 
-      // Clear remote container
       if (remoteContainerRef.current) {
         remoteContainerRef.current.innerHTML = '';
       }
 
-      // Remove listeners & leave
       if (clientRef.current) {
         clientRef.current.removeAllListeners();
         clientRef.current.leave();
@@ -431,7 +410,7 @@ const LiveVideo = ({ session, onClose }) => {
       setRemoteUsers([]);
       setCurrentPage(1);
     };
-  }, [session, renderRemoteVideo]);
+  }, [session, renderRemoteVideo, studentNames]);
 
   const handleEndStream = async () => {
     try {
@@ -454,6 +433,22 @@ const LiveVideo = ({ session, onClose }) => {
       toast.error('Failed to end stream');
     }
   };
+
+  useEffect(() => {
+  let mounted = true;
+  // ... init code ...
+  return () => {
+    mounted = false;
+    if (clientRef.current) {
+      clientRef.current.leave();
+      tracksRef.current.forEach(track => {
+        track.stop();
+        track.close();
+      });
+    }
+  };
+}, [session]); // Ensure this only runs when session truly changes
+
 
   const toggleCamera = () => {
     const videoTrack = tracksRef.current.find(
@@ -481,14 +476,12 @@ const LiveVideo = ({ session, onClose }) => {
     if (input.trim() && clientRef.current) {
       const messageText = input.trim();
       
-      // Create message payload
       const messageData = JSON.stringify({
         sender: 'Teacher',
         text: messageText,
         timestamp: Date.now()
       });
       
-      // Convert string to Uint8Array for Agora stream message
       const encoder = new TextEncoder();
       const messageBytes = encoder.encode(messageData);
       
@@ -497,7 +490,6 @@ const LiveVideo = ({ session, onClose }) => {
           await clientRef.current.sendStreamMessage(messageBytes);
         }
         
-        // Add to local messages
         setMessages(prev => [...prev, { 
           sender: 'You (Teacher)', 
           text: messageText,
@@ -507,7 +499,6 @@ const LiveVideo = ({ session, onClose }) => {
         setInput('');
       } catch (error) {
         console.error('Error sending message:', error);
-        // Fallback - still show message locally even if sending fails
         setMessages(prev => [...prev, { 
           sender: 'You (Teacher)', 
           text: messageText,
@@ -521,7 +512,6 @@ const LiveVideo = ({ session, onClose }) => {
   const toggleScreenShare = async () => {
     try {
       if (isScreenSharing) {
-        // Stop screen sharing and restore camera
         if (screenTrackRef.current) {
           await clientRef.current.unpublish(screenTrackRef.current);
           screenTrackRef.current.stop();
@@ -529,7 +519,6 @@ const LiveVideo = ({ session, onClose }) => {
           screenTrackRef.current = null;
         }
         
-        // Re-publish camera track
         const videoTrack = tracksRef.current.find(
           (track) => track && track.trackMediaType === 'video'
         );
@@ -540,7 +529,6 @@ const LiveVideo = ({ session, onClose }) => {
         setIsScreenSharing(false);
         toast.success('Screen sharing stopped');
       } else {
-        // Stop camera track first
         const videoTrack = tracksRef.current.find(
           (track) => track && track.trackMediaType === 'video'
         );
@@ -548,13 +536,11 @@ const LiveVideo = ({ session, onClose }) => {
           await clientRef.current.unpublish(videoTrack);
         }
         
-        // Create screen share track
         const screenTrack = await AgoraRTC.createScreenVideoTrack({
           encoderConfig: '1080p_1',
         });
         screenTrackRef.current = screenTrack;
-   
-        // Handle track ended event (when user stops sharing via browser)
+ 
         screenTrack.on('track-ended', async () => {
           try {
             if (screenTrackRef.current) {
@@ -564,7 +550,6 @@ const LiveVideo = ({ session, onClose }) => {
               screenTrackRef.current = null;
             }
             
-            // Re-publish camera track
             const videoTrack = tracksRef.current.find(
               (track) => track && track.trackMediaType === 'video'
             );
@@ -586,7 +571,6 @@ const LiveVideo = ({ session, onClose }) => {
     } catch (error) {
       console.error('Screen share error:', error);
       
-      // If error, try to restore camera
       if (!isScreenSharing) {
         const videoTrack = tracksRef.current.find(
           (track) => track && track.trackMediaType === 'video'

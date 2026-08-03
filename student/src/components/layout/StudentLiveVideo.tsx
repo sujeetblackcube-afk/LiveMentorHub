@@ -4,7 +4,6 @@ import { toast } from 'react-toastify';
 import Pagination from './Pagination';
 import { Users, Video, VideoOff, Mic, MicOff, MessageCircle, Hand, X } from 'lucide-react';
 import axios from 'axios';
-import { API_BASE, LIVESESSION_PATHS } from "@/lib/api";
 import { useAuth } from "@/store/useAuth";
 
 // Types and Interfaces
@@ -48,15 +47,6 @@ interface RemoteUser {
   hasAudio?: boolean;
 }
 
-interface AgoraTrack {
-  trackMediaType: 'video' | 'audio';
-  enabled: boolean;
-  setEnabled: (enabled: boolean) => void;
-  stop: () => void;
-  close: () => void;
-  play: (element: HTMLElement, config?: { fit: 'cover' | 'contain' }) => void;
-}
-
 interface GridStyle {
   gridTemplateColumns: string;
   gridTemplateRows: string;
@@ -69,7 +59,6 @@ interface StudentLiveVideoProps {
   onClose: () => void;
 }
 
-// Add AgoraRTC client interface
 interface IAgoraRTCClient {
   join: (appId: string, channel: string, token: string, uid: number) => Promise<void>;
   leave: () => Promise<void>;
@@ -135,7 +124,8 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
   const [isMicOn, setIsMicOn] = useState<boolean>(true);
   const [handRaised, setHandRaised] = useState<boolean>(false);
 
-  // Helper to get display name for chat senders
+  const user = useAuth((state) => state.user) || { name: 'Guest' };
+
   const getDisplayName = (sender: string, isLocal: boolean): string => {
     if (isLocal) return 'You';
     
@@ -147,33 +137,18 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
       }
       return sender || 'Student';
     }
-    
     return 'Teacher';
   };
 
   const STUDENTS_PER_PAGE: number = 4;
 
-  // Improved grid layout function for better visual arrangement
   const getGridStyle = (count: number): GridStyle => {
-    if (count === 0) return { gridTemplateColumns: '1fr', gridTemplateRows: '1fr' };
-    
-    if (count === 1) {
-      return { gridTemplateColumns: '1fr', gridTemplateRows: '1fr' };
-    }
-    if (count === 2) {
-      return { gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: '1fr' };
-    }
-    if (count === 3) {
-      return { gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '1fr' };
-    }
-    if (count === 4) {
-      return { gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 1fr)' };
-    }
-    
+    if (count === 0 || count === 1) return { gridTemplateColumns: '1fr', gridTemplateRows: '1fr' };
+    if (count === 2) return { gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: '1fr' };
+    if (count === 3) return { gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '1fr' };
     return { gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 1fr)' };
   };
 
-  // Calculate pagination
   const totalPages: number = Math.ceil(remoteUsersCount / STUDENTS_PER_PAGE);
   const startIndex: number = (currentPage - 1) * STUDENTS_PER_PAGE;
   const endIndex: number = startIndex + STUDENTS_PER_PAGE;
@@ -182,20 +157,16 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
   const currentPageUsersCount: number = currentPageUsers.length;
   const gridStyle: GridStyle = getGridStyle(currentPageUsersCount);
 
-  // Reset to page 1 if remote users count changes and current page is out of bounds
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(1);
     }
   }, [remoteUsersCount, totalPages, currentPage]);
 
-  // Join live session
   useEffect(() => {
     const joinSession = async (): Promise<void> => {
       try {
         setIsLoading(true);
-        
-        // Get authentication token from localStorage
         const token = typeof window !== "undefined" ? localStorage.getItem("cp_token") : null;
         
         const headers: Record<string, string> = {
@@ -208,10 +179,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
         
         const response = await axios.post<JoinSessionResponse>(
           `${API_BASE}${LIVESESSION_PATHS.joinSession}`, 
-          {
-            sessionId,
-            studentId
-          },
+          { sessionId, studentId },
           { headers }
         );
 
@@ -238,19 +206,16 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
     }
   }, [sessionId, studentId, onClose]);
 
-  // Memoized function to render remote video
   const renderRemoteVideo = useCallback((remoteUser: RemoteUser, container: HTMLElement): void => {
     if (remoteUser.videoTrack) {
       remoteUser.videoTrack.play(container, { fit: 'cover' });
     }
   }, []);
 
-  // Clear remote container and re-render only current page users
   const renderCurrentPageUsers = useCallback((): void => {
     if (!remoteContainerRef.current) return;
     
     remoteContainerRef.current.innerHTML = '';
-    
     const usersToRender = remoteUsers.slice(startIndex, endIndex);
     
     usersToRender.forEach((remoteUser) => {
@@ -259,11 +224,9 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
         remoteDiv.id = `remote-${remoteUser.uid}`;
         remoteDiv.className = 'relative w-full h-full bg-gray-800 rounded-lg overflow-hidden';
         
-        // Add user info overlay
         const infoDiv = document.createElement('div');
         infoDiv.className = 'absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-sm px-2 py-1 rounded flex items-center gap-1';
         
-        // Check if it's the teacher
         const isTeacher = remoteUser.uid === session?.teacherUid;
         infoDiv.innerHTML = `<span class="w-2 h-2 ${isTeacher ? 'bg-yellow-500' : 'bg-green-500'} rounded-full"></span> ${isTeacher ? 'Teacher' : 'Student'}`;
         remoteDiv.appendChild(infoDiv);
@@ -281,7 +244,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
     });
   }, [remoteUsers, startIndex, endIndex, renderRemoteVideo, session?.teacherUid]);
 
-  // Re-render when page changes
   useEffect(() => {
     if (remoteUsersCount > 0) {
       renderCurrentPageUsers();
@@ -290,7 +252,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
 
   useEffect(() => {
     if (!session) return;
-
     let mounted = true;
 
     const initAgora = async (): Promise<void> => {
@@ -304,7 +265,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
 
         clientRef.current = client;
 
-        // USER PUBLISHED
         const userPublishedHandler = async (remoteUser: RemoteUser, mediaType: string): Promise<void> => {
           if (!mounted) return;
           try {
@@ -355,29 +315,24 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
           }
         };
 
-        // USER UNPUBLISHED
         const userUnpublishedHandler = (remoteUser: RemoteUser): void => {
           const remoteDiv = document.getElementById(`remote-${remoteUser.uid}`);
           if (remoteDiv) remoteDiv.remove();
 
           const newCount = Math.max(0, client.remoteUsers.length);
           setRemoteUsersCount(newCount);
-          
           setRemoteUsers(prev => prev.filter(u => u.uid !== remoteUser.uid));
         };
 
-        // USER LEFT
         const userLeftHandler = (remoteUser: RemoteUser): void => {
           const remoteDiv = document.getElementById(`remote-${remoteUser.uid}`);
           if (remoteDiv) remoteDiv.remove();
 
           const newCount = Math.max(0, client.remoteUsers.length - 1);
           setRemoteUsersCount(newCount);
-          
           setRemoteUsers(prev => prev.filter(u => u.uid !== remoteUser.uid));
         };
 
-        // STREAM MESSAGE - Receive messages
         const streamMessageHandler = (remoteUser: RemoteUser, message: Uint8Array): void => {
           if (!mounted) return;
           try {
@@ -410,7 +365,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
         client.on('user-left', userLeftHandler);
         client.on('stream-message', streamMessageHandler);
 
-        // Join channel
         if (!mounted) return;
         await client.join(
           session.appId,
@@ -419,7 +373,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
           session.uid
         );
 
-        // Handle existing remote users
         if (!mounted) return;
         const existingUsers = client.remoteUsers;
         setRemoteUsers(existingUsers);
@@ -459,7 +412,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
           }
         }
 
-        // Student can optionally publish their own video/audio
         try {
           if (!mounted) return;
           await navigator.mediaDevices.getUserMedia({
@@ -480,9 +432,23 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
 
           if (!mounted) return;
           await client.publish([audioTrack, videoTrack]);
+
+          // Broadcast student name/metadata to teacher and room via Agora stream message
+          try {
+            const studentMetadata = JSON.stringify({
+              type: 'student_info',
+              studentId: studentId,
+              name: user.name,
+              timestamp: Date.now()
+            });
+            const encoder = new TextEncoder();
+            await client.sendStreamMessage(encoder.encode(studentMetadata));
+          } catch (metaErr) {
+            console.warn('Failed to broadcast student metadata:', metaErr);
+          }
+
         } catch (mediaError) {
-          // console.log('Student opted not to share media or media error:', mediaError);
-          // Continue without publishing - student can be viewer only
+          // Student opted not to share media or media error
         }
 
         if (mounted) {
@@ -494,7 +460,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
         if (error instanceof Error && 
             (error.message?.includes('cancel token canceled') || 
              error.message?.includes('OPERATION_ABORTED'))) {
-          // console.log('Agora operation aborted');
           return;
         }
         if (mounted) {
@@ -530,7 +495,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
       setRemoteUsers([]);
       setCurrentPage(1);
     };
-  }, [session, renderRemoteVideo]);
+  }, [session, renderRemoteVideo, studentId, user.name]);
 
   const toggleCamera = (): void => {
     const videoTrack = tracksRef.current.find(
@@ -572,16 +537,16 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
           type: 'hand_raise',
           studentId: studentId,
           studentName: effectiveStudentName,
+          name: effectiveStudentName || user.name,
           isRaised: !handRaised,
           timestamp: Date.now()
         });
         
         const encoder = new TextEncoder();
         const messageBytes = encoder.encode(messageData);
-        
         clientRef.current.sendStreamMessage(messageBytes).catch(() => {});
       } catch (e) {
-        // Stream message fails safely if data channel is not open
+        // Stream message fails safely
       }
     }
   };
@@ -594,6 +559,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
         const messageData = JSON.stringify({
           sender: effectiveStudentName,
           studentId: studentId,
+          name: effectiveStudentName || user.name,
           text: messageText,
           timestamp: Date.now()
         });
@@ -656,7 +622,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 z-50 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex justify-between items-center px-6 py-4 bg-black/30 backdrop-blur-md border-b border-white/10">
+      <div className="flex justify-between items-center px-6 py-4 bg-black/35 backdrop-blur-md border-b border-white/10">
         <div className="flex items-center gap-4">
           <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-2 rounded-lg">
             <Video className="w-6 h-6 text-white" />
@@ -687,7 +653,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
 
       {/* Video Area */}
       <div className="flex-1 relative flex p-4 gap-4">
-        {/* Remote Videos - Main screen for teacher only */}
         <div
           ref={remoteContainerRef}
           className="flex-1 bg-gray-800/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
@@ -704,11 +669,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
               </div>
               <h3 className="text-2xl font-bold text-white mb-2">Teacher Screen Share</h3>
               <p className="text-white/60 text-lg">Main content appears here</p>
-              <div className="mt-6 flex gap-2">
-                <span className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></span>
-                <span className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
-                <span className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-              </div>
             </div>
           )}
         </div>
@@ -727,7 +687,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
           )}
           <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-sm px-3 py-1.5 rounded-full flex items-center gap-2">
             {isMicOn ? <Mic className="w-3 h-3" /> : <MicOff className="w-3 h-3 text-red-400" />}
-            You (Student)
+            {user.name}
           </div>
           {handRaised && (
             <div className="absolute top-2 right-2 bg-yellow-500 p-1.5 rounded-full animate-pulse">
@@ -756,7 +716,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
                 <div className="text-center text-white/50 py-8">
                   <MessageCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p>No messages yet</p>
-                  <p className="text-sm">Start the conversation!</p>
                 </div>
               ) : (
                 messages.map((msg, index) => (

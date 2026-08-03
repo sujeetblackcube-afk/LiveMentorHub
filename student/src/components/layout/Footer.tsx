@@ -101,7 +101,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="hover:text-white transition-colors text-sm"
             >
-              Design & Developed by BlackCube Solution LLC
+              Design & Developed by YAM INTERNATIONAL
             </Link>
             
           </div>

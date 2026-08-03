@@ -37,6 +37,7 @@ export function SyllabusSection({ courseId }: SyllabusSectionProps) {
       try {
         setLoading(true);
         const syllabus = await getSyllabus(courseId);
+        console.log('Fetched syllabus:', syllabus);
         setData(syllabus);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load syllabus');
