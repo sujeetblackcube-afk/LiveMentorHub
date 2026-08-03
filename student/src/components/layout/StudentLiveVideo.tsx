@@ -5,6 +5,7 @@ import Pagination from './Pagination';
 import { Users, Video, VideoOff, Mic, MicOff, MessageCircle, Hand, X } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from "@/store/useAuth";
+import { API_BASE, LIVESESSION_PATHS } from "@/lib/api";
 
 // Types and Interfaces
 interface LiveSession {
@@ -123,8 +124,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
   const [isCameraOn, setIsCameraOn] = useState<boolean>(true);
   const [isMicOn, setIsMicOn] = useState<boolean>(true);
   const [handRaised, setHandRaised] = useState<boolean>(false);
-
-  const user = useAuth((state) => state.user) || { name: 'Guest' };
 
   const getDisplayName = (sender: string, isLocal: boolean): string => {
     if (isLocal) return 'You';
@@ -438,7 +437,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
             const studentMetadata = JSON.stringify({
               type: 'student_info',
               studentId: studentId,
-              name: user.name,
+              name: effectiveStudentName || user?.name || 'Student',
               timestamp: Date.now()
             });
             const encoder = new TextEncoder();
@@ -495,7 +494,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
       setRemoteUsers([]);
       setCurrentPage(1);
     };
-  }, [session, renderRemoteVideo, studentId, user.name]);
+  }, [session, renderRemoteVideo, studentId, user?.name]);
 
   const toggleCamera = (): void => {
     const videoTrack = tracksRef.current.find(
@@ -537,7 +536,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
           type: 'hand_raise',
           studentId: studentId,
           studentName: effectiveStudentName,
-          name: effectiveStudentName || user.name,
+          name: effectiveStudentName || user?.name || 'Student',
           isRaised: !handRaised,
           timestamp: Date.now()
         });
@@ -559,7 +558,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
         const messageData = JSON.stringify({
           sender: effectiveStudentName,
           studentId: studentId,
-          name: effectiveStudentName || user.name,
+          name: effectiveStudentName || user?.name || 'Student',
           text: messageText,
           timestamp: Date.now()
         });
@@ -687,7 +686,7 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
           )}
           <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-sm px-3 py-1.5 rounded-full flex items-center gap-2">
             {isMicOn ? <Mic className="w-3 h-3" /> : <MicOff className="w-3 h-3 text-red-400" />}
-            {user.name}
+            {user?.name || effectiveStudentName}
           </div>
           {handRaised && (
             <div className="absolute top-2 right-2 bg-yellow-500 p-1.5 rounded-full animate-pulse">
