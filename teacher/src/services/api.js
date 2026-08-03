@@ -64,6 +64,10 @@ export const createLiveSession = async (sessionData) => {
 
 // Bulk create live sessions (for weekly/monthly scheduling)
 export const createBulkLiveSessions = async (bulkData) => {
+  console.log("Creating bulk live sessions with data:", bulkData);
+
+
+  
   const url = `${BASE_URL}/livesessions`;
   return fetch(url, {
     method: 'POST',
