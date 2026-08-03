@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { FileText, Download, Loader2 } from 'lucide-react';
+import { FileText, Download, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { getSyllabus } from '@/lib/syllabusApi';
 import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
 
 function SectionHeading({ title, icon: Icon }: { title: string, icon?: any }) {
     return (
@@ -19,7 +20,7 @@ function SectionHeading({ title, icon: Icon }: { title: string, icon?: any }) {
 interface SyllabusData {
   courseCode: string;
   courseName: string;
-  syllabusUrl: string;
+  syllabusUrl: string | null;
   syllabusPoints: string[];
 }
 
@@ -36,36 +37,47 @@ export function SyllabusSection({ courseId }: SyllabusSectionProps) {
     async function fetchData() {
       try {
         setLoading(true);
+        setError(null);
+        console.log('Initiating fetch for courseId:', courseId);
         const syllabus = await getSyllabus(courseId);
-        console.log('Fetched syllabus:', syllabus);
+        console.log('Fetched syllabus successfully:', syllabus);
         setData(syllabus);
       } catch (err) {
+        console.error('Error fetching syllabus:', err);
         setError(err instanceof Error ? err.message : 'Failed to load syllabus');
       } finally {
         setLoading(false);
       }
     }
-    if (courseId) fetchData();
+
+    if (courseId) {
+      fetchData();
+    } else {
+      console.warn('courseId is missing or falsy. Fetch skipped.');
+      setLoading(false);
+    }
   }, [courseId]);
 
   if (loading) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="bg-white p-8 lg:p-10 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-center h-64"
-      >
+      <div className="bg-white p-8 lg:p-10 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-[#0d1f5c]" />
           <p className="text-sm text-gray-500">Loading syllabus...</p>
         </div>
-      </motion.div>
+      </div>
     );
   }
 
-  if (error || !data) {
-    return null; // or error UI
+  if (!courseId) {
+    return (
+      <div className="bg-yellow-50 p-6 rounded-2xl border border-yellow-100 text-yellow-700 text-sm">
+        No course ID provided to load syllabus.
+      </div>
+    );
   }
+
+  if (!data) return null;
 
   return (
     <motion.section
@@ -73,19 +85,31 @@ export function SyllabusSection({ courseId }: SyllabusSectionProps) {
       animate={{ opacity: 1, y: 0 }}
       className="bg-white p-8 lg:p-10 rounded-[2rem] border border-gray-100 shadow-sm"
     >
-      
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-[#0d1f5c]/5 to-[#d4940a]/5 p-6 rounded-xl border border-[#0d1f5c]/10">
-          <Button 
-            asChild 
-            size="lg"
-            className="w-full bg-[#0d1f5c] hover:bg-[#d4940a] text-white shadow-lg"
-          >
-            <a href={data.syllabusUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-              <Download className="h-4 w-4" />
-              Download Syllabus PDF
-            </a>
-          </Button>
+          {data.syllabusUrl ? (
+            <Button 
+              asChild 
+              size="lg"
+              className="w-full bg-[#0d1f5c] hover:bg-[#d4940a] text-white shadow-lg"
+            >
+              <a href={data.syllabusUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
+                <Download className="h-4 w-4" />
+                Download Syllabus PDF
+              </a>
+            </Button>
+          ) : (
+            <Button 
+              size="lg"
+              onClick={() => toast.info("Syllabus is not yet uploaded by admin")}
+              className="w-full bg-gray-400 hover:bg-gray-500 text-white shadow-lg cursor-pointer"
+            >
+              <span className="flex items-center justify-center gap-2">
+                <Download className="h-4 w-4" />
+                Download Syllabus PDF
+              </span>
+            </Button>
+          )}
         </div>
         {data.syllabusPoints.length > 0 && (
           <div>
@@ -108,4 +132,3 @@ export function SyllabusSection({ courseId }: SyllabusSectionProps) {
     </motion.section>
   );
 }
-

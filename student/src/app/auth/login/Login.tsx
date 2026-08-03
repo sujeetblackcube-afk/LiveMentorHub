@@ -746,14 +746,7 @@ function FloatingInput({
       >
         {label}
       </motion.label>
-      {(focused || value) && (
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#d4940a] to-[#e8a020] rounded-full"
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: 0.3 }}
-        />
-      )}
+
     </motion.div>
   );
 }

@@ -617,7 +617,8 @@ export default function CourseDetailsPage() {
                     </div>
                 </div>
             </main>
-
+            
+            <Button>add review</Button>
             <Footer />
 
             <EnrollmentModal
