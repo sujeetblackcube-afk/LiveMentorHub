@@ -30,6 +30,8 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import teacherstudentdataRoutes from './androidroutes/teacherstudentdataRoute.js';
 import syllabusRoutes from './routes/syllabusRoute.js';
 import dashboardRoutes from './routes/dashboardRoute.js';
+import deleteAccountRoutes from './routes/deleteAccount.js';
+import reviewRoutes from './routes/reviewRoutes.js';
 
 // Webhook controllers
 import { cashfreeWebhook } from './controllers/enrollmentController.js';
@@ -43,10 +45,9 @@ const app = express();
 // ============================================================
 // CASHFREE WEBHOOKS - MUST BE BEFORE express.json() MIDDLEWARE
 // This route must come FIRST to preserve raw body for signature verification
-app.post('/api/enrollments/cashfree-webhook', express.raw({ type: 'application/json' }), cashfreeWebhook);
+// Common webhook route for both enrollments and subscription events
+app.post('/api/cashfree-webhook', express.raw({ type: 'application/json' }), cashfreeWebhook);
 
-// Cashfree webhook for subscriptions
-app.post('/api/subscriptions/cashfree-webhook', express.raw({ type: 'application/json' }), cashfreeSubscriptionWebhook);
 
 // Middleware
 app.use(cors({
@@ -94,6 +95,11 @@ app.use("/api/notifications", notificationRoutes);
 app.use('/api/android/teacherstudentdata', teacherstudentdataRoutes);
 app.use('/api/syllabus', syllabusRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/reviews', reviewRoutes);
+
+
+//delete accout route for playstore
+app.use('/page', deleteAccountRoutes);
 
 // Health check
 app.get('/', (req, res) => {

@@ -10,7 +10,6 @@ import {
   getSubscriptionsByTeacherId,
   getAllSubscriptionsBuyed,
   getSubscriptionsWithTeacherStatus,
-  createSubscriptionCashfreeOrder,
   verifySubscriptionCashfreeOrder,
 } from "../controllers/subscriptionController.js";
 
@@ -24,7 +23,7 @@ router.use(authMiddleware);
 router.post("/", createSubscription);
 
 // Cashfree order for subscriptions (teacher purchase)
-router.post("/create-cashfree-order", authMiddleware, createSubscriptionCashfreeOrder);
+router.post("/create-cashfree-order", authMiddleware, createSubscriptionBuyed);
 
 // Cashfree verify order for subscription
 router.post("/verify-cashfree-order/:orderId", authMiddleware, verifySubscriptionCashfreeOrder);

@@ -9,12 +9,11 @@ import {
   formatCurrency 
 } from "../utils/currencyRates.js";
 import {convertCoursePrices} from '../controllers/courseController.js'
-
+import Review from '../models/Review.js'
 
 export const getCoursesBySubject = async (req, res) => {
   try {
-    const { studentId } = req.params;
-    const { subjectCode } = req.params;
+    const { studentId, subjectCode } = req.params;
     const { country } = req.query;
 
     if (!studentId) {
@@ -47,18 +46,26 @@ export const getCoursesBySubject = async (req, res) => {
 
     const enrolledCourseCodes = enrollments.map(enrollment => enrollment.courseCode);
 
-    // Add enrollment status to each course and convert prices
+    // Pre-fetch reviews for the student to avoid N+1 queries
+    const studentReviews = await Review.findAll({
+      where: { studentId },
+      attributes: ["courseCode"],
+    });
+    const reviewedCourseCodes = new Set(studentReviews.map(r => r.courseCode));
+
+    // Add enrollment status, review status, and convert prices for each course
     const coursesWithStatus = courses.map(course => {
       const courseData = convertCoursePrices(course, currencyInfo);
       return {
         ...courseData,
-        enrollmentStatus: enrolledCourseCodes.includes(course.courseCode) ? 1 : 0
+        enrollmentStatus: enrolledCourseCodes.includes(course.courseCode) ? 1 : 0,
+        hasReviewed: reviewedCourseCodes.has(course.courseCode),
       };
     });
 
     return res.status(200).json({
       success: true,
-      message: "Courses with enrollment status fetched successfully",
+      message: "Courses with enrollment and review status fetched successfully",
       data: coursesWithStatus,
       currencyInfo: currencyInfo,
     });
@@ -136,6 +143,7 @@ export const getCoursePageData = async (req, res) => {
     let mycourses = [];
     let allCourses = [];
     let enrolledCourseCodes = [];
+    let reviewedCourseCodes = new Set();
 
     // Get currency info based on country
     let currencyInfo = null;
@@ -143,8 +151,15 @@ export const getCoursePageData = async (req, res) => {
       currencyInfo = getCurrencyInfo(country);
     }
 
-    // If studentId is provided, fetch enrolled courses
+    // If studentId is provided, fetch enrolled courses and reviews
     if (studentId) {
+      // Pre-fetch reviews for the student to avoid N+1 queries
+      const studentReviews = await Review.findAll({
+        where: { studentId },
+        attributes: ["courseCode"],
+      });
+      reviewedCourseCodes = new Set(studentReviews.map(r => r.courseCode));
+
       // Fetch all enrollments for the student
       const enrollments = await Enrollment.findAll({
         where: { studentId },
@@ -163,12 +178,13 @@ export const getCoursePageData = async (req, res) => {
           },
         });
 
-        // Add enrollmentStatus: 1 to all mycourses and convert prices
+        // Add enrollmentStatus: 1, hasReviewed, and convert prices to all mycourses
         mycourses = courses.map(course => {
           const courseData = convertCoursePrices(course, currencyInfo);
           return {
             ...courseData,
-            enrollmentStatus: 1
+            enrollmentStatus: 1,
+            hasReviewed: reviewedCourseCodes.has(course.courseCode),
           };
         });
       }
@@ -201,12 +217,13 @@ export const getCoursePageData = async (req, res) => {
       order: [["rating", "DESC"]],
     });
 
-    // Add enrollmentStatus: 0 to all allCourses and convert prices
+    // Add enrollmentStatus: 0, hasReviewed, and convert prices to all allCourses
     allCourses = courses.map(course => {
       const courseData = convertCoursePrices(course, currencyInfo);
       return {
         ...courseData,
-        enrollmentStatus: 0
+        enrollmentStatus: 0,
+        hasReviewed: reviewedCourseCodes.has(course.courseCode),
       };
     });
 

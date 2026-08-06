@@ -319,6 +319,12 @@ const Teacher = sequelize.define(
       defaultValue: "teacher",
       allowNull: false,
     },
+
+    totalReviews: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+    },
   },
   {
     tableName: "teachers",

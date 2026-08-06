@@ -25,6 +25,7 @@ import SubscriptionBuyed from './SubscriptionBuyed.js';
 import TeacherPayout from './Payout.js';
 import Notification from './Notifications.js';
 import Syllabus from './Syllabus.js';
+import Review from './Review.js';
 
 
 // Define associations - Test has many TestSubmissions
@@ -45,6 +46,13 @@ Course.hasOne(Syllabus, {
 Student.hasMany(Enrollment, { foreignKey: 'studentId', sourceKey: 'studentId', as: 'enrollments' });
 Enrollment.belongsTo(Student, { foreignKey: 'studentId', targetKey: 'studentId' });
 
+// Review associations
+Student.hasMany(Review, { foreignKey: 'studentId', sourceKey: 'studentId', as: 'reviews' });
+Review.belongsTo(Student, { foreignKey: 'studentId', targetKey: 'studentId', as: 'student' });
+
+Course.hasMany(Review, { foreignKey: 'courseCode', sourceKey: 'courseCode', as: 'reviews' });
+Review.belongsTo(Course, { foreignKey: 'courseCode', targetKey: 'courseCode', as: 'course' });
+
 // Sync models function
 const syncModels = async () => {
   try {
@@ -56,6 +64,9 @@ const syncModels = async () => {
       ALTER TABLE "students" DROP COLUMN IF EXISTS "activeAppToken";
       ALTER TABLE "courses" ADD COLUMN IF NOT EXISTS "introVideo" TEXT;
       ALTER TABLE "syllabus" ADD COLUMN IF NOT EXISTS "introVideoUrl" TEXT;
+
+      ALTER TABLE "courses" ADD COLUMN IF NOT EXISTS "totalReviews" INTEGER DEFAULT 0;
+      ALTER TABLE "teachers" ADD COLUMN IF NOT EXISTS "totalReviews" INTEGER DEFAULT 0;
     `).catch((err) => {
       console.warn("DB migration query notice:", err.message);
     });
@@ -93,5 +104,6 @@ export {
   TeacherPayout,
   Notification,
   Syllabus,
+  Review,
   syncModels
 };

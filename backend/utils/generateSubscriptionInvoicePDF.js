@@ -71,6 +71,7 @@ export const generateSubscriptionInvoicePDF = (subscription, company = {}) => {
       });
       doc.restore();
     }
+
     doc
       .fillColor("#ffffff")
       .font("Helvetica-Bold")
@@ -120,7 +121,7 @@ export const generateSubscriptionInvoicePDF = (subscription, company = {}) => {
     =============================== */
     const cardTop = 220;
 
-    // Teacher/Buyer Card
+    // Teacher/Buyer Card (Replaced teacherId with Email & Phone)
     doc.roundedRect(40, cardTop, 250, 130, 10).fill(lightGray);
     doc.strokeColor(border).stroke();
 
@@ -133,10 +134,11 @@ export const generateSubscriptionInvoicePDF = (subscription, company = {}) => {
     doc
       .fillColor("#000")
       .font("Helvetica")
-      .fontSize(11)
-      .text(`Name: ${subscription.teacherName || "-"}`, 55, cardTop + 45)
-      .text(`Teacher ID: ${subscription.teacherId || "-"}`, 55, cardTop + 65)
-      .text(`Plan: ${subscription.planName || "-"}`, 55, cardTop + 85);
+      .fontSize(10)
+      .text(`Name: ${subscription.teacherName || "-"}`, 55, cardTop + 42)
+      .text(`Email: ${subscription.teacherEmail || subscription.email || "-"}`, 55, cardTop + 60, { width: 220 })
+      .text(`Phone: ${subscription.teacherPhone || subscription.phone || "-"}`, 55, cardTop + 80)
+      .text(`Plan: ${subscription.planName || "-"}`, 55, cardTop + 98);
 
     // Invoice Details Card
     doc.roundedRect(305, cardTop, 250, 130, 10).fill(lightGray);
@@ -154,12 +156,13 @@ export const generateSubscriptionInvoicePDF = (subscription, company = {}) => {
 
     doc
       .fillColor("#000")
-      .fontSize(11)
       .font("Helvetica")
-      .text(`Order ID: ${subscription.orderId || "-"}`, 320, cardTop + 45)
+      .fontSize(6)
+      .text(`Order ID: ${subscription.orderId || subscription.id || "-"}`, 320, cardTop + 45, { width: 220 })
+      .fontSize(10)
       .text(`Issue Date: ${createdAt}`, 320, cardTop + 65)
-      .text(`Start Date: ${startDate}`, 320, cardTop + 85)
-      .text(`End Date: ${endDate}`, 320, cardTop + 105);
+      .text(`Start Date: ${startDate}`, 320, cardTop + 83)
+      .text(`End Date: ${endDate}`, 320, cardTop + 101);
 
     /* ===============================
        SUBSCRIPTION TABLE (MODERN)
@@ -233,7 +236,7 @@ export const generateSubscriptionInvoicePDF = (subscription, company = {}) => {
         "Thank you for subscribing to our platform! This invoice confirms your subscription purchase.",
         40,
         640,
-        { align: "center", width: 515 },
+        { align: "center", width: 515 }
       );
 
     /* ===============================

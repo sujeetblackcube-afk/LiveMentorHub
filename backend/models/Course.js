@@ -101,6 +101,11 @@ const Course = sequelize.define(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
+    totalReviews: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+    },
   },
   {
     tableName: "courses",

@@ -9,6 +9,7 @@ import {
   getCourseCount,
   uploadThumbnail
 } from "../controllers/courseController.js";
+import { getCourseReviews } from "../controllers/reviewController.js";
 import authMiddleware from '../middleware/authmiddleware.js';
 
 const router = express.Router();
@@ -24,6 +25,9 @@ router.get("/", getAllCourses);
 // Get course count
 router.get("/count", getCourseCount);
 
+// Get reviews for a specific course
+router.get("/:courseCode/reviews", getCourseReviews);
+``
 // Get a single course by ID
 router.get("/:courseCode", getCourseById);
 

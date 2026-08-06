@@ -52,6 +52,7 @@ export interface CourseItem {
     subcategory?: string;
     stream?: string;
     tabs: string[];
+    hasReviewed?: boolean;
     curriculum: {
         id: number;
         title: string;

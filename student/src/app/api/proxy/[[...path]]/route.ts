@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL || "https://clussplus.auby.in";
+const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://clussplus.auby.in";
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +24,7 @@ async function handleRequest(req: NextRequest, paramsPromise: Promise<{ path?: s
     const { path } = await paramsPromise;
     const fullPath = path ? path.join("/") : "";
     const searchParams = req.nextUrl.searchParams.toString();
-    const url = `${BACKEND_URL}/${fullPath}${searchParams ? '?' + searchParams : ''}`;
+    const url = `${NEXT_PUBLIC_BACKEND_URL}/${fullPath}${searchParams ? '?' + searchParams : ''}`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);

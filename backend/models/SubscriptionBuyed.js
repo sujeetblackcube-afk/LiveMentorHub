@@ -38,8 +38,6 @@ const SubscriptionBuyed = sequelize.define(
       defaultValue: 0,
     },
 
-
-    // 🔥 This handles 15 days / 30 days / 90 days etc.
     durationDays: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -61,17 +59,13 @@ const SubscriptionBuyed = sequelize.define(
     },
 
     paymentStatus: {
-      type: DataTypes.ENUM("pending", "paid", "failed"),
+      type: DataTypes.ENUM( "pending", "paid", "failed"),
       defaultValue: "pending",
     },
     transactionId: {
       type: DataTypes.STRING,
       allowNull: true,
-    },
-    pdfUrl: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
+    }
   },
   {
     tableName: "subscription_buyed",

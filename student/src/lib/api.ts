@@ -3,13 +3,13 @@
  * Uses environment variables for dev & production.
  */
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE as string;
+export const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL as string;
 
-if (!API_BASE) {
-  throw new Error(
-    "NEXT_PUBLIC_API_BASE is not defined in environment variables.",
-  );
-}
+// if (!API_BASE) {
+//   throw new Error(
+//     "NEXT_PUBLIC_BACKEND_URL is not defined in environment variables.",
+//   );
+// }
 
 export const API_AUTH_BASE = API_BASE;
 export const API_FORGOT_PASSWORD_BASE = API_BASE;

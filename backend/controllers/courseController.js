@@ -14,6 +14,7 @@ import {
   formatCurrency,
   getCurrencyInfo 
 } from "../utils/currencyRates.js";
+import Review from '../models/Review.js';
 
 export const convertCoursePrices = (course, currencyInfo) => {
   const courseData = course.toJSON ? course.toJSON() : course;
@@ -234,6 +235,8 @@ export const createCourse = async (req, res) => {
 export const getAllCourses = async (req, res) => {
   try {
     const { status, courseType, difficulty, board, medium, classname, subject, category, page, limit } = req.query;
+    // Support studentId from query params or authenticated user object
+    const studentId = req.query.studentId || req.user?.studentId;
 
     const where = {};
     if (status) where.status = status;
@@ -255,6 +258,16 @@ export const getAllCourses = async (req, res) => {
       }]
     };
 
+    // Pre-fetch reviewed course codes for the student to avoid N+1 queries
+    let reviewedCourseCodes = new Set();
+    if (studentId) {
+      const studentReviews = await Review.findAll({
+        where: { studentId },
+        attributes: ['courseCode'],
+      });
+      reviewedCourseCodes = new Set(studentReviews.map(r => r.courseCode));
+    }
+
     if (page) {
       const paginatedResult = await getPaginatedData(
         Course,
@@ -262,9 +275,16 @@ export const getAllCourses = async (req, res) => {
         page,
         limit || 10
       );
+
+      const enhancedData = paginatedResult.data.map(course => {
+        const courseData = course.toJSON ? course.toJSON() : course;
+        courseData.hasReviewed = reviewedCourseCodes.has(courseData.courseCode);
+        return courseData;
+      });
+
       return res.status(200).json({
         success: true,
-        data: paginatedResult.data,
+        data: enhancedData,
         pagination: {
           totalItems: paginatedResult.totalItems,
           totalPages: paginatedResult.totalPages,
@@ -275,10 +295,15 @@ export const getAllCourses = async (req, res) => {
     }
 
     const courses = await Course.findAll(queryOptions);
+    const enhancedCourses = courses.map(course => {
+      const courseData = course.toJSON ? course.toJSON() : course;
+      courseData.hasReviewed = reviewedCourseCodes.has(courseData.courseCode);
+      return courseData;
+    });
 
     return res.status(200).json({
       success: true,
-      data: courses,
+      data: enhancedCourses,
     });
   } catch (error) {
     console.error("Get Courses Error:", error);
@@ -292,6 +317,7 @@ export const getAllCourses = async (req, res) => {
 export const getCourseById = async (req, res) => {
   try {
     const { courseCode } = req.params;
+    const studentId = req.user?.studentId;
 
     const course = await Course.findByPk(courseCode);
 
@@ -302,9 +328,24 @@ export const getCourseById = async (req, res) => {
       });
     }
 
+    let hasReviewed = false;
+    if (studentId) {
+      const reviewCount = await Review.count({
+        where: {
+          courseCode,
+          studentId,
+        },
+      });
+      hasReviewed = reviewCount > 0;
+    }
+
+    // Convert Sequelize instance to plain object and attach hasReviewed
+    const courseData = course.toJSON();
+    courseData.hasReviewed = hasReviewed;
+
     return res.status(200).json({
       success: true,
-      data: course,
+      data: courseData,
     });
   } catch (error) {
     console.error("Get Course Error:", error);
@@ -586,7 +627,6 @@ export const deactivateExpiredCourses = async () => {
     throw error;
   }
 };
-
 
 
 

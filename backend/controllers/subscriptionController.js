@@ -8,6 +8,7 @@ import { getPaginatedData } from "../utils/pagination.js";
 import { generateSubscriptionInvoicePDF } from "../utils/generateSubscriptionInvoicePDF.js";
 import multer from "multer";
 import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
+import { notifySubscriptionConfirmation } from "../utils/notifySubscriptionEmail.js";
 
 // Helper function to upload PDF buffer to Cloudinary
 const uploadPdfToS3 = async (buffer, fileName) => {
@@ -205,7 +206,7 @@ export const deleteSubscription = async (req, res) => {
 };
 
 // NOTE: For real purchases, use Cashfree flow + webhook. This endpoint is kept for admin/manual creation.
-export const createSubscriptionCashfreeOrder = async (req, res) => {
+export const createSubscriptionBuyed = async (req, res) => {
   try {
     const { teacherId, planName } = req.body;
 
@@ -282,6 +283,19 @@ export const createSubscriptionCashfreeOrder = async (req, res) => {
     const client = createCashfreeClient();
     const response = await client.PGCreateOrder(request);
 
+    const newSubscription = await SubscriptionBuyed.create({
+      teacherId: response.data.customer_details.customer_id,
+      teacherName: response.data.customer_details.customer_name,
+      orderId: response.data.order_id,
+      planName: response.data.order_tags.planName,
+      price: parseFloat(response.data.order_amount),
+      durationDays: parseInt(response.data.order_tags.durationDays),
+      startDate: response.data.order_tags.startDate,
+      endDate: response.data.order_tags.endDate,
+      status: "active",
+      paymentStatus: "pending",
+    });
+
     return res.status(200).json({
       success: true,
       payment_session_id: response.data.payment_session_id,
@@ -294,84 +308,6 @@ export const createSubscriptionCashfreeOrder = async (req, res) => {
     return res.status(error.response?.status || 500).json({
       success: false,
       message: error.response?.data?.message || error.message || "Internal server error"
-    });
-  }
-};
-
-// Create a new subscription buyed (teacherId from params, other fields from body)
-// NOTE: For real purchases, use Cashfree flow + webhook. This endpoint is kept for admin/manual creation.
-export const createSubscriptionBuyed = async (req, res) => {
-  try {
-    const { teacherId } = req.params;
-    const { planName, price, durationDays, startDate, endDate, orderId, status, paymentStatus, transactionId } = req.body;
-
-    // Validate required fields
-    if (!planName || price === undefined || !durationDays || !startDate || !endDate) {
-      return res.status(400).json({
-        success: false,
-        message: "Plan name, price, duration days, start date, and end date are required",
-      });
-    }
-
-    // Fetch teacher from Teacher table using teacherId
-    const teacher = await Teacher.findOne({ where: { teacherId } });
-
-    if (!teacher) {
-      return res.status(404).json({
-        success: false,
-        message: "Teacher not found",
-      });
-    }
-
-    const teacherName = teacher.name;
-
-    const subscriptionBuyed = await SubscriptionBuyed.create({
-      teacherId,
-      teacherName,
-      planName,
-      price,
-      durationDays,
-      startDate,
-      endDate,
-      orderId: orderId || null,
-      status: status || "active",
-      paymentStatus: paymentStatus || "pending",
-      transactionId: transactionId || null,
-    });
-
-    // Generate PDF invoice
-    try {
-      const pdfBuffer = await generateSubscriptionInvoicePDF(subscriptionBuyed, {
-        name: process.env.COMPANY_NAME || "LiveMentorHub",
-        email: process.env.COMPANY_EMAIL || "support@livementorhub.com",
-        address: process.env.COMPANY_ADDRESS || "Nehru Place, New Delhi",
-        phone: process.env.COMPANY_PHONE || "+91 0000000000",
-        logoPath: process.env.COMPANY_LOGO_PATH || "uploads/company/logo.png",
-      });
-
-      // Generate unique filename for the PDF
-      const pdfFileName = `subscription-invoice-${subscriptionBuyed.id}-${Date.now()}.pdf`;
-
-      // Upload PDF to S3
-      const pdfUrl = await uploadPdfToS3(pdfBuffer, pdfFileName);
-
-      // Update subscription with PDF URL
-      subscriptionBuyed.pdfUrl = pdfUrl;
-      await subscriptionBuyed.save();
-    } catch (pdfError) {
-      console.error("Error generating PDF:", pdfError);
-    }
-
-    return res.status(201).json({
-      success: true,
-      message: "Subscription buyed created successfully",
-      data: subscriptionBuyed,
-    });
-  } catch (error) {
-    console.error("Create Subscription Buyed Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
     });
   }
 };
@@ -651,6 +587,7 @@ export const verifySubscriptionCashfreeOrder = async (req, res) => {
     const order = response.data;
 
     if (!order || order.order_status !== "PAID") {
+      console
       return res.status(400).json({
         success: false,
         message: `Order status is ${order?.order_status || "NOT PAID"}`,

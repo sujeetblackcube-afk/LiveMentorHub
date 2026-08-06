@@ -18,6 +18,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "@/components/layout/Footer";
 import { SyllabusSection } from './SyllabusSection';
 import { cn, downloadFile } from "@/lib/utils";
+import { AddReviewModal } from "@/components/courses/AddReviewModal";
+import { AllReviewsModal } from "@/components/courses/AllReviewsModal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -161,7 +163,6 @@ export default function CourseDetailsPage() {
         : 0;
 
     const hasCurriculum = course.curriculum && course.curriculum.length > 0;
-
     return (
         <div className="bg-[#f8f9fa] min-h-screen flex flex-col font-sans selection:bg-[#d4940a] selection:text-white">
 
@@ -617,7 +618,8 @@ export default function CourseDetailsPage() {
                 </div>
             </main>
             
-            <Button>add review</Button>
+            <AddReviewModal courseId={courseId}/>
+            <AllReviewsModal courseId={courseId}/>
             <Footer />
 
             <EnrollmentModal
