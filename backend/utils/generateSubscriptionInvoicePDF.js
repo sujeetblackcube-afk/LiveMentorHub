@@ -136,8 +136,7 @@ export const generateSubscriptionInvoicePDF = (subscription, company = {}) => {
       .font("Helvetica")
       .fontSize(10)
       .text(`Name: ${subscription.teacherName || "-"}`, 55, cardTop + 42)
-      .text(`Email: ${subscription.teacherEmail || subscription.email || "-"}`, 55, cardTop + 60, { width: 220 })
-      .text(`Phone: ${subscription.teacherPhone || subscription.phone || "-"}`, 55, cardTop + 80)
+      .text(`Email: ${userEmail || "-"}`, 55, cardTop + 60, { width: 220 })
       .text(`Plan: ${subscription.planName || "-"}`, 55, cardTop + 98);
 
     // Invoice Details Card

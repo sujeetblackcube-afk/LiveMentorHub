@@ -14,6 +14,7 @@ import Notification from "../models/Notifications.js";
 import { triggerPushForNotifications } from "../config/onesignalService.js";
 import crypto from "crypto";
 import {notifySubscriptionConfirmation} from '../utils/notifySubscriptionEmail.js'
+import SubscriptionBuyed from "../models/SubscriptionBuyed.js";
 
 // Helper function to update total enrollment for a course
 const updateTotalEnrollment = async (courseCode) => {

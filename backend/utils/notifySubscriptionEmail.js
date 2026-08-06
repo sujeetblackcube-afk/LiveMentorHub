@@ -21,7 +21,7 @@ export const notifySubscriptionConfirmation = async (subscription, userEmail, co
     // 1. Conditionally generate & save the PDF ONLY if payment is paid
     const attachments = [];
     if (isPaid) {
-      const pdfBuffer = await generateSubscriptionInvoicePDF(subscription, companyDetails);
+      const pdfBuffer = await generateSubscriptionInvoicePDF(subscription, userEmail, companyDetails);
 
       const tempDir = path.resolve("temp");
       if (!fs.existsSync(tempDir)) {
