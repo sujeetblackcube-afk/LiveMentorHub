@@ -480,6 +480,7 @@ export const cashfreeWebhook = async (req, res) => {
     const orderData = event.data?.order;
     const paymentData = event.data?.payment;
     const customerData = event.data?.customer_details;
+    const userEmail = customerData.customer_email;
 
     if (!orderData?.order_id) {
       return res.status(400).json({ error: "Order ID missing in webhook payload" });
@@ -502,7 +503,6 @@ export const cashfreeWebhook = async (req, res) => {
         }
 
         console.log("Customer data",customerData);
-        const userEmail = customerData.customer_email;
 
       await subscription.update({
         paymentStatus: "paid",
@@ -527,7 +527,6 @@ export const cashfreeWebhook = async (req, res) => {
           return res.status(404).json({ error: "Enrollment record not found" });
         }
 
-        const userEmail = customerData?.customer_email;
 
       await enrollment.update({
         paymentStatus: "PAID",
@@ -563,7 +562,6 @@ export const cashfreeWebhook = async (req, res) => {
           transactionId: transactionId});
 
       console.log(`⚠️ Subscription updated to FAILED for Order ID: ${orderId}`);
-
       
       await notifySubscriptionConfirmation(subscription, userEmail);
 
@@ -592,7 +590,7 @@ export const cashfreeWebhook = async (req, res) => {
       } 
 
       else {
-        return res.status(4000).json({ error: "Webhook received but type is not recognized. No action taken." });
+        return res.status(400).json({ error: "Webhook received but type is not recognized. No action taken." });
       }
     }
 
