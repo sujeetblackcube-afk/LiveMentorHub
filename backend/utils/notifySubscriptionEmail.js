@@ -4,6 +4,7 @@ import path from "path";
 import { generateSubscriptionInvoicePDF } from "../utils/generateSubscriptionInvoicePDF.js"; 
 
 export const notifySubscriptionConfirmation = async (subscription, userEmail, companyDetails = {}) => {
+  console.log("Preparing to send subscription confirmation email to:", userEmail);
   let tempFilePath = null;
 
   try {
@@ -104,7 +105,7 @@ export const notifySubscriptionConfirmation = async (subscription, userEmail, co
 
     // 5. Send Email
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent: %s', info.messageId);
+    console.log('Email sent: %s', userEmail, info.messageId);
 
     return true;
   } catch (error) {

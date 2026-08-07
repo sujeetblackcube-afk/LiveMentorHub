@@ -69,8 +69,8 @@ const Course = sequelize.define(
       allowNull: true,
     },
     courseDuration: {
-      type: DataTypes.INTEGER, // duration in days
-      allowNull: true,
+      type: DataTypes.INTEGER, 
+      allowNull: false,
     },
     // academic specific fields
     board: DataTypes.STRING,

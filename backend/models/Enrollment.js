@@ -15,7 +15,7 @@ const Enrollment = sequelize.define(
     // Enrollment Identity
     // =======================
     enrollmentCode: {
-      type: DataTypes.STRING(30),
+      type: DataTypes.STRING(255),
       allowNull: false,
       primaryKey: true,
     },
@@ -176,12 +176,6 @@ const Enrollment = sequelize.define(
   {
     tableName: "enrollments",
     timestamps: true,
-    indexes: [
-      {
-        unique: true,
-        fields: ["studentId", "courseCode"],
-      },
-    ],
     // Removed unique index on studentId/courseCode to allow multiple enrollments
     // for the same student in the same course (e.g., renewed enrollments)
   },

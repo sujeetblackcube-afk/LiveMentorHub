@@ -2,7 +2,7 @@ import PDFDocument from "pdfkit";
 import path from "path";
 import fs from "fs";
 
-export const generateSubscriptionInvoicePDF = (subscription, company = {}) => {
+export const generateSubscriptionInvoicePDF = (subscription, userEmail, company = {}) => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: "A4",

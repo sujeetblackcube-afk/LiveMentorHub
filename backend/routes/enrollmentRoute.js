@@ -33,7 +33,6 @@ const router = express.Router();
 // Cashfree Create Order Route
 router.post("/create-cashfree-order", authMiddleware, createCashfreeOrder);
 
-router.post("/verify-cashfree-order/:orderId", authMiddleware, verifyEnrollmentCashfreeOrder);
 // Apply auth middleware to all other routes
 router.use(authMiddleware);
 

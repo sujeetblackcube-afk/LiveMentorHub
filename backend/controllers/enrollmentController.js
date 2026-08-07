@@ -223,7 +223,8 @@ export const createCashfreeOrder = async (req, res) => {
     const amount = req.body.amount || course.discountedprice || course.originalprice || 0;
     const currency = (req.body.currency || "INR").toUpperCase();
 
-    const cfOrderId = `ENR_${Date.now()}_${studentId}`;
+    const now = Date.now();
+    const cfOrderId = `ENR_${now}_${studentId}`;
 
     let returnBaseUrl = process.env.CASHFREE_RETURN_URL || process.env.FRONTEND_URL;
     if (!returnBaseUrl) {
@@ -241,7 +242,6 @@ export const createCashfreeOrder = async (req, res) => {
       }
     }
 
-    // Cashfree Production strictly requires HTTPS for return_url
     if (process.env.CASHFREE_ENV === "PRODUCTION" && returnBaseUrl.startsWith("http://")) {
       returnBaseUrl = returnBaseUrl.replace(/^http:\/\//i, "https://");
     }
@@ -259,7 +259,7 @@ export const createCashfreeOrder = async (req, res) => {
         customer_name: student.name || "Student"
       },
       order_meta: {
-        return_url: `${normalizedReturnUrl}checkout-success?order_id={order_id}`
+        return_url: `${normalizedReturnUrl}checkout-success?order_id={cfOrderId}`,
       },
       order_tags: {
         studentId: String(studentId),
@@ -267,9 +267,49 @@ export const createCashfreeOrder = async (req, res) => {
         type: "enrollment"
       }
     };
-
     const client = createCashfreeClient();
     const response = await client.PGCreateOrder(request);
+
+    // FIXED: Proper Date Math
+    const nowDate = new Date();
+    const courseDurationDays = Number(course.courseDuration) || 30; // fallback if missing
+    const expireDate = new Date(nowDate.getTime() + courseDurationDays * 24 * 60 * 60 * 1000);
+
+    console.log("making new enrollment record with orderId:", cfOrderId);
+    const newEnrollment = await Enrollment.create({
+      id: await generateEnrollmentId(),
+      enrollmentCode: cfOrderId,
+      enrollmentDate: nowDate,
+      enrollmentExpireDate: expireDate, // Pass calculated Date object
+      courseStartDate: nowDate,
+      courseExpiryDate: expireDate,     // Pass calculated Date object
+
+      status: "PENDING", // Best practice: keep as PENDING until webhook/payment verification succeeds
+
+      // Student Snapshot
+      studentId: student.studentId,
+      studentName: student.name,
+      studentEmail: student.email,
+      studentMobile: student.mobile,
+      studentAddress: student.address,
+      teacherId: null,
+
+      // Course Snapshot
+      courseName: course.courseName,
+      courseCode: course.courseCode,
+      coursePrice: course.discountedprice || course.mrp,
+
+      // Payment Details
+      paymentStatus: "UNPAID",
+      transactionNumber: null,
+      orderId: cfOrderId || null,
+      paymentMethod: null,
+      paymentDate: nowDate,
+
+      // Learning Tracking
+      progress: 0,
+      remarks: null,
+    });
 
     res
       .status(200)
@@ -280,8 +320,28 @@ export const createCashfreeOrder = async (req, res) => {
         cf_mode: process.env.CASHFREE_ENV === "PRODUCTION" ? "production" : "sandbox"
       });
   } catch (err) {
-    const errorDetails = err.response?.data || err.message;
-    console.error("Cashfree create order error:", errorDetails);
+    
+  if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
+    console.log("=== EXACT FIELD VALIDATION ERROR ===");
+    err.errors.forEach(e => {
+      console.log(`Field: ${e.path} | Error: ${e.message} | Value Sent: ${e.value}`);
+    });
+  } else {
+    console.error("Cashfree create order error:", err);
+  }
+  // ... rest of error response
+
+
+
+
+
+    // Enhanced error logging to capture exact Sequelize validation issues
+    if (err.name === 'SequelizeValidationError') {
+      console.error("Sequelize Validation Errors:", err.errors.map(e => ({ field: e.path, message: e.message })));
+    } else {
+      console.error("Cashfree create order error:", err.response?.data || err.message);
+    }
+
     res.status(err.response?.status || 500).json({
       success: false,
       message: err.response?.data?.message || err.message || "Internal server error"
@@ -382,183 +442,6 @@ export const verifyEnrollmentCashfreeOrder = async (req, res) => {
   }
 };
 
-// Cashfree Webhook to create enrollment after payment success
-
-// export const cashfreeWebhook = async (req, res) => {
-//   try {
-//     const timestamp = req.headers["x-webhook-timestamp"];
-//     const receivedSignature = req.headers["x-webhook-signature"];
-
-//     if (!timestamp || !receivedSignature) {
-//       console.error("❌ Missing required Cashfree webhook headers");
-//       return res.status(400).json({ error: "Missing webhook headers" });
-//     }
-
-//     const rawBody = Buffer.isBuffer(req.body)
-//       ? req.body.toString("utf8")
-//       : typeof req.body === "string"
-//       ? req.body
-//       : JSON.stringify(req.body);
-
-//     const secretKey = process.env.CASHFREE_SECRET_KEY;
-//     const computedSignature = crypto
-//       .createHmac("sha256", secretKey)
-//       .update(timestamp + rawBody)
-//       .digest("base64");
-
-//     if (computedSignature !== receivedSignature) {
-//       console.error("❌ Cashfree Webhook Error: Signature mismatch");
-//       console.error("Received:", receivedSignature);
-//       console.error("Computed:", computedSignature);
-//       return res.status(400).json({ error: "Invalid signature" });
-//     }
-
-//     const event = typeof req.body === "object" && !Buffer.isBuffer(req.body)
-//       ? req.body
-//       : JSON.parse(rawBody);
-
-//     console.log("✅ Cashfree Webhook Received Successfully:");
-//     console.log(JSON.stringify(event, null, 2));
-
-//     // if (event.type === "PAYMENT_SUCCESS_WEBHOOK") {
-//       // handle payment success
-
-
-//     // }
-//     // else if(event.type === "PAYMENT_FAILED_WEBHOOK") {
-//       // handle payment failure
-//     // }
-
-//     return res.status(400).json({ status: "failed", received: true, message: "Webhook received but not processed. Event type not handled." });
-
-//   } catch (err) {
-//     console.error("❌ Cashfree Webhook Processing Error:", err.message);
-//     return res.status(500).json({ error: err.message });
-//   }
-// };
-
-
-  //   if (event.type !== "PAYMENT_SUCCESS_WEBHOOK") {
-  //     return res.status(200).json({ received: true });
-  //   }
-
-  //   const order = event.data.order;
-  //   const payment = event.data.payment;
-
-  //   const tags = order.order_tags || {};
-  //   if (tags.type !== "enrollment") {
-  //     return res.status(200).json({ received: true });
-  //   }
-
-  //   const studentId = tags.studentId;
-  //   const courseCode = tags.courseCode;
-
-  //   if (!studentId || !courseCode) {
-  //     console.error("❌ Metadata missing in Cashfree webhook");
-  //     return res.status(200).send("Metadata missing, skipped safely");
-  //   }
-
-  //   // Fetch student & course
-  //   const student = await Student.findOne({ where: { studentId } });
-  //   const course = await Course.findOne({ where: { courseCode } });
-
-  //   if (!student || !course) {
-  //     console.error("❌ Student or Course not found");
-  //     return res.status(200).send("Student or course not found");
-  //   }
-
-  //   // ✅ Prevent duplicate webhook processing (VERY IMPORTANT)
-  //   const transactionIdStr = payment.cf_payment_id.toString();
-  //   const existingPayment = await Enrollment.findOne({
-  //     where: { transactionNumber: transactionIdStr },
-  //   });
-
-  //   if (existingPayment) {
-  //     return res.status(200).send("Already processed this payment");
-  //   }
-
-  //   // Generate unique enrollment code
-  //   const prefix = "ENR";
-  //   const today = new Date();
-  //   const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`;
-
-  //   const lastEnrollment = await Enrollment.findOne({
-  //     where: { enrollmentCode: { [Op.like]: `${prefix}${dateStr}%` } },
-  //     order: [["createdAt", "DESC"]],
-  //   });
-
-  //   let nextNumber = 1;
-  //   if (lastEnrollment) {
-  //     const lastCode = lastEnrollment.enrollmentCode;
-  //     nextNumber = parseInt(lastCode.replace(`${prefix}${dateStr}`, ""), 10) + 1;
-  //   }
-
-  //   const enrollmentCode = `${prefix}${dateStr}${String(nextNumber).padStart(4, "0")}`;
-
-  //   const courseStartDate = new Date();
-  //   let enrollmentExpireDate = null;
-
-  //   if (course.courseDuration && Number.isInteger(course.courseDuration) && course.courseDuration > 0) {
-  //     enrollmentExpireDate = new Date(courseStartDate);
-  //     enrollmentExpireDate.setDate(enrollmentExpireDate.getDate() + course.courseDuration + 30);
-  //   }
-
-  //   const id = await generateEnrollmentId();
-
-  //   const enrollment = await Enrollment.create({
-  //     id,
-  //     enrollmentCode,
-  //     status: "APPROVED",
-  //     studentId,
-  //     studentName: student.name,
-  //     studentEmail: student.email,
-  //     studentMobile: student.mobile,
-  //     studentAddress: student.address,
-  //     courseCode: course.courseCode,
-  //     courseName: course.courseName,
-  //     coursePrice: course.discountedprice,
-  //     courseStartDate,
-  //     enrollmentExpireDate,
-  //     paymentStatus: "PAID",
-  //     transactionNumber: transactionIdStr,
-  //     orderId: order.order_id,
-  //     paymentMethod: payment.payment_group || "card",
-  //     amountPaid: payment.payment_amount,
-  //     currency: payment.payment_currency,
-  //   });
-
-  //   try {
-  //     const pdfBuffer = await generateEnrollmentPDF(enrollment);
-  //     const fileName = `${enrollment.enrollmentCode}-${uuidv4()}.pdf`;
-  //     const pdfUrl = await uploadPdfToS3(pdfBuffer, fileName, enrollment.studentId);
-  //     await enrollment.update({ pdfUrl });
-  //   } catch (pdfError) {
-  //     console.error("⚠️ PDF generation failed:", pdfError.message);
-  //   }
-
-  //   try {
-  //     const notification = await Notification.create({
-  //       userId: student.studentId,
-  //       role: "student",
-  //       title: "🎉 Enrollment Confirmed!",
-  //       message: `You are successfully enrolled in ${course.courseName}. Start learning today! 🚀`,
-  //       type: "enrollment",
-  //       referenceId: enrollment.id,
-  //     });
-
-  //     await triggerPushForNotifications([notification]);
-  //   } catch (notifyError) {
-  //     console.error("⚠️ Notification failed:", notifyError.message);
-  //   }
-
-  //   res.status(200).json({ received: true });
-  // } catch (err) {
-  //   console.error("❌ Cashfree Webhook Error:", err);
-  //   res.status(200).json({ error: err.message });
-  // }
-// };
-
-
 export const cashfreeWebhook = async (req, res) => {
   try {
     const timestamp = req.headers["x-webhook-timestamp"];
@@ -602,23 +485,24 @@ export const cashfreeWebhook = async (req, res) => {
     }
 
     const orderId = orderData.order_id;
-
-    // 1. Find the existing subscription record by orderId
-    const subscription = await SubscriptionBuyed.findOne({ where: { orderId } });
-
-    if (!subscription) {
-      console.error(`❌ Subscription record not found for Order ID: ${orderId}`);
-      return res.status(404).json({ error: "Subscription record not found" });
-    }
-
-    // 2. Extract Customer Email (from Cashfree payload or existing record)
-    const userEmail = customerData?.customer_email || subscription.teacherEmail;
+    const transactionId = paymentData?.cf_payment_id ? String(paymentData.cf_payment_id) : null;
 
     // Handle Payment Success
     if (eventType === "PAYMENT_SUCCESS_WEBHOOK") {
-      const transactionId = paymentData?.cf_payment_id ? String(paymentData.cf_payment_id) : null;
 
-      
+      // handle subscription 
+      if(event.data.order.order_tags.type === "subscription") {
+     
+        const subscription = await SubscriptionBuyed.findOne({ where: { orderId } });
+
+        if (!subscription) {
+          console.error(`❌ Subscription record not found for Order ID: ${orderId}`);
+          return res.status(404).json({ error: "Subscription record not found" });
+        }
+
+        console.log("Customer data",customerData);
+        const userEmail = customerData.customer_email;
+
       await subscription.update({
         paymentStatus: "paid",
         transactionId: transactionId,
@@ -630,13 +514,52 @@ export const cashfreeWebhook = async (req, res) => {
       await notifySubscriptionConfirmation(subscription, userEmail);
 
       return res.status(200).json({ status: "success", message: "Payment processed successfully" });
+
+      }
+
+      else if(event.data.order.order_tags.type === "enrollment") {
+        // Handle enrollment logic
+        const enrollment = await Enrollment.findOne({ where: { orderId } });
+
+        if (!enrollment) {
+          console.error(`❌ Enrollment record not found for Order ID: ${orderId}`);
+          return res.status(404).json({ error: "Enrollment record not found" });
+        }
+
+        const userEmail = customerData?.customer_email;
+
+      await enrollment.update({
+        paymentStatus: "PAID",
+        transactionId: transactionId,
+      });
+
+      console.log(`🎉 Enrollment updated to PAID for Order ID: ${orderId}`);
+
+      // Invoke notification email with PDF invoice attached
+      await notifySubscriptionConfirmation(enrollment, userEmail);
+
+      return res.status(200).json({ status: "success", message: "Payment processed successfully" });
+
+      }
+
+      else{
+        return res.status(400).send(`Webhook received for orderId: ${orderId}, but type is not recognized. No action taken.`);
+      }
     } 
 
     // Handle Payment Failure
     else if (eventType === "PAYMENT_FAILED_WEBHOOK" || eventType === "PAYMENT_DECLINED_WEBHOOK") {
-      await subscription.update({
-        paymentStatus: "failed",
-      });
+      if(event.data.order.order_tags.type === "subscription") {
+        const subscription = await SubscriptionBuyed.findOne({ where: { orderId } });
+
+        if (!subscription) {
+          console.error(`❌ Subscription record not found for Order ID: ${orderId}`);
+          return res.status(404).json({ error: "Subscription record not found" });
+        }
+
+        await subscription.update({
+          paymentStatus: "failed",
+          transactionId: transactionId});
 
       console.log(`⚠️ Subscription updated to FAILED for Order ID: ${orderId}`);
 
@@ -644,6 +567,32 @@ export const cashfreeWebhook = async (req, res) => {
       await notifySubscriptionConfirmation(subscription, userEmail);
 
       return res.status(200).json({ status: "success", message: "Payment failure handled successfully" });
+      }
+
+      else if(event.data.order.order_tags.type === "enrollment"){
+        const enrollment = await Enrollment.findOne({ where: { orderId } });
+
+        if (!enrollment) {
+          console.error(`❌ Enrollment record not found for Order ID: ${orderId}`);
+          return res.status(404).json({ error: "Enrollment record not found" });
+        }
+
+        await enrollment.update({
+          paymentStatus: "FAILED",
+          transactionId: transactionId
+        });
+
+        console.log(`⚠️ Enrollment updated to FAILED for Order ID: ${orderId}`);
+
+        // Invoke notification email with PDF invoice attached
+        await notifySubscriptionConfirmation(enrollment, userEmail);
+
+        return res.status(200).json({ status: "success", message: "Payment failure handled successfully" });
+      } 
+
+      else {
+        return res.status(4000).json({ error: "Webhook received but type is not recognized. No action taken." });
+      }
     }
 
     return res.status(200).json({ 
