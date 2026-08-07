@@ -12,6 +12,7 @@ export const generateEnrollmentPDF = (enrollment, company = {}) => {
     const buffers = [];
     doc.on("data", buffers.push.bind(buffers));
     doc.on("end", () => resolve(Buffer.concat(buffers)));
+    doc.on("error", reject);
 
     /* ===============================
        LOAD LOGO (SMART FALLBACK)
@@ -36,9 +37,17 @@ export const generateEnrollmentPDF = (enrollment, company = {}) => {
     const lightGray = "#f1f5f9";
     const border = "#e2e8f0";
 
-    const price = Number(enrollment.amountPaid || 0);
+    const price = Number(enrollment.amountPaid || enrollment.coursePrice || 0);
     const currency = enrollment.currency || "INR";
     const formattedPrice = `${price.toLocaleString()} ${currency}`;
+
+    const formattedIssueDate = enrollment.paymentDate
+      ? new Date(enrollment.paymentDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+      : new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+
+    const formattedExpireDate = enrollment.enrollmentExpireDate || enrollment.courseExpiryDate
+      ? new Date(enrollment.enrollmentExpireDate || enrollment.courseExpiryDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+      : "N/A";
 
     /* ===============================
        HEADER BACKGROUND
@@ -71,6 +80,7 @@ export const generateEnrollmentPDF = (enrollment, company = {}) => {
       });
       doc.restore();
     }
+
     doc
       .fillColor("#ffffff")
       .font("Helvetica-Bold")
@@ -98,7 +108,7 @@ export const generateEnrollmentPDF = (enrollment, company = {}) => {
       .text("ENROLLMENT INVOICE", 40, 150);
 
     // Status Badge
-    const status = enrollment.paymentStatus || "PENDING";
+    const status = (enrollment.paymentStatus || "PENDING").toUpperCase();
     const badgeColor = status === "PAID" ? "#16a34a" : "#f59e0b";
 
     doc.roundedRect(420, 150, 120, 30, 15).fill(badgeColor);
@@ -152,18 +162,10 @@ export const generateEnrollmentPDF = (enrollment, company = {}) => {
       .fillColor("#000")
       .fontSize(11)
       .font("Helvetica")
-      .text(
-        `Enrollment No: ${enrollment.enrollmentCode || "-"}`,
-        320,
-        cardTop + 45,
-      )
-      .text(`Issue Date: ${enrollment.paymentDate || "-"}`, 320, cardTop + 65)
-      .text(`Course Code: ${enrollment.courseCode || "-"}`, 320, cardTop + 95)
-      .text(
-        `Expiry Date: ${enrollment.enrollmentExpireDate || "-"}`,
-        320,
-        cardTop + 115,
-      );
+      .text(`Enrollment No: ${enrollment.enrollmentCode || "-"}`, 320, cardTop + 45)
+      .text(`Issue Date: ${formattedIssueDate}`, 320, cardTop + 65)
+      .text(`Course Code: ${enrollment.courseCode || "-"}`, 320, cardTop + 85)
+      .text(`Expiry Date: ${formattedExpireDate}`, 320, cardTop + 105);
 
     /* ===============================
        COURSE TABLE (MODERN)
@@ -237,7 +239,7 @@ export const generateEnrollmentPDF = (enrollment, company = {}) => {
         "Thank you for enrolling with us! This invoice confirms your successful registration and payment.",
         40,
         640,
-        { align: "center", width: 515 },
+        { align: "center", width: 515 }
       );
 
     /* ===============================

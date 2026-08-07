@@ -176,6 +176,7 @@ const Enrollment = sequelize.define(
   {
     tableName: "enrollments",
     timestamps: true,
+
     // Removed unique index on studentId/courseCode to allow multiple enrollments
     // for the same student in the same course (e.g., renewed enrollments)
   },

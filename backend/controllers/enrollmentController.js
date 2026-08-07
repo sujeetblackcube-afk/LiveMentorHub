@@ -14,6 +14,7 @@ import Notification from "../models/Notifications.js";
 import { triggerPushForNotifications } from "../config/onesignalService.js";
 import crypto from "crypto";
 import {notifySubscriptionConfirmation} from '../utils/notifySubscriptionEmail.js'
+import { notifyEnrollmentConfirmation } from "../utils/notifyEnrollmentEmail.js";
 import SubscriptionBuyed from "../models/SubscriptionBuyed.js";
 
 // Helper function to update total enrollment for a course
@@ -585,7 +586,7 @@ export const cashfreeWebhook = async (req, res) => {
         console.log(`⚠️ Enrollment updated to FAILED for Order ID: ${orderId}`);
 
         // Invoke notification email with PDF invoice attached
-        await notifySubscriptionConfirmation(enrollment, userEmail);
+        await notifyEnrollmentConfirmation(enrollment, userEmail);
 
         return res.status(200).json({ status: "success", message: "Payment failure handled successfully" });
       } 
