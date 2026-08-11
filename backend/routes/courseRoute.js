@@ -14,22 +14,16 @@ import authMiddleware from '../middleware/authmiddleware.js';
 
 const router = express.Router();
 
+// Public routes
+router.get("/", getAllCourses);
+router.get("/count", getCourseCount);
+router.get("/:courseCode/reviews", getCourseReviews);
+router.get("/:courseCode", getCourseById);
+
 router.use(authMiddleware);
 
 // Create a new course
 router.post("/", uploadThumbnail.fields([{ name: 'thumbnail', maxCount: 1 }, { name: 'introVideo', maxCount: 1 }]), createCourse);
-
-// Get all courses
-router.get("/", getAllCourses);
-
-// Get course count
-router.get("/count", getCourseCount);
-
-// Get reviews for a specific course
-router.get("/:courseCode/reviews", getCourseReviews);
-``
-// Get a single course by ID
-router.get("/:courseCode", getCourseById);
 
 // Update a course
 router.put("/:courseCode", uploadThumbnail.fields([{ name: 'thumbnail', maxCount: 1 }, { name: 'introVideo', maxCount: 1 }]), updateCourse);

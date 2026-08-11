@@ -161,10 +161,17 @@ export const getCoursePageData = async (req, res) => {
       reviewedCourseCodes = new Set(studentReviews.map(r => r.courseCode));
 
       // Fetch all enrollments for the student
-      const enrollments = await Enrollment.findAll({
-        where: { studentId },
-        attributes: ["courseCode"], // Only need courseCode
-      });
+      const enrollments = await Enrollment.findAll(
+        {
+        where: {
+          studentId,
+          status: {
+            [Op.in]: ["APPROVED", "PASSOUT"]
+          }
+
+      },
+  attributes: ["courseCode"], // Only need courseCode
+});
 
       if (enrollments.length > 0) {
         // Extract courseCodes
@@ -178,7 +185,6 @@ export const getCoursePageData = async (req, res) => {
           },
         });
 
-        // Add enrollmentStatus: 1, hasReviewed, and convert prices to all mycourses
         mycourses = courses.map(course => {
           const courseData = convertCoursePrices(course, currencyInfo);
           return {

@@ -178,7 +178,6 @@ export const createEnrollment = async (req, res) => {
 
     const pdfBuffer = await generateEnrollmentPDF(enrollment);
     const fileName = `${enrollment.enrollmentCode}-${uuidv4()}.pdf`;
-    const pdfUrl = await uploadPdfToS3(pdfBuffer, fileName, enrollment.studentId);
     await enrollment.update({ pdfUrl });
 
     await updateTotalEnrollment(courseCode);
@@ -505,7 +504,8 @@ export const cashfreeWebhook = async (req, res) => {
         console.log("Customer data",customerData);
 
       await subscription.update({
-        paymentStatus: "paid",
+        paymentStatus: "PAID",
+        status: "APPROVED",
         transactionId: transactionId,
       });
 
@@ -530,13 +530,15 @@ export const cashfreeWebhook = async (req, res) => {
 
       await enrollment.update({
         paymentStatus: "PAID",
+        status: "APPROVED",
         transactionId: transactionId,
       });
+      
 
       console.log(`🎉 Enrollment updated to PAID for Order ID: ${orderId}`);
 
       // Invoke notification email with PDF invoice attached
-      await notifySubscriptionConfirmation(enrollment, userEmail);
+      await notifyEnrollmentConfirmation(enrollment, userEmail);
 
       return res.status(200).json({ status: "success", message: "Payment processed successfully" });
 
