@@ -24,7 +24,11 @@ export const submitReview = async (req, res) => {
     }
 
     const enrollment = await Enrollment.findOne({
-      where: { studentId, courseCode },
+      where: { studentId, courseCode,
+        status: {
+          [Op.in]: ["APPROVED", "PASSOUT"],
+        }
+       },
       transaction
     });
 

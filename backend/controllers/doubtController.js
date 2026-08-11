@@ -49,7 +49,10 @@ export const createDoubt = async (req, res) => {
     const enrollment = await Enrollment.findOne({
       where: {
         studentId,
-        courseCode
+        courseCode,
+        status: {
+          [Op.in]: ["APPROVED", "PASSOUT"],
+        }
       },
       attributes: ['teacherId']
     });
