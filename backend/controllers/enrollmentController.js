@@ -86,12 +86,15 @@ export const createEnrollment = async (req, res) => {
       });
     }
 
-    // Check if enrollment already exists
+    // Check if enrollment already exists with APPROVED or PASSOUT status
     const existingEnrollment = await Enrollment.findOne({
-      where: { studentId, courseCode: course.courseCode },
-      status: {
-      [Op.in]: ['APPROVED', 'PASSOUT']
-    }
+      where: {
+        studentId,
+        courseCode: course.courseCode,
+        status: {
+          [Op.in]: ["APPROVED", "PASSOUT"],
+        },
+      },
     });
     if (existingEnrollment) {
       return res.status(400).json({
