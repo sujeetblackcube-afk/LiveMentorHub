@@ -214,7 +214,9 @@ export const createSubscriptionBuyed = async (req, res) => {
       return res.status(400).json({ success: false, message: "teacherId and planName are required" });
     }
 
-    const subscriptionPlan = await Subscription.findOne({ where: { planName } });
+    const subscriptionPlan = await Subscription.findOne({ where: { planName, status: {
+          [Op.in]: ["APPROVED", "PASSOUT"],
+        } } });
     if (!subscriptionPlan) {
       return res.status(404).json({ success: false, message: "Subscription plan not found" });
     }

@@ -770,7 +770,7 @@ export const joinLiveSession = async (req, res) => {
       where: {
         studentId,
         courseCode: session.courseCode,
-        status: "APPROVED", // Assuming only approved enrollments can join
+        status: "APPROVED", // only approved enrollments can join
       },
     });
 

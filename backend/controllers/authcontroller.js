@@ -875,7 +875,11 @@ const login = async (req, res) => {
         specificId = user.studentId;
 
         const enrollment = await Enrollment.findOne({
-          where: { studentId: specificId },
+          where: { studentId: specificId,
+            status: {
+          [Op.in]: ["APPROVED", "PASSOUT"],
+        }
+           },
         });
 
         enrollmentStatus = enrollment ? 1 : 0;

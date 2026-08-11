@@ -1,5 +1,9 @@
 import { Review, Course, Teacher, Student, Enrollment } from '../models/index.js';
 import sequelize from '../config/db.js';
+
+import pkg from 'sequelize';
+const { Op } = pkg;
+
 /**
  * SUBMIT COURSE REVIEW
  * POST /api/reviews

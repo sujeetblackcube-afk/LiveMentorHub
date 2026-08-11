@@ -21,7 +21,6 @@ import {
   getEnrollmentsByCourseCode,
   createCashfreeOrder,
   getEnrollmentsByStudentId,
-  verifyEnrollmentCashfreeOrder
 } from "../controllers/enrollmentController.js";
 import authMiddleware from '../middleware/authmiddleware.js';
 
