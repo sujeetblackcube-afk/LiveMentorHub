@@ -605,7 +605,6 @@ export default function Subscription() {
                 </div>
               </div>
 
-                // Payment Details (show only before Cashfree starts)
                 <div>
                   <h3
                     className="font-semibold text-lg mb-3"

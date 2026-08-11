@@ -361,7 +361,7 @@ const Login = () => {
           <div className="group flex items-center gap-3">
             <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl overflow-hidden shadow-xl shadow-indigo-500/30 bg-white">
               <img
-                src="/teacher/logo.png"
+                src="/teacher/logo.jpg"
                 alt="Live Mentor Hub Logo"
                 className="w-full h-full object-contain p-2"
                 onError={(e) => { e.target.onerror = null; e.target.src = '/vite.svg'; }}

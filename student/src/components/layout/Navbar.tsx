@@ -166,7 +166,7 @@ export function Navbar() {
           <Link href="/" className="flex items-center gap-3 group">
             <div className="bg-white/50 rounded-xl border border-gray-100 shadow-sm w-12 h-10 flex items-center justify-center overflow-hidden">
               <Image
-                src="/logo.png"
+                src="/logo.jpg"
                 alt="LiveMentorHub"
                 width={120}
                 height={120}

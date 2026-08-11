@@ -89,6 +89,9 @@ export const createEnrollment = async (req, res) => {
     // Check if enrollment already exists
     const existingEnrollment = await Enrollment.findOne({
       where: { studentId, courseCode: course.courseCode },
+      status: {
+      [Op.in]: ['APPROVED', 'PASSOUT']
+    }
     });
     if (existingEnrollment) {
       return res.status(400).json({
@@ -176,11 +179,14 @@ export const createEnrollment = async (req, res) => {
       remarks,
     });
 
-    const pdfBuffer = await generateEnrollmentPDF(enrollment);
-    const fileName = `${enrollment.enrollmentCode}-${uuidv4()}.pdf`;
-    await enrollment.update({ pdfUrl });
+    // const pdfBuffer = await generateEnrollmentPDF(enrollment);
+    // const fileName = `${enrollment.enrollmentCode}-${uuidv4()}.pdf`;
+    // await enrollment.update({ pdfUrl });
+
 
     await updateTotalEnrollment(courseCode);
+
+    notifyEnrollmentConfirmation(enrollment,student.email);
 
     return res.status(201).json({
       success: true,
