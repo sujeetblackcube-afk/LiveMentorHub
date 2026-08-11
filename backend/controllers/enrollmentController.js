@@ -192,7 +192,7 @@ export const createEnrollment = async (req, res) => {
       success: true,
       message: "Enrollment created successfully",
       data: enrollment,
-      pdfUrl,
+      // pdfUrl,
       enrollmentStatus: 1,
     });
   } catch (error) {
