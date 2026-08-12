@@ -98,7 +98,7 @@ export async function checkHasReviewedAction({
     }
 }
 
-export async function getCourseReviewsAction(courseId: string) {
+export async function getCourseReviewsAction(courseId: string, token?: string) {
     const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL;
 
     if (!courseId || !backendBase) {
@@ -112,8 +112,7 @@ export async function getCourseReviewsAction(courseId: string) {
         const headers: Record<string, string> = {
             Accept: "application/json",
         };
-        const token = localStorage.getItem("cp_token");
-        
+
         if (token) {
             headers["Authorization"] = `Bearer ${token}`;
         }

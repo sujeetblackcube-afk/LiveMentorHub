@@ -53,6 +53,7 @@ export interface CourseItem {
     stream?: string;
     tabs: string[];
     hasReviewed?: boolean;
+    enrollmentStatus?: number;
     curriculum: {
         id: number;
         title: string;
@@ -130,12 +131,14 @@ if (thumbnail && !thumbnail.startsWith("http")) {
     const medium = String(getFirst<string>(o, "medium") ?? "");
     const totalLessons = Number(getFirst<number>(o, "totalLessons", "total_lessons")) || 0;
     const difficulty = String(getFirst<string>(o, "difficulty", "courseDifficulty") ?? "");
+    const enrollmentStatus = Number(getFirst<number>(o, "enrollmentStatus", "isEnrolled", "is_enrolled")) || 0;
     const currencySymbol = String(getFirst<string>(o, "currencySymbol") ?? "₹");
     const currencyCode = String(getFirst<string>(o, "currencyCode") ?? "INR");
     const courseStartDate = String(getFirst<string>(o, "courseStartDate", "startDate", "start_date") ?? "");
     const courseEndDate = String(getFirst<string>(o, "deadline", "courseEndDate", "endDate", "end_date") ?? "");
     const subcategory = String(getFirst<string>(o, "subcategory", "subCategory") ?? "");
     const stream = String(getFirst<string>(o, "stream") ?? "");
+    const hasReviewed = Boolean(getFirst<boolean>(o, "hasReviewed", "has_reviewed", "reviewed"));
     const rawCurriculum = getFirst<unknown[]>(o, "curriculum", "chapters", "modules", "lessons", "syllabus");
     const curriculum = Array.isArray(rawCurriculum)
         ? rawCurriculum.slice(0, 20).map((item, i) => {
@@ -172,6 +175,7 @@ if (thumbnail && !thumbnail.startsWith("http")) {
         medium,
         totalLessons,
         difficulty,
+        enrollmentStatus,
         currencySymbol,
         currencyCode,
         courseStartDate,
@@ -179,6 +183,7 @@ if (thumbnail && !thumbnail.startsWith("http")) {
         subcategory,
         stream,
         tabs: ["Curriculum", "Materials", "Announcements"],
+        hasReviewed,
         curriculum,
     };
 }

@@ -4,10 +4,16 @@ import { useState, useEffect } from "react";
 import { isEnrolledIn } from "@/lib/courseData";
 import { submitReviewAction, checkHasReviewedAction } from "@/app/actions/reviews";
 
-export const AddReviewModal = ({ courseId }: { courseId: string }) => {
+export const AddReviewModal = ({
+    courseId,
+    hasReviewed: hasReviewedProp,
+}: {
+    courseId: string;
+    hasReviewed?: boolean;
+}) => {
     const [isEnrolled, setIsEnrolled] = useState<boolean>(false);
-    const [hasReviewed, setHasReviewed] = useState<boolean>(false);
-    const [isLoadingStatus, setIsLoadingStatus] = useState<boolean>(true);
+    const [hasReviewed, setHasReviewed] = useState<boolean>(hasReviewedProp === true);
+    const [isLoadingStatus, setIsLoadingStatus] = useState<boolean>(hasReviewedProp === true ? false : true);
     const [showForm, setShowForm] = useState<boolean>(false);
     
     const [rating, setRating] = useState<number>(0);
@@ -17,6 +23,12 @@ export const AddReviewModal = ({ courseId }: { courseId: string }) => {
     const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
 
     useEffect(() => {
+        if (hasReviewedProp === true) {
+            setHasReviewed(true);
+            setIsLoadingStatus(false);
+            return;
+        }
+
         async function verifyStatus() {
             if (!courseId) {
                 setIsLoadingStatus(false);
@@ -51,7 +63,7 @@ export const AddReviewModal = ({ courseId }: { courseId: string }) => {
         }
 
         verifyStatus();
-    }, [courseId]);
+    }, [courseId, hasReviewedProp]);
 
     // Auto-dismiss snackbar after 3 seconds
     useEffect(() => {
@@ -106,42 +118,48 @@ export const AddReviewModal = ({ courseId }: { courseId: string }) => {
     }
 
     return (
-        <div className="mt-2 ml-4 mb-6">
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 my-6 flex justify-center">
             <button
                 onClick={() => setShowForm(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition shadow-sm"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-medium text-sm rounded-xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-md shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
                 Add Rating
             </button>
 
             {/* Modal Form */}
             {showForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
-                        <div className="flex justify-between items-center pb-2 border-b">
-                            <h3 className="text-lg font-semibold text-gray-800">Add Your Review</h3>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-lg shadow-2xl border border-slate-100 space-y-6 transform transition-all scale-100">
+                        <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                            <div>
+                                <h3 className="text-xl font-semibold text-slate-900">Add Your Review</h3>
+                                <p className="text-xs text-slate-500 mt-0.5">Share your feedback to help future learners</p>
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => setShowForm(false)}
-                                className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+                                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center text-lg font-semibold transition"
                             >
                                 &times;
                             </button>
                         </div>
                         
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <form onSubmit={handleSubmit} className="space-y-5">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Rating <span className="text-red-500">*</span>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Rating <span className="text-rose-500">*</span>
                                 </label>
-                                <div className="flex space-x-1">
+                                <div className="flex items-center space-x-1.5 bg-slate-50 p-3 rounded-xl border border-slate-100 justify-around sm:justify-start">
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <button
                                             type="button"
                                             key={star}
                                             onClick={() => setRating(star)}
-                                            className={`text-3xl focus:outline-none transition-transform hover:scale-110 ${
-                                                star <= rating ? "text-yellow-400" : "text-gray-300"
+                                            className={`text-3xl focus:outline-none transition-transform active:scale-125 hover:scale-110 ${
+                                                star <= rating ? "text-amber-400 drop-shadow-sm" : "text-slate-200 hover:text-amber-200"
                                             }`}
                                         >
                                             ★
@@ -151,32 +169,32 @@ export const AddReviewModal = ({ courseId }: { courseId: string }) => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-slate-700 mb-1.5">
                                     Comment
                                 </label>
                                 <textarea
                                     value={comment}
                                     onChange={(e) => setComment(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-md p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition placeholder:text-slate-400 resize-none"
                                     rows={4}
                                     placeholder="Write your thoughts about the course..."
                                     required
                                 />
                             </div>
 
-                            <div className="flex justify-end space-x-3 pt-2">
+                            <div className="flex items-center justify-end space-x-3 pt-2">
                                 <button
                                     type="button"
                                     onClick={() => setShowForm(false)}
-                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition font-medium"
+                                    className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 active:scale-[0.98] transition font-medium text-sm"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition font-medium shadow-sm"
+                                    className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 active:scale-[0.98] transition font-medium text-sm shadow-md shadow-indigo-500/20"
                                 >
-                                    Submit
+                                    Submit Review
                                 </button>
                             </div>
                         </form>
@@ -186,9 +204,11 @@ export const AddReviewModal = ({ courseId }: { courseId: string }) => {
 
             {/* Snackbar Notification */}
             {snackbarMessage && (
-                <div className="fixed bottom-5 right-5 z-50 bg-green-600 text-white px-6 py-3 rounded-lg shadow-xl flex items-center space-x-2 transition-all">
-                    <span className="text-xl">✓</span>
-                    <span className="font-medium">{snackbarMessage}</span>
+                <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center space-x-3 transition-all animate-in slide-in-from-bottom-5">
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/50 flex items-center justify-center text-xs font-bold">
+                        ✓
+                    </div>
+                    <span className="font-medium text-sm">{snackbarMessage}</span>
                 </div>
             )}
         </div>

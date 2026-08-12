@@ -98,6 +98,7 @@ export default function CourseDetailsPage() {
             setContentLoading(true);
             try {
                 const data = await fetchCourseContent(studentId, course.id, activeContentType === 'ALL' ? undefined : activeContentType as CourseContentType);
+                console.log('DATA FETCHED FOR COURSES: ',data)
                 setContent(data);
             } catch (e) {
                 console.error('Content fetch error:', e);
@@ -618,7 +619,9 @@ export default function CourseDetailsPage() {
                 </div>
             </main>
             
-            <AddReviewModal courseId={courseId}/>
+            {course?.enrollmentStatus === 1 && course?.hasReviewed === false && (
+                <AddReviewModal courseId={courseId} hasReviewed={course.hasReviewed} />
+            )}
             <AllReviewsModal courseId={courseId}/>
             <Footer />
 
