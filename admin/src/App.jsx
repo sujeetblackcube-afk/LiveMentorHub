@@ -30,6 +30,8 @@ import Subscription from './pages/Subscription';
 import Payout from './pages/Payout';
 import Login from './pages/login';
 import Classes from './pages/Classes';
+import ClassDetails from './components/ClassDetails';
+import CourseDetails from './components/CourseDetails';
 import Batches from './pages/Batches';
 import ProtectedRoute from './components/ProtectedRoute';
 import Reports from './pages/Reports';
@@ -107,6 +109,8 @@ function AppContent() {
             <Route path="/payout" element={<ProtectedRoute><Payout /></ProtectedRoute>} />
             
             <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
+            <Route path="/classes/:classId" element={<ProtectedRoute><ClassDetails /></ProtectedRoute>} />
+            <Route path="/courses/:courseId" element={<ProtectedRoute><CourseDetails /></ProtectedRoute>} />
             <Route path="/batches" element={<ProtectedRoute><Batches /></ProtectedRoute>} />
 
             {/* 🔁 DEFAULT */}
