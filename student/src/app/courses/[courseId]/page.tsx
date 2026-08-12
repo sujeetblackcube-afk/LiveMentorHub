@@ -18,8 +18,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "@/components/layout/Footer";
 import { SyllabusSection } from './SyllabusSection';
 import { cn, downloadFile } from "@/lib/utils";
-import { AddReviewModal } from "@/components/courses/AddReviewModal";
-import { AllReviewsModal } from "@/components/courses/AllReviewsModal";
+// import { AddReviewModal } from "@/components/courses/AddReviewModal";
+// import { AllReviewsModal } from "@/components/courses/AllReviewsModal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -619,10 +619,10 @@ export default function CourseDetailsPage() {
                 </div>
             </main>
             
-            {course?.enrollmentStatus === 1 && course?.hasReviewed === false && (
+            {/* {course?.enrollmentStatus === 1 && course?.hasReviewed === false && (
                 <AddReviewModal courseId={courseId} hasReviewed={course.hasReviewed} />
             )}
-            <AllReviewsModal courseId={courseId}/>
+            <AllReviewsModal courseId={courseId}/> */}
             <Footer />
 
             <EnrollmentModal

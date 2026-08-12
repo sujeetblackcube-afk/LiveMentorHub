@@ -384,7 +384,7 @@ export default function LandingPage() {
                                     Learning on the Go
                                 </span>
                                 <h2 className="text-4xl md:text-5xl font-black text-[#0d1f5c] leading-[1.1] mb-6">
-                                    Get the <div className="inline-block w-12 h-10 bg-white rounded-lg align-middle mx-1 overflow-hidden relative shadow-sm border border-gray-100"><Image src="/logo.jpg" alt="LiveMentorHub" width={120} height={120} className="w-full h-full object-contain scale-[1.7]" unoptimized /></div> Hub App
+                                    Get the <div className="inline-block w-12 h-10 bg-white rounded-lg align-middle mx-1 overflow-hidden relative shadow-sm border border-gray-100"><Image src="/logo.png" alt="LiveMentorHub" width={120} height={120} className="w-full h-full object-contain scale-[1.7]" unoptimized /></div> Hub App
                                 </h2>
                                 <p className="text-gray-500 text-lg leading-relaxed max-w-xl">
                                     Everything you need for your learning journey is now at your fingertips. Access live doubt solving, interactive classes, and seamless material downloads from your smartphone.
