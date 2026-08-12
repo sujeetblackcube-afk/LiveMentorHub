@@ -102,7 +102,7 @@ export default function Sidebar({ collapsed }) {
 >
   <div className="w-8 h-8 flex items-center justify-center rounded-lg overflow-hidden">
     <img
-      src="/admin/logo.jpg"
+      src="/admin/logo.png"
       alt="Logo"
       className="w-full h-full object-contain"
     />

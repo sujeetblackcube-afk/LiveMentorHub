@@ -183,7 +183,7 @@ export default function Navbar({ collapsed, setCollapsed }) {
         >
           <div className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg overflow-hidden">
             <img
-              src="/admin/logo.jpg"
+              src="/admin/logo.png"
               alt="Logo"
               className="w-full h-full object-contain"
             />
