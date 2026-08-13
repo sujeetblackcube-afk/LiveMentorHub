@@ -382,10 +382,7 @@ export default function Course({ status = "Active" }) {
       if (!formData.subject) errors.subject = true;
     }
 
-    // Validation for non-academic courses
-    if (formData.courseType === "non-academic") {
-      if (!formData.category) errors.category = true;
-    }
+    // Non-academic courses: category is optional
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -1618,7 +1615,7 @@ const handleSyllabusEdit = async (course) => {
                   </h3>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Category *
+                      Category
                     </label>
                     <input
                       type="text"
@@ -1626,14 +1623,14 @@ const handleSyllabusEdit = async (course) => {
                       onChange={(e) =>
                         setFormData({ ...formData, category: e.target.value })
                       }
-                      className={`w-full px-3 py-2 border ${fieldErrors.category ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500`}
+                      className={`w-full px-3 py-2 border  rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500`}
                       placeholder="Enter category"
                     />
-                    {fieldErrors.category && (
+                    {/* {fieldErrors.category && (
                       <p className="text-red-500 text-xs mt-1">
                         Please fill this field, this field is required
                       </p>
-                    )}
+                    )} */}
                   </div>
 
                   <div>

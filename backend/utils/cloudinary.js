@@ -29,7 +29,8 @@ export const uploadBufferToCloudinary = (buffer, folder, resourceType = 'auto') 
       }
     );
 
-    const stream = Readable.from(buffer);
+    // Ensure we stream the entire Buffer as a single chunk to preserve binary integrity
+    const stream = Readable.from([buffer]);
     stream.pipe(uploadStream);
   });
 };

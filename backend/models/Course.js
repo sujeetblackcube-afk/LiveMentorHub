@@ -120,11 +120,7 @@ const Course = sequelize.define(
           }
         }
 
-        if (this.courseType === "non-academic") {
-          if (!this.category) {
-            throw new Error("Category is required for non-academic courses");
-          }
-        }
+        // Non-academic courses: category is optional now (no validation)
       },
     },
   },

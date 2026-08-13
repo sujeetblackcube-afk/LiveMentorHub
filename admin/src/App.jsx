@@ -33,6 +33,8 @@ import Classes from './pages/Classes';
 import ClassDetails from './components/ClassDetails';
 import CourseDetails from './components/CourseDetails';
 import Batches from './pages/Batches';
+import SubjectDetails from './pages/SubjectDetails';
+import CourseInfo from './pages/CourseInfo';
 import ProtectedRoute from './components/ProtectedRoute';
 import Reports from './pages/Reports';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -111,6 +113,8 @@ function AppContent() {
             <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
             <Route path="/classes/:classId" element={<ProtectedRoute><ClassDetails /></ProtectedRoute>} />
             <Route path="/courses/:courseId" element={<ProtectedRoute><CourseDetails /></ProtectedRoute>} />
+            <Route path="/subjects/:subjectId" element={<ProtectedRoute><SubjectDetails /></ProtectedRoute>} />
+            <Route path="/course_info/:courseCode" element={<ProtectedRoute><CourseInfo /></ProtectedRoute>} />
             <Route path="/batches" element={<ProtectedRoute><Batches /></ProtectedRoute>} />
 
             {/* 🔁 DEFAULT */}

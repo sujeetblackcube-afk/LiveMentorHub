@@ -189,7 +189,7 @@ export const createCourse = async (req, res) => {
       }
     }
 
-
+    console.log('creating course with category:', category)
     // Create course
     const course = await Course.create({
       id,
@@ -211,7 +211,8 @@ export const createCourse = async (req, res) => {
       subject,
       subjectCode,
       stream,
-      category,
+      // store category as null when empty to avoid validation/type errors
+        category: category && category !== '' ? category : null,
       subcategory,
       targetAudience,
       totalLessons: totalLessons || 0,

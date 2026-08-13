@@ -1,6 +1,8 @@
 import multer from "multer";
 import path from "path";
+import fs from 'fs';
 import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
+import crypto from 'crypto';
 import NotesMedia from "../models/NotesMedia.js";
 import Course from "../models/Course.js";
 import Teacher from "../models/Teacher.js";
@@ -83,6 +85,45 @@ export const addNotes = async (req, res) => {
       });
     }
 
+    // Log buffer details for debugging binary corruption issues
+    try {
+      const buf = req.file.buffer;
+      console.log('Received file for notes upload:', {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        bufferLength: buf ? buf.length : null,
+      });
+      // Save incoming buffer to disk for local verification (debug)
+      try {
+        const debugDir = path.join(process.cwd(), 'uploads', 'debug');
+        fs.mkdirSync(debugDir, { recursive: true });
+        const safeName = req.file.originalname ? req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_') : `upload_${Date.now()}`;
+        const debugPath = path.join(debugDir, `${Date.now()}_${safeName}`);
+        fs.writeFileSync(debugPath, buf);
+        console.log('Saved incoming upload to disk for verification:', debugPath);
+      } catch (fsErr) {
+        console.error('Error saving incoming file to disk for debug:', fsErr);
+      }
+      // compute sha256 of incoming buffer
+      try {
+        const incomingHash = crypto.createHash('sha256').update(buf).digest('hex');
+        console.log('Incoming file sha256:', incomingHash);
+      } catch (hErr) {
+        console.error('Error computing incoming file hash:', hErr);
+      }
+      if (buf && buf.length > 0) {
+        const head = buf.slice(0, 16).toString('hex');
+        const tail = buf.slice(Math.max(0, buf.length - 16)).toString('hex');
+        console.log(`File buffer head (hex): ${head}`);
+        console.log(`File buffer tail (hex): ${tail}`);
+      } else {
+        console.warn('Uploaded file buffer is empty or missing');
+      }
+    } catch (logErr) {
+      console.error('Error logging uploaded file buffer details:', logErr);
+    }
+
     // Fetch courseName from Course table using courseCode
     const course = await Course.findOne({ where: { courseCode } });
     if (!course) {
@@ -97,12 +138,43 @@ export const addNotes = async (req, res) => {
     }
     const teacherName = teacher.name;
 
-    // Upload file to Cloudinary
+    // Upload file to Cloudinary (choose resource_type based on mimetype)
     let contentUrl = null;
     try {
-      const result = await uploadBufferToCloudinary(req.file.buffer, "notes");
+      let resourceType = 'auto';
+      if (req.file.mimetype === 'application/pdf' ||
+          req.file.mimetype === 'application/msword' ||
+          req.file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+          req.file.mimetype === 'text/plain') {
+        resourceType = 'raw';
+      } else if (req.file.mimetype && req.file.mimetype.startsWith('video/')) {
+        resourceType = 'video';
+      } else if (req.file.mimetype && req.file.mimetype.startsWith('image/')) {
+        resourceType = 'image';
+      }
+
+      const result = await uploadBufferToCloudinary(req.file.buffer, "notes", resourceType);
+      console.log('Cloudinary upload result for notes:', { public_id: result.public_id, resource_type: result.resource_type, secure_url: result.secure_url, bytes: result.bytes, format: result.format });
       contentUrl = result.secure_url;
+
+      // Verify uploaded file by downloading it back and comparing SHA256
+      try {
+        const incomingHash = crypto.createHash('sha256').update(req.file.buffer).digest('hex');
+        const resp = await fetch(result.secure_url);
+        const arr = await resp.arrayBuffer();
+        const downloadedBuf = Buffer.from(arr);
+        const downloadedHash = crypto.createHash('sha256').update(downloadedBuf).digest('hex');
+        console.log('Verification hashes - incoming:', incomingHash, 'downloaded:', downloadedHash);
+        if (incomingHash !== downloadedHash) {
+          console.warn('Mismatch between incoming file and downloaded uploaded file from Cloudinary');
+        } else {
+          console.log('Uploaded file verified: hashes match');
+        }
+      } catch (verifyErr) {
+        console.error('Error verifying uploaded file from Cloudinary:', verifyErr);
+      }
     } catch (uploadError) {
+      console.error('Error uploading note to Cloudinary:', uploadError);
       return res.status(500).json({ success: false, message: "Error uploading file" });
     }
 
@@ -118,6 +190,8 @@ export const addNotes = async (req, res) => {
       contentUrl,
       contentType,
     });
+
+    console.log('NotesMedia created:', { id: newNote.id, contentUrl: newNote.contentUrl });
 
     res.status(201).json({
       success: true,

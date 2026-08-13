@@ -111,7 +111,8 @@ export default function ClassDetails() {
                     {SUBJECTS_DUMMY_DATA.map((subject) => (
                       <div 
                         key={subject.id} 
-                        className="bg-white border border-gray-100 shadow-sm rounded-xl p-5 flex items-center space-x-4 hover:shadow-md hover:border-blue-100 transition-all duration-200"
+                        onClick={() => navigate(`/subjects/${subject.id}`)}
+                        className="bg-white border border-gray-100 shadow-sm rounded-xl p-5 flex items-center space-x-4 hover:shadow-md hover:border-blue-100 transition-all duration-200 cursor-pointer"
                       >
                         <div className="flex-shrink-0 w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-semibold text-lg">
                           {subject.name.charAt(0)}
