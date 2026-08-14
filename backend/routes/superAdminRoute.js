@@ -10,6 +10,7 @@ import {
   getCourseParticipantsByCode,
   patchCourseDetails,
 } from "../controllers/adminCatalogController.js";
+import { createClass } from '../controllers/classController.js';
 
 const router = express.Router();
 
@@ -22,6 +23,7 @@ router.put('/profile', authMiddleware, upload.single('profileImage'), updateProf
 router.get('/reviews', authMiddleware, adminGetAllReviews);
 router.delete('/reviews/:reviewId', authMiddleware, adminDeleteReview);
 
+router.post('/classes', authMiddleware, createClass);
 router.get('/classes', authMiddleware, getClassSummary);
 router.get('/classes/:id/hierarchy', authMiddleware, getClassHierarchyById);
 router.get('/subjects/:subjectCode/courses', authMiddleware, getSubjectCourses);

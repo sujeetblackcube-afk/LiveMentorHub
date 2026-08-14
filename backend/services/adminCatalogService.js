@@ -171,6 +171,8 @@ export const getCoursesBySubjectCode = async (subjectCode) => {
     introVideo: course.introVideo,
     totalReviews: course.totalReviews,
     rating: course.rating,
+    courseStartDate: course.courseStartDate,
+    deadline: course.deadline,
   }));
 };
 

@@ -22,7 +22,7 @@ import {
 
 const DIFFICULTY_LEVELS = ["Beginner", "Intermediate", "Advanced"];
 const COURSE_TYPES = ["academic", "non-academic"];
-const LANGUAGES = ["English", "Hindi", "Spanish", "French", "German"];
+const LANGUAGES = ["English", "Hindi"];
 const MAX_BULLETS = 10;
 const BULLET_CHAR_LIMIT = 200;
 

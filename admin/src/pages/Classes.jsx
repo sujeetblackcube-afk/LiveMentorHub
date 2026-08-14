@@ -1,13 +1,22 @@
-import React, { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getSuperAdminClassSummary, createSuperAdminClass } from '../services/api';
 
-// 1. DUMMY DATA: Added 'classId' to be used in the URL routing.
-const DUMMY_DATA = [
-  { id: 1, classId: 'cls-9', classLevel: 'Class 9', totalSubjects: 5, totalCourses: 8, enrolledStudents: 39 },
-  { id: 2, classId: 'cls-10', classLevel: 'Class 10', totalSubjects: 6, totalCourses: 12, enrolledStudents: 145 },
-  { id: 3, classId: 'cls-11', classLevel: 'Class 11', totalSubjects: 4, totalCourses: 5, enrolledStudents: 89 },
-  { id: 4, classId: 'cls-12', classLevel: 'Class 12', totalSubjects: 5, totalCourses: 10, enrolledStudents: 210 },
-];
+const normalizeClassRows = (payload) => {
+  const rows = Array.isArray(payload) ? payload : payload?.data || [];
+
+  return rows
+    .map((row, index) => ({
+      id: row.classId ?? row.id ?? index + 1,
+      classId: row.classId ?? row.id ?? String(index + 1),
+      classLevel: row.className ?? row.classLevel ?? 'Unknown Class',
+      totalSubjects: Number(row.totalSubjects ?? 0),
+      totalCourses: Number(row.totalCourses ?? 0),
+      enrolledStudents: Number(row.totalEnrolledStudents ?? row.enrolledStudents ?? 0),
+      status: row.status ?? 'ACTIVE',
+    }))
+    .sort((a, b) => String(a.classLevel).localeCompare(String(b.classLevel), undefined, { sensitivity: 'base' }));
+};
 
 // ---------------------------------------------------------------------------
 // AddClassModal Component
@@ -17,21 +26,22 @@ function AddClassModal({ isOpen, onClose, onAdd }) {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!className.trim()) return;
 
-    // Pass the new class data back to the parent. Counts default to 0.
-    onAdd({
-      classLevel: className,
-      totalSubjects: 0,
-      totalCourses: 0,
-      enrolledStudents: 0,
-    });
+    try {
+      await onAdd({
+        className: className.trim(),
+        class_description: `${className.trim()} class created from admin panel.`,
+        status: 'ACTIVE',
+      });
 
-    // Reset and close
-    setClassName('');
-    onClose();
+      setClassName('');
+      onClose();
+    } catch (error) {
+      console.error('Failed to add class:', error);
+    }
   };
 
   return (
@@ -94,31 +104,69 @@ function AddClassModal({ isOpen, onClose, onAdd }) {
 // MAIN COMPONENT: CourseStatisticsTable
 // ---------------------------------------------------------------------------
 export default function CourseStatisticsTable() {
-  const [tableData, setTableData] = useState(DUMMY_DATA);
+  const [tableData, setTableData] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
-  // Handler for receiving data from the modal
-  const handleAddClass = (newClassData) => {
-    // Generate temporary IDs (you'll rely on the DB's IDs after API integration)
-    const uniqueId = Date.now();
-    const newClassWithId = {
-      ...newClassData,
-      id: uniqueId, 
-      classId: `cls-${uniqueId}` // Generate a dummy classId for routing
-    };
-    
-    // Update state to include the new row
-    setTableData([...tableData, newClassWithId]);
+  useEffect(() => {
+    let isMounted = true;
 
-    // Show snackbar and hide it after 3 seconds
-    setShowSnackbar(true);
-    setTimeout(() => {
-      setShowSnackbar(false);
-    }, 3000);
+    const fetchClasses = async () => {
+      try {
+        setIsLoading(true);
+        const response = await getSuperAdminClassSummary();
+
+        if (!isMounted) return;
+
+        const normalizedRows = normalizeClassRows(response);
+        setTableData(normalizedRows);
+        setErrorMessage('');
+      } catch (error) {
+        if (!isMounted) return;
+        setTableData([]);
+        setErrorMessage(error.message || 'Unable to load classes.');
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchClasses();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleAddClass = async (newClassData) => {
+    try {
+      const response = await createSuperAdminClass(newClassData);
+      const createdClass = response?.data || response;
+
+      const normalizedRow = {
+        id: createdClass?.id ?? Date.now(),
+        classId: createdClass?.classId ?? createdClass?.id ?? `cls-${Date.now()}`,
+        classLevel: createdClass?.className ?? newClassData.className,
+        totalSubjects: 0,
+        totalCourses: 0,
+        enrolledStudents: 0,
+        status: createdClass?.status ?? 'ACTIVE',
+      };
+
+      setTableData((prev) => normalizeClassRows([...prev, normalizedRow]));
+      setShowSnackbar(true);
+      setTimeout(() => {
+        setShowSnackbar(false);
+      }, 3000);
+    } catch (error) {
+      setErrorMessage(error.message || 'Unable to add class.');
+      throw error;
+    }
   };
 
   return (
@@ -156,6 +204,11 @@ export default function CourseStatisticsTable() {
                   className="w-full max-w-xs pl-3 pr-3 py-2 border rounded-md"
                 />
               </div>
+              {errorMessage && (
+                <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {errorMessage}
+                </div>
+              )}
             </div>
             <table className="w-full text-sm table-fixed">
               
@@ -202,7 +255,7 @@ export default function CourseStatisticsTable() {
                       >
                         <td className="px-6 py-4 font-medium">
                           <div className="text-gray-900">{row.classLevel}</div>
-                          <div className="text-xs text-gray-500">{row.classId}</div>
+                          {/* <div className="text-xs text-gray-500">{row.classId}</div> */}
                         </td>
                         <td className="px-6 py-4 text-gray-600">{row.totalSubjects}</td>
                         <td className="px-6 py-4 text-gray-600">{row.totalCourses}</td>

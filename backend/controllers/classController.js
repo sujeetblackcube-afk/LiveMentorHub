@@ -3,34 +3,31 @@ import Subject from "../models/Subject.js";
 import pkg from 'sequelize';
 const { Op } = pkg;
 import { getPaginatedData } from "../utils/pagination.js";
+import { createClassRecord } from '../services/classService.js';
 
 const createClass = async (req, res) => {
   try {
-    const { className, class_description } = req.body;
+    const { className, class_description, status } = req.body || {};
 
-    if (!className || !class_description) {
-      return res.status(400).json({
-        status: false,
-        message: "className and class_description are required",
+    if (req.auth && req.auth.role !== 'superadmin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only super admins can create classes.',
       });
     }
 
-    const newClass = await Class.create({
-      className,
-      class_description,
-    });
+    const newClass = await createClassRecord({ className, class_description, status });
 
     return res.status(201).json({
-      status: true,
-      message: "Class created successfully",
+      success: true,
+      message: 'Class created successfully',
       data: newClass,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      status: false,
-      message: "Server error",
-      error: error.message,
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Unable to create class.',
     });
   }
 };

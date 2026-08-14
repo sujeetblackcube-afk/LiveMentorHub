@@ -152,11 +152,57 @@ export const updateParentStatus = async (parentId, status) => {
 
 // Classes API
 export const createClass = async (classData) => {
-  return fetch(`${BASE_URL}/classes`, {
+  return fetch(`${BASE_URL}/superadmin/classes`, {
     method: "POST",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(classData),
   }).then(json);
+};
+
+export const createSuperAdminClass = async (classData) => createClass(classData);
+
+export const getSuperAdminClassSummary = async () => {
+  const response = await fetch(`${BASE_URL}/superadmin/classes`, {
+    headers: getAuthHeaders(),
+  });
+  return json(response);
+};
+
+export const getSuperAdminClassHierarchy = async (classId) => {
+  const response = await fetch(`${BASE_URL}/superadmin/classes/${classId}/hierarchy`, {
+    headers: getAuthHeaders(),
+  });
+  return json(response);
+};
+
+export const getSuperAdminSubjectCourses = async (subjectCode) => {
+  const response = await fetch(`${BASE_URL}/superadmin/subjects/${encodeURIComponent(subjectCode)}/courses`, {
+    headers: getAuthHeaders(),
+  });
+  return json(response);
+};
+
+export const getSuperAdminCourseParticipants = async (courseCode) => {
+  const response = await fetch(`${BASE_URL}/superadmin/courses/${encodeURIComponent(courseCode)}/participants`, {
+    headers: getAuthHeaders(),
+  });
+  return json(response);
+};
+
+export const getCourseByCode = async (courseCode) => {
+  const response = await fetch(`${BASE_URL}/courses/${encodeURIComponent(courseCode)}`, {
+    headers: getAuthHeaders(),
+  });
+  return json(response);
+};
+
+export const updateSuperAdminCourse = async (courseCode, payload) => {
+  const response = await fetch(`${BASE_URL}/superadmin/courses/${encodeURIComponent(courseCode)}`, {
+    method: 'PATCH',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return json(response);
 };
 
 export const getAllClasses = async (params = {}) => {

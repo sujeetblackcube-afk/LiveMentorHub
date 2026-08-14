@@ -1160,7 +1160,7 @@ const resendOtp = async (req, res) => {
     if (!sent) {
       return res.status(500).json({
         status: false,
-        message: "Failed to send OTP",
+        message: "Failed to send OTP to your registered mail.",
       });
     }
 
