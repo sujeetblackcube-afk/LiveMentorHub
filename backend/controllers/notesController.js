@@ -100,9 +100,13 @@ export const addNotes = async (req, res) => {
     // Upload file to Cloudinary
     let contentUrl = null;
     try {
-      const result = await uploadBufferToCloudinary(req.file.buffer, "notes");
+      const result = await uploadBufferToCloudinary(req.file.buffer, "notes", "auto", {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
       contentUrl = result.secure_url;
     } catch (uploadError) {
+      console.error('Cloudinary notes upload error:', uploadError);
       return res.status(500).json({ success: false, message: "Error uploading file" });
     }
 

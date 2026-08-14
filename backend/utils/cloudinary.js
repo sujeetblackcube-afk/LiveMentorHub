@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
+import path from 'path';
 import { Readable } from 'stream';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -14,12 +15,63 @@ cloudinary.config({
  * @param {Buffer} buffer - The file buffer.
  * @param {string} folder - The target folder in Cloudinary.
  * @param {string} resourceType - 'image', 'video', 'raw', or 'auto'.
+ * @param {Object} options - Additional options, e.g., { originalname, mimetype }.
  * @returns {Promise<Object>} - Cloudinary upload response containing secure_url.
  */
-export const uploadBufferToCloudinary = (buffer, folder, resourceType = 'auto') => {
+export const uploadBufferToCloudinary = (buffer, folder, resourceType = 'auto', options = {}) => {
   return new Promise((resolve, reject) => {
+    const { originalname, mimetype } = options;
+    let finalResourceType = resourceType;
+    let ext = '';
+    let cleanBaseName = 'file';
+
+    if (originalname) {
+      ext = path.extname(originalname).toLowerCase();
+      cleanBaseName = path.basename(originalname, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
+    }
+
+    const isDocument = (mimetype && (
+      mimetype === 'application/pdf' ||
+      mimetype.includes('word') ||
+      mimetype.includes('presentation') ||
+      mimetype.includes('excel') ||
+      mimetype.includes('spreadsheet') ||
+      mimetype.includes('msword') ||
+      mimetype === 'text/plain'
+    )) || (ext && ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.txt', '.csv'].includes(ext));
+
+    const isVideo = (mimetype && mimetype.startsWith('video/')) ||
+      (ext && ['.mp4', '.avi', '.mov', '.mkv', '.webm', '.3gp', '.m4v'].includes(ext));
+
+    const isImage = (mimetype && mimetype.startsWith('image/')) ||
+      (ext && ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'].includes(ext));
+
+    if (resourceType === 'auto') {
+      if (isDocument) {
+        finalResourceType = 'raw';
+      } else if (isVideo) {
+        finalResourceType = 'video';
+      } else if (isImage) {
+        finalResourceType = 'image';
+      } else {
+        finalResourceType = 'auto';
+      }
+    }
+
+    const uploadOptions = {
+      resource_type: finalResourceType,
+    };
+
+    if (finalResourceType === 'raw' && ext) {
+      uploadOptions.public_id = `${folder}/${cleanBaseName}_${Date.now()}${ext}`;
+    } else if (originalname) {
+      uploadOptions.public_id = `${folder}/${cleanBaseName}_${Date.now()}`;
+    } else {
+      uploadOptions.folder = folder;
+    }
+
     const uploadStream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: resourceType },
+      uploadOptions,
       (error, result) => {
         if (error) {
           console.error('Cloudinary upload error:', error);

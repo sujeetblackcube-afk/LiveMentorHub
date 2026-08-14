@@ -107,7 +107,10 @@ export const addAssignment = async (req, res) => {
     let fileType = null;
     if (req.file) {
       try {
-        const result = await uploadBufferToCloudinary(req.file.buffer, "assignments");
+        const result = await uploadBufferToCloudinary(req.file.buffer, "assignments", "auto", {
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+        });
         fileUrl = result.secure_url;
         fileType = req.file.mimetype;
       } catch (uploadError) {
@@ -339,7 +342,10 @@ export const editAssignment = async (req, res) => {
     // Handle file upload if provided
     if (req.file) {
       try {
-        const result = await uploadBufferToCloudinary(req.file.buffer, "assignments");
+        const result = await uploadBufferToCloudinary(req.file.buffer, "assignments", "auto", {
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+        });
         updateData.fileUrl = result.secure_url;
         updateData.fileType = req.file.mimetype;
       } catch (uploadError) {
@@ -462,7 +468,10 @@ export const submitAssignment = async (req, res) => {
     // File handling
     if (req.file) {
       try {
-        const result = await uploadBufferToCloudinary(req.file.buffer, `student/${studentId}`);
+        const result = await uploadBufferToCloudinary(req.file.buffer, `student/${studentId}`, "auto", {
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+        });
         submission.submissionFileUrl = result.secure_url;
         submission.submissionFileType = req.file.mimetype;
       } catch (uploadError) {
