@@ -141,20 +141,10 @@ export const addNotes = async (req, res) => {
     // Upload file to Cloudinary (choose resource_type based on mimetype)
     let contentUrl = null;
     try {
-      let resourceType = 'auto';
-      if (req.file.mimetype === 'application/pdf' ||
-          req.file.mimetype === 'application/msword' ||
-          req.file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-          req.file.mimetype === 'text/plain') {
-        resourceType = 'raw';
-      } else if (req.file.mimetype && req.file.mimetype.startsWith('video/')) {
-        resourceType = 'video';
-      } else if (req.file.mimetype && req.file.mimetype.startsWith('image/')) {
-        resourceType = 'image';
-      }
-
-      const result = await uploadBufferToCloudinary(req.file.buffer, "notes", resourceType);
-      console.log('Cloudinary upload result for notes:', { public_id: result.public_id, resource_type: result.resource_type, secure_url: result.secure_url, bytes: result.bytes, format: result.format });
+      const result = await uploadBufferToCloudinary(req.file.buffer, "notes", "auto", {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
       contentUrl = result.secure_url;
 
       // Verify uploaded file by downloading it back and comparing SHA256
@@ -174,7 +164,7 @@ export const addNotes = async (req, res) => {
         console.error('Error verifying uploaded file from Cloudinary:', verifyErr);
       }
     } catch (uploadError) {
-      console.error('Error uploading note to Cloudinary:', uploadError);
+      console.error('Cloudinary notes upload error:', uploadError);
       return res.status(500).json({ success: false, message: "Error uploading file" });
     }
 

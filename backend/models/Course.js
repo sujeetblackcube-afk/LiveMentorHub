@@ -120,7 +120,8 @@ const Course = sequelize.define(
           }
         }
 
-        // Non-academic courses: category is optional now (no validation)
+        // Non-academic courses do not require category in this app's data model.
+        // Some legacy records and flows store them without category, so it must remain optional.
       },
     },
   },

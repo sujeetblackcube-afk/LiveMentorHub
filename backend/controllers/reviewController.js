@@ -99,6 +99,13 @@ export const submitReview = async (req, res) => {
   } catch (error) {
     await transaction.rollback();
     console.error("Error submitting review:", error);
+
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        error: error.errors?.[0]?.message || "Validation failed while submitting review."
+      });
+    }
+
     return res.status(500).json({ error: "Internal server error" });
   }
 };
