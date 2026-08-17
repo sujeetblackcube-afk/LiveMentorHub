@@ -44,7 +44,7 @@ const Students = () => {
       } else {
         // Fetch all students from all courses
         const token = localStorage.getItem('token');
-        const coursesResponse = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/teachers/courses`, {
+        const coursesResponse = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/teacher/courses`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

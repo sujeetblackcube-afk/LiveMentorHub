@@ -89,7 +89,7 @@ const AdminProfile = () => {
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/teachers/profile`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/teacher/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -293,7 +293,7 @@ const AdminProfile = () => {
                 if (editData.qualificationCertificates) formData.append('qualificationCertificates', editData.qualificationCertificates);
                 if (editData.experienceCertificates) formData.append('experienceCertificates', editData.experienceCertificates);
 
-                const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/teachers/profile`, {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/teacher/profile`, {
                   method: 'PUT',
                   headers: {
                     'Authorization': `Bearer ${token}`

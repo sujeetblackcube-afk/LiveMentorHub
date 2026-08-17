@@ -1,6 +1,7 @@
 //  const BASE_URL = "http://localhost:5000/api"; // Adjust if backend runs on different port
 // // const BASE_URL = "http://16.171.61.121:5000/api"; // Adjust if backend runs on different port
-  const BASE_URL = `${import.meta.env.VITE_BACKEND_BASE_URL}/api`;
+const BASE_URL = `${import.meta.env.VITE_BACKEND_BASE_URL}/api`;
+export const TEACHER_BASE_URL = `${BASE_URL}/teacher`;
 export const BACKEND_BASE_URL = `${import.meta.env.VITE_BACKEND_BASE_URL}`; // For static files
 
 const getAuthHeaders = () => {
@@ -38,23 +39,23 @@ export const getBanners = async (params = {}) => {
 };
 export const getTeacherCourseStudents = async (courseCode, params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/teachers/courses/${courseCode}/students${query ? `?${query}` : ""}`;
+  const url = `${TEACHER_BASE_URL}/courses/${courseCode}/students${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getTeacherCourses = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/teachers/courses${query ? `?${query}` : ""}`;
+  const url = `${TEACHER_BASE_URL}/courses${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getTotalStudentCountForTeacher = async () => {
-  const url = `${BASE_URL}/teachers/total-students`;
+  const url = `${TEACHER_BASE_URL}/total-students`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const createLiveSession = async (sessionData) => {
-  const url = `${BASE_URL}/livesessions`;
+  const url = `${TEACHER_BASE_URL}/livesessions`;
   return fetch(url, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -66,9 +67,7 @@ export const createLiveSession = async (sessionData) => {
 export const createBulkLiveSessions = async (bulkData) => {
   console.log("Creating bulk live sessions with data:", bulkData);
 
-
-  
-  const url = `${BASE_URL}/livesessions`;
+  const url = `${TEACHER_BASE_URL}/livesessions`;
   return fetch(url, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -77,7 +76,7 @@ export const createBulkLiveSessions = async (bulkData) => {
 };
 
 export const updateLiveSession = async (sessionId, sessionData) => {
-  const url = `${BASE_URL}/livesessions/${sessionId}`;
+  const url = `${TEACHER_BASE_URL}/livesessions/${sessionId}`;
   return fetch(url, {
     method: 'PUT',
     headers: getAuthHeaders(),
@@ -86,7 +85,7 @@ export const updateLiveSession = async (sessionId, sessionData) => {
 };
 
 export const deleteLiveSession = async (sessionId, teacherId) => {
-  const url = `${BASE_URL}/livesessions/${sessionId}`;
+  const url = `${TEACHER_BASE_URL}/livesessions/${sessionId}`;
   return fetch(url, {
     method: 'DELETE',
     headers: {
@@ -100,12 +99,12 @@ export const deleteLiveSession = async (sessionId, teacherId) => {
 // get live sessions for a specific teacher
 export const getTeacherLiveSessions = async (teacherId, params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/teachers/${teacherId}/livesessions${query ? `?${query}` : ""}`;
+  const url = `${TEACHER_BASE_URL}/${teacherId}/livesessions${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const startLiveSession = async (sessionId, teacherId) => {
-  const url = `${BASE_URL}/livesessions/start`;
+  const url = `${TEACHER_BASE_URL}/livesessions/start`;
   return fetch(url, {
     method: 'POST',
     headers: {
@@ -117,7 +116,7 @@ export const startLiveSession = async (sessionId, teacherId) => {
 };
 
 export const joinLiveSession = async (sessionId, studentId) => {
-  const url = `${BASE_URL}/livesessions/join`;
+  const url = `${TEACHER_BASE_URL}/livesessions/join`;
   return fetch(url, {
     method: 'POST',
     headers: {
@@ -128,11 +127,11 @@ export const joinLiveSession = async (sessionId, studentId) => {
   }).then(json);
 };
 export const getTeacherCourseCount = async (teacherId) => {
-  const url = `${BASE_URL}/teachers/${teacherId}/coursecount`;
+  const url = `${TEACHER_BASE_URL}/${teacherId}/coursecount`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 export  const  getcountLiveClassesByTeacher = async (teacherId) => {
-  const url = `${BASE_URL}/livesessions/teacher/${teacherId}/total`;
+  const url = `${TEACHER_BASE_URL}/livesessions/teacher/${teacherId}/total`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
