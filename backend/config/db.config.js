@@ -1,4 +1,4 @@
-// config/db.js
+// config/db.config.js
 import pkg from 'sequelize';
 const { Sequelize } = pkg;
 import config from './config.js';

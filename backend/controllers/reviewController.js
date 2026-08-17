@@ -1,5 +1,5 @@
 import { Review, Course, Teacher, Student, Enrollment } from '../models/index.js';
-import sequelize from '../config/db.js';
+import sequelize from '../config/db.config.js';
 
 import pkg from 'sequelize';
 const { Op } = pkg;

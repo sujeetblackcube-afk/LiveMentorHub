@@ -7,7 +7,7 @@ import { getPaginatedData } from "../utils/pagination.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
+import { uploadBufferToCloudinary } from "../utils/../config/cloudinary.config.js";
 import { 
   getCurrencyFromCountry, 
   convertCurrency, 

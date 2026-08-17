@@ -4,7 +4,7 @@ import pkg from 'sequelize';
 const { Op } = pkg;
 import multer from "multer";
 import path from "path";
-import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
+import { uploadBufferToCloudinary } from "../utils/../config/cloudinary.config.js";
 
 const validateCourseExists = async (courseCode, courseName = null) => {
   const where = { courseCode };

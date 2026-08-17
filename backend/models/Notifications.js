@@ -1,7 +1,7 @@
 
 import pkg from 'sequelize';
 const { DataTypes } = pkg;
-import sequelize from '../config/db.js';
+import sequelize from '../config/db.config.js';
 const Notification = sequelize.define("Notification", {
   notificationId: {
     type: DataTypes.UUID,

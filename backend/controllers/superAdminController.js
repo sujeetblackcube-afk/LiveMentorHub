@@ -1,7 +1,7 @@
 import  SuperAdmin  from '../models/SuperAdmin.js';
 import pkg from 'sequelize';
 const { Op } = pkg;
-import { uploadBufferToCloudinary } from '../utils/cloudinary.js';
+import { uploadBufferToCloudinary } from '../utils/../config/cloudinary.config.js';
 
 // Get super admin profile
 const getProfile = async (req, res) => {

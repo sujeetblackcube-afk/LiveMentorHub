@@ -1,6 +1,6 @@
 import multer from "multer";
 import path from "path";
-import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
+import { uploadBufferToCloudinary } from "../utils/../config/cloudinary.config.js";
 import Assignment from "../models/Assignment.js";
 import AssignmentSubmission from "../models/AssignmentSubmission.js";
 import Teacher from "../models/Teacher.js";

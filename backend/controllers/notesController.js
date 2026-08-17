@@ -1,7 +1,7 @@
 import multer from "multer";
 import path from "path";
 import fs from 'fs';
-import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
+import { uploadBufferToCloudinary } from "../utils/../config/cloudinary.config.js";
 import crypto from 'crypto';
 import NotesMedia from "../models/NotesMedia.js";
 import Course from "../models/Course.js";

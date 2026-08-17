@@ -9,7 +9,7 @@ import { generateEnrollmentPDF } from "../utils/generateEnrollmentPDF.js";
 import { v4 as uuidv4 } from "uuid";
 import multer from "multer";
 import Cashfree, { createCashfreeClient } from "../utils/cashfree.js";
-import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
+import { uploadBufferToCloudinary } from "../utils/../config/cloudinary.config.js";
 import Notification from "../models/Notifications.js";
 import { triggerPushForNotifications } from "../config/onesignalService.js";
 import crypto from "crypto";

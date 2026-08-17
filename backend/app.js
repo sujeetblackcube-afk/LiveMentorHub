@@ -3,14 +3,18 @@ import express, { static as expressStatic } from 'express';
 import dotenv from 'dotenv';
 
 // Route imports
-import authRoutes from './routes/authRoute.js';
-import studentRoutes from './routes/studentRoute.js';
+import authRoutes from './authentication/auth.routes.js';
+import studentRoutes from './student/student.routes.js';
+import enrollmentRoutes from './student/enrollments/studentEnrollment.routes.js';
+import testRoutes from './student/tests/studentTest.routes.js';
+import notesRoutes from './student/notes/studentNotes.routes.js';
+import doubtRoutes from './student/doubts/studentDoubt.routes.js';
+import reviewRoutes from './student/reviews/studentReview.routes.js';
 import teacherRoutes from './routes/teacherRoute.js';
 import parentRoutes from './routes/parentRoute.js';
 import classRoutes from './routes/classRoute.js';
 import subjectRoutes from './routes/subjectRoute.js';
 import courseRoutes from './routes/courseRoute.js';
-import enrollmentRoutes from './routes/enrollmentRoute.js';
 import bannerRoutes from './routes/bannerRoute.js';
 import contentRoutes from './routes/contentRoute.js';
 import superAdminRoutes from './routes/superAdminRoute.js';
@@ -18,11 +22,8 @@ import coursepagedataRoutes from './androidroutes/coursepagedataRoute.js';
 import homeroutes from './androidroutes/homeroutes.js';
 import contactUsRoute from './routes/contactUsRoute.js';
 import livesessionRoutes from './routes/livesessionRoute.js';
-import notesRoutes from './routes/notesRoute.js';
-import doubtRoutes from './routes/doubtRoute.js';
 import assignmentRoutes from './routes/assignmentRoute.js';
 import questionRoutes from './routes/questionRoute.js';
-import testRoutes from './routes/testRoute.js';
 import subscriptionRoutes from './routes/subscriptionRoute.js';
 import payoutRoutes from './routes/payoutRoute.js';
 import ReportRoute from './routes/reportRoute.js';
@@ -31,7 +32,6 @@ import teacherstudentdataRoutes from './androidroutes/teacherstudentdataRoute.js
 import syllabusRoutes from './routes/syllabusRoute.js';
 import dashboardRoutes from './routes/dashboardRoute.js';
 import deleteAccountRoutes from './routes/deleteAccount.js';
-import reviewRoutes from './routes/reviewRoutes.js';
 
 // Webhook controllers
 import { cashfreeWebhook } from './controllers/enrollmentController.js';

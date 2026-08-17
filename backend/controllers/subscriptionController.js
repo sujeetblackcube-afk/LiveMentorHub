@@ -7,7 +7,7 @@ const { Op } = pkg;
 import { getPaginatedData } from "../utils/pagination.js";
 import { generateSubscriptionInvoicePDF } from "../utils/generateSubscriptionInvoicePDF.js";
 import multer from "multer";
-import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
+import { uploadBufferToCloudinary } from "../utils/../config/cloudinary.config.js";
 import { notifySubscriptionConfirmation } from "../utils/notifySubscriptionEmail.js";
 
 // Helper function to upload PDF buffer to Cloudinary

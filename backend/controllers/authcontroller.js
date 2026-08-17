@@ -1,3 +1,22 @@
+/**
+ * ⚠️ DEPRECATED - DO NOT USE FOR NEW CODE
+ * 
+ * This file has been refactored and split into multiple focused files:
+ * - backend/authentication/auth.controller.js (HTTP handlers)
+ * - backend/authentication/auth.service.js (Business logic)
+ * - backend/authentication/auth.routes.js (Route definitions)
+ * - backend/authentication/auth.validation.js (Request validation)
+ * 
+ * This file is kept for reference only. All imports should be updated to use the new structure.
+ * 
+ * See backend/docs/authentication.md for complete API documentation.
+ * See this file only if you need to understand the old implementation.
+ */
+
+// ============================================================
+// OLD CODE - REFERENCE ONLY - DO NOT USE
+// ============================================================
+
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import multer from "multer";

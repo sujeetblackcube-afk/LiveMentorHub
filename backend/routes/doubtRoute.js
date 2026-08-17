@@ -1,18 +1,25 @@
+/**
+ * Legacy student doubt routes.
+ * Kept for rollback safety while the student doubt module is moved under
+ * backend/student/doubts.
+ */
+
 import express from 'express';
-import { createDoubt, updateDoubt, getDoubtsByCourseCode, getDoubtsByStudentId } from '../controllers/doubtController.js';
+// import { createDoubt, updateDoubt, getDoubtsByCourseCode, getDoubtsByStudentId } from '../controllers/doubtController.js';
 
 const router = express.Router();
 
-// POST /api/doubts - Create a new doubt
-router.post('/', createDoubt);
+// // POST /api/doubts - Create a new doubt
+// router.post('/', createDoubt);
 
-// GET /api/doubts/student/:studentId - Get all doubts by student ID
-router.get('/student/:studentId', getDoubtsByStudentId);
+// // GET /api/doubts/student/:studentId - Get all doubts by student ID
+// router.get('/student/:studentId', getDoubtsByStudentId);
 
-// PUT /api/doubts/:id - Update a doubt with teacher reply
-router.put('/:id', updateDoubt);
+// // PUT /api/doubts/:id - Update a doubt with teacher reply
+// router.put('/:id', updateDoubt);
 
-// GET /api/doubts/:teacherId - Get all doubts for a teacher's courses
-router.get('/:teacherId', getDoubtsByCourseCode);
+// // GET /api/doubts/:teacherId - Get all doubts for a teacher's courses
+// router.get('/:teacherId', getDoubtsByCourseCode);
 
 export default router;
+

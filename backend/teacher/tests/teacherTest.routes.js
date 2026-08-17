@@ -1,0 +1,33 @@
+/**
+ * Teacher tests routes.
+ * Internal refactor route. Public route remains /api/tests.
+ */
+
+import express from 'express';
+import authMiddleware from '../../middleware/authmiddleware.js';
+import {
+  createTeacherTest,
+  getTeacherTests,
+  getTeacherTestById,
+  updateTeacherTest,
+  deleteTeacherTest,
+  getTeacherTestSubmissions,
+  updateTeacherTestSubmissionMarks,
+} from './teacherTest.controller.js';
+
+const router = express.Router();
+router.use(authMiddleware);
+
+router.post('/', createTeacherTest);
+router.get('/', getTeacherTests);
+router.get('/:id', getTeacherTestById);
+router.get('/course/:courseCode', async (req, res) => {
+  const { getTeacherTests } = await import('./teacherTest.controller.js');
+  return getTeacherTests(req, res);
+});
+router.put('/:id', updateTeacherTest);
+router.delete('/:id', deleteTeacherTest);
+router.get('/:teacherId/test-submissions', getTeacherTestSubmissions);
+router.put('/grade-submission/:submissionId', updateTeacherTestSubmissionMarks);
+
+export default router;

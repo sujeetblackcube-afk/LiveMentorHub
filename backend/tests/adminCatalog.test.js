@@ -1,6 +1,6 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import sequelize from '../config/db.js';
+import sequelize from '../config/db.config.js';
 import ClassModel from '../models/Class.js';
 import SubjectModel from '../models/Subject.js';
 import CourseModel from '../models/Course.js';

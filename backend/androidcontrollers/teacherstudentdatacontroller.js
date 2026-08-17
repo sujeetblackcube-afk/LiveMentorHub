@@ -5,7 +5,7 @@ import NotesMedia from "../models/NotesMedia.js";
 import Course from "../models/Course.js";
 import LiveSession from "../models/Livesession.js";
 import Notification from "../models/Notifications.js";
-import sequelize from "../config/db.js";
+import sequelize from "../config/db.config.js";
 import TeacherPayout from "../models/Payout.js";
 import pkg from 'sequelize';
 const { Op } = pkg;

@@ -2,7 +2,7 @@ import TeacherPayout from "../models/Payout.js";
 import Teacher from "../models/Teacher.js";
 import pkg from 'sequelize';
 const { Op } = pkg;
-import sequelize from "../config/db.js";
+import sequelize from "../config/db.config.js";
 import { getPaginatedData } from "../utils/pagination.js";
 
 // Create a new payment/payout request

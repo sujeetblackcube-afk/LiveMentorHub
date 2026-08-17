@@ -6,10 +6,12 @@ import authMiddleware from "../middleware/authmiddleware.js";
 import {
   getClassSummary,
   getClassHierarchyById,
+} from "../admin/classes/class.controller.js";
+import {
   getSubjectCourses,
   getCourseParticipantsByCode,
   patchCourseDetails,
-} from "../controllers/adminCatalogController.js";
+} from "../admin/courses/course.controller.js";
 import { createClass } from '../controllers/classController.js';
 
 const router = express.Router();
