@@ -30,6 +30,17 @@ import {
 } from './teacherProfile.controller.js';
 import authMiddleware from '../middleware/authmiddleware.js';
 
+const requireTeacherRole = (req, res, next) => {
+  if (!req.auth || req.auth.role !== 'teacher') {
+    return res.status(403).json({
+      success: false,
+      message: 'Teacher access required',
+    });
+  }
+
+  next();
+};
+
 // Keep the same file locations as the legacy implementation.
 const teacherProfileDir = path.join(process.cwd(), 'uploads', 'teacher-profiles');
 const teacherDocDir = path.join(process.cwd(), 'uploads', 'teacher-documents');
@@ -54,11 +65,11 @@ const upload = multer({ storage });
 
 const router = express.Router();
 
-router.get('/', getAllTeachers);
-router.get('/count', getTeacherCount);
-router.patch('/:teacherId/status', updateTeacherStatus);
-router.patch('/:teacherId/course', updateCoursename);
-router.get('/profile', authMiddleware, getTeacherProfile);
+router.get('/', authMiddleware, requireTeacherRole, getAllTeachers);
+router.get('/count', authMiddleware, requireTeacherRole, getTeacherCount);
+router.patch('/:teacherId/status', authMiddleware, requireTeacherRole, updateTeacherStatus);
+router.patch('/:teacherId/course', authMiddleware, requireTeacherRole, updateCoursename);
+router.get('/profile', authMiddleware, requireTeacherRole, getTeacherProfile);
 router.put(
   '/profile',
   upload.fields([
@@ -68,14 +79,15 @@ router.put(
     { name: 'experienceCertificates', maxCount: 20 },
   ]),
   authMiddleware,
+  requireTeacherRole,
   updateTeacherProfile
 );
-router.get('/courses', authMiddleware, getTeacherCourses);
-router.get('/courses/:courseCode/students', authMiddleware, getTeacherCourseStudents);
-router.get('/:teacherId/livesessions', authMiddleware, getTeacherLiveSessions);
-router.get('/:teacherId/coursecount', authMiddleware, courseCountForTeacher);
-router.get('/total-students', authMiddleware, getTotalStudentCountForTeacher);
-router.delete('/delete-account/:teacherId', deleteTeacher);
+router.get('/courses', authMiddleware, requireTeacherRole, getTeacherCourses);
+router.get('/courses/:courseCode/students', authMiddleware, requireTeacherRole, getTeacherCourseStudents);
+router.get('/:teacherId/livesessions', authMiddleware, requireTeacherRole, getTeacherLiveSessions);
+router.get('/:teacherId/coursecount', authMiddleware, requireTeacherRole, courseCountForTeacher);
+router.get('/total-students', authMiddleware, requireTeacherRole, getTotalStudentCountForTeacher);
+router.delete('/delete-account/:teacherId', authMiddleware, requireTeacherRole, deleteTeacher);
 
 router.use('/courses', courseRoutes);
 router.use('/tests', testRoutes);

@@ -15,8 +15,16 @@ import {
 
 const router = express.Router();
 
+const requireSuperAdmin = (req, res, next) => {
+  if (req.auth && req.auth.role === "superadmin") {
+    return next();
+  }
+  return res.status(403).json({ success: false, message: "Forbidden" });
+};
+
 // Apply auth middleware to all routes
 router.use(authMiddleware);
+router.use(requireSuperAdmin);
 
 /**
  * GET /api/admin/students/count

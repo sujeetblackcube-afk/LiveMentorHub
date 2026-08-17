@@ -5,8 +5,10 @@ import {
   getDoubtsByCourseCode,
   getDoubtsByStudentId,
 } from '../../controllers/doubtController.js';
+import authMiddleware from '../../middleware/authmiddleware.js';
 
 const router = express.Router();
+router.use(authMiddleware);
 
 // POST /api/doubts - Create a new doubt
 router.post('/', createDoubt);

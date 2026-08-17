@@ -8,6 +8,6 @@ router.post('/', authMiddleware, submitReview);
 
 router.get('/average', authMiddleware, getAverageRating);
 
-router.get('/has-reviewed', hasStudentReviewed);
+router.get('/has-reviewed', authMiddleware, hasStudentReviewed);
 
 export default router;

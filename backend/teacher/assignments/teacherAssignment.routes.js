@@ -14,7 +14,20 @@ import {
 } from './teacherAssignment.controller.js';
 
 const router = express.Router();
+
+const requireTeacherRole = (req, res, next) => {
+  if (!req.auth || req.auth.role !== 'teacher') {
+    return res.status(403).json({
+      success: false,
+      message: 'Teacher access required',
+    });
+  }
+
+  next();
+};
+
 router.use(authMiddleware);
+router.use(requireTeacherRole);
 
 router.post('/:teacherId', uploadTeacherAssignmentFile, addTeacherAssignment);
 router.post('/students/submission', uploadTeacherAssignmentFile, submitTeacherAssignment);

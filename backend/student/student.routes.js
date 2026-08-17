@@ -19,6 +19,7 @@ import {
 import authMiddleware from '../middleware/authmiddleware.js';
 
 const router = express.Router();
+router.use(authMiddleware);
 
 /**
  * GET /api/students
@@ -60,7 +61,7 @@ router.put('/:studentId', uploadProfile.single('profileImage'), updateStudentDat
  * GET /api/students/getlive-sessions/:studentId
  * Get live sessions for student
  */
-router.get('/getlive-sessions/:studentId', authMiddleware, getStudentLiveSessions);
+router.get('/getlive-sessions/:studentId', getStudentLiveSessions);
 
 /**
  * DELETE /api/students/delete-account/:studentId

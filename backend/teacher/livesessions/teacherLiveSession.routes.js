@@ -11,6 +11,16 @@ import {
 } from './teacherLiveSession.controller.js';
 
 const router = express.Router();
+const requireTeacherRole = (req, res, next) => {
+  if (!req.auth || req.auth.role !== 'teacher') {
+    return res.status(403).json({
+      success: false,
+      message: 'Teacher access required',
+    });
+  }
+
+  next();
+};
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -23,11 +33,14 @@ const upload = multer({
   },
 });
 
-router.post('/', authMiddleware, upload.single('thumbnail'), createTeacherLiveSession);
-router.post('/start', authMiddleware, startTeacherLiveSession);
-router.post('/join', authMiddleware, joinTeacherLiveSession);
-router.put('/:sessionId', authMiddleware, upload.single('thumbnail'), updateTeacherLiveSession);
-router.delete('/:sessionId', authMiddleware, deleteTeacherLiveSession);
-router.get('/teacher/:teacherId/total', authMiddleware, getTeacherLiveClassTotal);
+router.use(authMiddleware);
+router.use(requireTeacherRole);
+
+router.post('/', upload.single('thumbnail'), createTeacherLiveSession);
+router.post('/start', startTeacherLiveSession);
+router.post('/join', joinTeacherLiveSession);
+router.put('/:sessionId', upload.single('thumbnail'), updateTeacherLiveSession);
+router.delete('/:sessionId', deleteTeacherLiveSession);
+router.get('/teacher/:teacherId/total', getTeacherLiveClassTotal);
 
 export default router;
