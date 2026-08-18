@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./auth.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { API_BASE_URL } from "../../utils/constants";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
@@ -41,7 +42,7 @@ export default function Login() {
     
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

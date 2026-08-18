@@ -1,8 +1,7 @@
-//  const BASE_URL = "http://localhost:5000/api"; // Adjust if backend runs on different port
-// // const BASE_URL = "http://16.171.61.121:5000/api"; // Adjust if backend runs on different port
-const BASE_URL = `${import.meta.env.VITE_BACKEND_BASE_URL}/api`;
+const envBase = (import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+const BASE_URL = `${envBase}/api`;
 export const TEACHER_BASE_URL = `${BASE_URL}/teacher`;
-export const BACKEND_BASE_URL = `${import.meta.env.VITE_BACKEND_BASE_URL}`; // For static files
+export const BACKEND_BASE_URL = envBase; // For static files
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
