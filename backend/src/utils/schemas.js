@@ -2,11 +2,16 @@ import { z } from 'zod';
 
 export const loginSchema = z.object({
   body: z.object({
-    email: z.string().email('Invalid email address').optional(),
-    mobile: z.string().min(10, 'Mobile number must be at least 10 digits').optional(),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
-  }).refine((data) => data.email || data.mobile, {
-    message: 'Either email or mobile is required',
+    identifier: z.string().optional(),
+    email: z.string().optional(),
+    mobile: z.string().optional(),
+    password: z.string().min(1, 'Password is required'),
+    role: z.string().optional(),
+    forceLogout: z.boolean().optional(),
+    playerId: z.string().nullable().optional(),
+    deviceType: z.string().nullable().optional(),
+  }).refine((data) => data.identifier || data.email || data.mobile, {
+    message: 'Identifier (email or mobile) is required',
   }),
 });
 
