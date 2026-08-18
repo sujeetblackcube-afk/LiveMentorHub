@@ -6,6 +6,8 @@ const { Op } = SequelizePkg;
 import Course from '../../../models/Course.js';
 import Teacher from '../../../models/Teacher.js';
 import Enrollment from '../../../models/Enrollment.js';
+import Notification from '../../../models/Notifications.js';
+import { triggerPushForNotifications } from '../../../config/onesignalService.js';
 import multer from "multer";
 import path from "path";
 import fs from "fs";

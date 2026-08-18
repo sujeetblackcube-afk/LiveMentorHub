@@ -103,7 +103,10 @@ const Classes = () => {
         formData.append("thumbnail", thumbnail); 
       }
 
-      await createLiveSession(formData);
+      const res = await createLiveSession(formData);
+      if (res && res.success === false) {
+        throw new Error(res.message || "Failed to create live session");
+      }
 
       toast.success("Session created successfully");
       setIsScheduleModalOpen(false);

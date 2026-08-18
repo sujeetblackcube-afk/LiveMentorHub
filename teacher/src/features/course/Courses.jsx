@@ -101,11 +101,11 @@ const Courses = () => {
       formData.append('maxParticipants', sessionData.maxParticipants || 100);
       formData.append('isPrivate', sessionData.isPrivate);
 
-      if (thumbnail) {
-        formData.append('thumbnail', thumbnail);
+      const res = await createLiveSession(formData);
+      if (res && res.success === false) {
+        throw new Error(res.message || 'Failed to schedule live session');
       }
 
-      await createLiveSession(formData);
       toast.success('Live session scheduled successfully!');
       setShowModal(false);
       setSessionData({
@@ -116,7 +116,7 @@ const Courses = () => {
       });
       setThumbnail(null);
     } catch (error) {
-      toast.error('Failed to schedule live session');
+      toast.error(error.message || 'Failed to schedule live session');
     } finally {
       setIsSubmitting(false);
     }
