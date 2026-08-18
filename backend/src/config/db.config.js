@@ -1,13 +1,15 @@
+import pg from 'pg';
 import pkg from 'sequelize';
 const { Sequelize } = pkg;
 import config from './config.js';
 
 const sequelizeOptions = {
   dialect: 'postgres',
+  dialectModule: pg,
   logging: false,
   pool: {
     max: 25,
-    min: 5,
+    min: 2,
     acquire: 30000,
     idle: 10000,
   },
