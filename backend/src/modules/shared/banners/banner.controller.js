@@ -51,6 +51,8 @@ export const addBanner = async (req, res) => {
   }
 };
 
+import { optimizeCloudinaryUrl } from '../../../utils/image.js';
+
 export const getBanners = async (req, res) => {
   try {
     const { status, page, limit } = req.query;
@@ -70,9 +72,14 @@ export const getBanners = async (req, res) => {
         page,
         limit || 10
       );
+      const optimizedData = paginatedResult.data.map(b => {
+        const item = b.toJSON ? b.toJSON() : b;
+        if (item.image) item.image = optimizeCloudinaryUrl(item.image, false);
+        return item;
+      });
       return res.status(200).json({
         success: true,
-        data: paginatedResult.data,
+        data: optimizedData,
         pagination: {
           totalItems: paginatedResult.totalItems,
           totalPages: paginatedResult.totalPages,
@@ -83,10 +90,15 @@ export const getBanners = async (req, res) => {
     }
 
     const banners = await Banner.findAll(queryOptions);
+    const optimizedBanners = banners.map(b => {
+      const item = b.toJSON ? b.toJSON() : b;
+      if (item.image) item.image = optimizeCloudinaryUrl(item.image, false);
+      return item;
+    });
 
     return res.status(200).json({
       success: true,
-      data: banners,
+      data: optimizedBanners,
     });
   } catch (error) {
     console.error("Get Banners Error:", error);

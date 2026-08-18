@@ -68,6 +68,7 @@ export default function CourseDetailsPage() {
     const [content, setContent] = useState<CourseContent[]>([]);
     const [contentLoading, setContentLoading] = useState(false);
     const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+    const [isPlayingIntro, setIsPlayingIntro] = useState(false);
 
     useEffect(() => {
         setStudentId(user?.studentId || "demo");
@@ -259,18 +260,35 @@ export default function CourseDetailsPage() {
                         transition={{ delay: 0.1 }}
                         className="w-full aspect-video rounded-3xl overflow-hidden bg-gray-900 shadow-2xl relative group"
                     >
-                        {course.thumbnail ? (
-                            <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                        {isPlayingIntro && course.introVideo ? (
+                            <video
+                                src={course.introVideo}
+                                controls
+                                autoPlay
+                                playsInline
+                                className="w-full h-full object-cover"
+                            />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                                <BookOpen size={48} className="text-white/10" />
-                            </div>
+                            <>
+                                {course.thumbnail ? (
+                                    <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <BookOpen size={48} className="text-white/10" />
+                                    </div>
+                                )}
+                                {course.introVideo ? (
+                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center transition-opacity">
+                                        <button
+                                            onClick={() => setIsPlayingIntro(true)}
+                                            className="h-20 w-20 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white hover:scale-110 transition-all text-white hover:text-[#0d1f5c]"
+                                        >
+                                            <PlayCircle size={40} className="ml-1" />
+                                        </button>
+                                    </div>
+                                ) : null}
+                            </>
                         )}
-                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className="h-20 w-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white hover:scale-110 transition-all text-white hover:text-[#0d1f5c]">
-                                <PlayCircle size={40} className="ml-1" />
-                            </button>
-                        </div>
                     </motion.div>
 
                     {/* Description Section */}

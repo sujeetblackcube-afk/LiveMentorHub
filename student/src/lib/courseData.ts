@@ -51,6 +51,7 @@ export interface CourseItem {
     courseEndDate?: string;
     subcategory?: string;
     stream?: string;
+    introVideo?: string;
     tabs: string[];
     hasReviewed?: boolean;
     enrollmentStatus?: number;
@@ -138,6 +139,7 @@ if (thumbnail && !thumbnail.startsWith("http")) {
     const courseEndDate = String(getFirst<string>(o, "deadline", "courseEndDate", "endDate", "end_date") ?? "");
     const subcategory = String(getFirst<string>(o, "subcategory", "subCategory") ?? "");
     const stream = String(getFirst<string>(o, "stream") ?? "");
+    const introVideo = String(getFirst<string>(o, "introVideo", "introVideoUrl", "intro_video", "videoUrl") ?? "");
     const hasReviewed = Boolean(getFirst<boolean>(o, "hasReviewed", "has_reviewed", "reviewed"));
     const rawCurriculum = getFirst<unknown[]>(o, "curriculum", "chapters", "modules", "lessons", "syllabus");
     const curriculum = Array.isArray(rawCurriculum)
@@ -182,6 +184,7 @@ if (thumbnail && !thumbnail.startsWith("http")) {
         courseEndDate,
         subcategory,
         stream,
+        introVideo,
         tabs: ["Curriculum", "Materials", "Announcements"],
         hasReviewed,
         curriculum,

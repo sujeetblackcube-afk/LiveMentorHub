@@ -952,12 +952,47 @@ export const deleteLiveSession = async (req, res) => {
   }
 };
 
+export const renewRtcTokenTeacher = async (req, res) => {
+  try {
+    const { channelName, uid, role } = req.body;
+    if (!channelName) {
+      return res.status(400).json({ success: false, message: 'channelName is required' });
+    }
+
+    const rtcRole = (role === 'publisher' || req.auth?.role === 'teacher')
+      ? RtcRole.PUBLISHER
+      : RtcRole.SUBSCRIBER;
+
+    const expirationTimeInSeconds = 3600 * 4; // 4 hours token window
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
+
+    const token = RtcTokenBuilder.buildTokenWithUid(
+      process.env.AGORA_APP_ID || 'agora_demo_app_id',
+      process.env.AGORA_APP_CERTIFICATE || 'agora_demo_certificate',
+      channelName,
+      parseInt(uid, 10) || 0,
+      rtcRole,
+      privilegeExpiredTs
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'RTC token renewed successfully',
+      token,
+      privilegeExpiredTs,
+    });
+  } catch (error) {
+    console.error('Renew RTC Token Error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const createTeacherLiveSession = createLiveSession;
 export const getTeacherLiveSessions = async (req, res) => res.status(200).json({ success: true, sessions: [] });
 export const getTeacherLiveSessionById = async (req, res) => res.status(200).json({ success: true });
 export const updateTeacherLiveSession = updateLiveSession;
 export const deleteTeacherLiveSession = deleteLiveSession;
-export const renewRtcTokenTeacher = async (req, res) => res.status(200).json({ success: true });
 export const getTeacherLiveClassTotal = teacherCreateLiveClassTotal;
 export const joinTeacherLiveSession = joinLiveSession;
 export const startTeacherLiveSession = startLiveSession;

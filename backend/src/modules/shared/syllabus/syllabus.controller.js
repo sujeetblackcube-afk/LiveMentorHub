@@ -80,7 +80,15 @@ export const addUpdateSyllabus = async (req, res) => {
     // Upload to Cloudinary
     let syllabusUrl = null;
     try {
-      const result = await uploadBufferToCloudinary(req.file.buffer, "syllabus", "raw");
+      const result = await uploadBufferToCloudinary(
+        req.file.buffer,
+        "syllabus",
+        "raw",
+        {
+          originalname: req.file.originalname || "syllabus.pdf",
+          mimetype: req.file.mimetype || "application/pdf"
+        }
+      );
       syllabusUrl = result.secure_url;
     } catch (uploadError) {
       return res.status(500).json({ success: false, message: "Error uploading syllabus file" });

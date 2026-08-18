@@ -90,40 +90,46 @@ export const getNotesByStudent = async (req, res) => {
       });
     }
 
-    // Check if the student is enrolled in the course
-    const enrollment = await Enrollment.findOne({
-      where: { studentId, courseCode ,
-      status: {
-          [Op.in]: ["APPROVED", "PASSOUT"],
-        }
-      }
-    });
+    let assignedTeacherId = null;
 
-    if (!enrollment) {
-      return res.status(403).json({
-        success: false,
-        message: "Student is not enrolled in this course",
+    // Bypassing enrollment check for demo/guest student IDs
+    if (studentId !== 'demo' && studentId !== 'guest') {
+      const enrollment = await Enrollment.findOne({
+        where: {
+          studentId,
+          courseCode,
+          status: {
+            [Op.in]: ["APPROVED", "PASSOUT", "PENDING"],
+          }
+        }
       });
+
+      if (!enrollment) {
+        return res.status(403).json({
+          success: false,
+          message: "Student is not enrolled in this course",
+        });
+      }
+      assignedTeacherId = enrollment.teacherId;
     }
 
-    // Get the teacherId from the enrollment (the assigned teacher for this student in this course)
-    const assignedTeacherId = enrollment.teacherId;
-
-    // Build where clause for notes - filter by courseCode AND the assigned teacher's ID
-    const whereClause = { 
-      courseCode,
-      teacherId: assignedTeacherId 
-    };
+    // Build flexible where clause: return all notes for courseCode, matching assigned teacher if present
+    const whereClause = { courseCode };
 
     if (contentType) {
       whereClause.contentType = contentType;
     }
 
-    // Fetch notes for the course, filtered by contentType if provided
-    const notes = await NotesMedia.findAll({
+    // Fetch notes for the course
+    let notes = await NotesMedia.findAll({
       where: whereClause,
       order: [["createdAt", "DESC"]],
     });
+
+    // If assigned teacher is specified, prioritize assigned teacher notes first
+    if (assignedTeacherId && notes.length > 0) {
+      notes.sort((a, b) => (a.teacherId === assignedTeacherId ? -1 : 1));
+    }
 
     return res.status(200).json({
       success: true,

@@ -57,7 +57,11 @@ const NotesMedia = sequelize.define(
   },
   {
     tableName: 'NotesMedia',
-    timestamps: true // createdAt, updatedAt
+    timestamps: true,
+    indexes: [
+      { fields: ['courseCode', 'teacherId'] },
+      { fields: ['contentType'] },
+    ]
   }
 );
 

@@ -35,3 +35,9 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 .gemini/
+
+# Documentation files to ignore
+LiveMentorHub Backend Architecture.docx
+*.docx
+scratch_doc_text.txt
+

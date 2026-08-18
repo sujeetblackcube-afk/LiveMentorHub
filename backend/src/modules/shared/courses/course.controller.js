@@ -16,8 +16,17 @@ import {
 } from '../../../utils/currencyRates.js';
 import Review from '../../../models/Review.js';
 
+import { optimizeCloudinaryUrl } from '../../../utils/image.js';
+
 export const convertCoursePrices = (course, currencyInfo) => {
   const courseData = course.toJSON ? course.toJSON() : course;
+  
+  if (courseData.thumbnailUrl) {
+    courseData.thumbnailUrl = optimizeCloudinaryUrl(courseData.thumbnailUrl, false);
+  }
+  if (courseData.introVideo) {
+    courseData.introVideo = optimizeCloudinaryUrl(courseData.introVideo, true);
+  }
   
   if (currencyInfo) {
     const convertedMrp = convertCurrency(
@@ -30,15 +39,12 @@ export const convertCoursePrices = (course, currencyInfo) => {
       currencyInfo.currencyCode
     );
 
-    // ✅ Keep same type as DB (STRING like "1200.00")
     courseData.convertedMrp = Number(convertedMrp).toFixed(2);
     courseData.convertedDiscountedPrice = Number(convertedDiscount).toFixed(2);
 
-    // ✅ Remove symbol from formatted (only numeric string)
     courseData.formattedMrp = Number(convertedMrp).toFixed(2);
     courseData.formattedDiscountedPrice = Number(convertedDiscount).toFixed(2);
 
-    // Keep currency info separately
     courseData.currencyCode = currencyInfo.currencyCode;
     courseData.currencySymbol = currencyInfo.symbol;
   }

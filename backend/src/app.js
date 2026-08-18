@@ -16,7 +16,16 @@ if (typeof cashfreeWebhook === 'function') {
   app.post('/api/cashfree-webhook', express.raw({ type: 'application/json' }), cashfreeWebhook);
 }
 
-// Global Middleware
+import helmet from 'helmet';
+import { apiRateLimiter } from './middleware/rateLimit.middleware.js';
+import { morganMiddleware } from './utils/logger.js';
+
+// Global Middleware & Security Headers (Helmet.js)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false,
+}));
+
 app.use(cors({
   origin: '*',
   credentials: true
@@ -27,6 +36,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(morganMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -34,9 +44,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', expressStatic('uploads'));
 
 // ============================================================
-// MASTER API ROUTE MOUNT
+// MASTER API ROUTE MOUNT WITH RATE LIMITING
 // ============================================================
-app.use('/api', masterRouter);
+app.use('/api', apiRateLimiter, masterRouter);
 
 // Root Health Check
 app.get('/', (req, res) => {

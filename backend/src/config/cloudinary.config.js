@@ -54,8 +54,9 @@ export const uploadBufferToCloudinary = (buffer, folder, resourceType = 'auto', 
       resource_type: finalResourceType,
     };
 
-    if (finalResourceType === 'raw' && ext) {
-      uploadOptions.public_id = `${folder}/${cleanBaseName}_${Date.now()}${ext}`;
+    if (finalResourceType === 'raw') {
+      const fileExt = ext || '.pdf';
+      uploadOptions.public_id = `${folder}/${cleanBaseName}_${Date.now()}${fileExt}`;
     } else if (originalname) {
       uploadOptions.public_id = `${folder}/${cleanBaseName}_${Date.now()}`;
     } else {

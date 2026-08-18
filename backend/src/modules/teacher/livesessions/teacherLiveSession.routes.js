@@ -8,6 +8,7 @@ import {
   updateTeacherLiveSession,
   deleteTeacherLiveSession,
   getTeacherLiveClassTotal,
+  renewRtcTokenTeacher,
 } from './teacherLiveSession.controller.js';
 
 const router = express.Router();
@@ -39,6 +40,7 @@ router.use(requireTeacherRole);
 router.post('/', upload.single('thumbnail'), createTeacherLiveSession);
 router.post('/start', startTeacherLiveSession);
 router.post('/join', joinTeacherLiveSession);
+router.post('/renew-token', renewRtcTokenTeacher);
 router.put('/:sessionId', upload.single('thumbnail'), updateTeacherLiveSession);
 router.delete('/:sessionId', deleteTeacherLiveSession);
 router.get('/teacher/:teacherId/total', getTeacherLiveClassTotal);
