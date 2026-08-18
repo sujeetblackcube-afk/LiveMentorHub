@@ -14,7 +14,10 @@ build/
 *.tsbuildinfo
 
 # Environment Variables & Local Configs
+.env
+.env.*
 .env*.local
+*.env
 .env.production
 .env.staging
 .env.development
