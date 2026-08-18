@@ -29,8 +29,10 @@ export const sendOtpSchema = z.object({
   body: z.object({
     mobile: z.string().min(10, 'Mobile number must be at least 10 digits').optional(),
     email: z.string().email('Invalid email address').optional(),
-  }).refine((data) => data.mobile || data.email, {
-    message: 'Either mobile or email is required',
+    identifier: z.string().optional(),
+    role: z.string().optional(),
+  }).refine((data) => data.mobile || data.email || data.identifier, {
+    message: 'Either mobile, email, or identifier is required',
   }),
 });
 

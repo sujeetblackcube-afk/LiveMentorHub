@@ -75,6 +75,39 @@ export function SyllabusSection({ courseId }: SyllabusSectionProps) {
     );
   }
 
+  const getFullSyllabusUrl = (url: string | null) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+    return `${base}/${url.replace(/^\/+/, '')}`;
+  };
+
+  const fullSyllabusUrl = getFullSyllabusUrl(data?.syllabusUrl || null);
+
+  const handleDownload = async () => {
+    if (!fullSyllabusUrl) return;
+    try {
+      toast.info("Downloading syllabus...");
+      const res = await fetch(fullSyllabusUrl);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+
+      // Extract filename or build clean title with .pdf
+      const safeTitle = (data?.courseName || "Course").replace(/[^a-zA-Z0-9]/g, "_");
+      link.setAttribute("download", `${safeTitle}_Syllabus.pdf`);
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(fullSyllabusUrl, "_blank");
+    }
+  };
+
   if (!data) return null;
 
   return (
@@ -85,16 +118,14 @@ export function SyllabusSection({ courseId }: SyllabusSectionProps) {
     >
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-[#0d1f5c]/5 to-[#d4940a]/5 p-6 rounded-xl border border-[#0d1f5c]/10">
-          {data.syllabusUrl ? (
+          {fullSyllabusUrl ? (
             <Button 
-              asChild 
               size="lg"
-              className="w-full bg-[#0d1f5c] hover:bg-[#d4940a] text-white shadow-lg"
+              onClick={handleDownload}
+              className="w-full bg-[#0d1f5c] hover:bg-[#d4940a] text-white shadow-lg cursor-pointer flex items-center justify-center gap-2"
             >
-              <a href={data.syllabusUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
-                <Download className="h-4 w-4" />
-                Download Syllabus PDF
-              </a>
+              <Download className="h-4 w-4" />
+              Download Syllabus PDF
             </Button>
           ) : (
             <Button 

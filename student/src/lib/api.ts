@@ -107,9 +107,9 @@ export const NOTIFICATION_PATHS = {
   getNotifications: (studentId: string) =>
     `/api/notifications/student/${studentId}`,
   deleteNotification: (notificationId: string) =>
-    `/api/notifications/${notificationId}`,
+    `/api/notifications/student/${notificationId}`,
   clearAllNotifications: (studentId: string) =>
-    `/api/notifications/student/all/${studentId}`,
+    `/api/notifications/student/${studentId}/all`,
 } as const;
 
 export const LIVESESSION_PATHS = {

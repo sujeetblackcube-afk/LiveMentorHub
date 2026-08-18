@@ -343,10 +343,15 @@ export const adminDeleteReview = async (req, res) => {
  * GET /api/reviews/has-reviewed
  */
 export const hasStudentReviewed = async (req, res) => {
-  const { studentId, courseCode } = req.body;
+  const studentId = req.query.studentId || req.body?.studentId || req.user?.studentId;
+  const courseCode = req.query.courseCode || req.body?.courseCode;
 
-  if (!studentId || !courseCode) {
-    return res.status(400).json({ error: "Both 'studentId' and 'courseCode' query parameters are required." });
+  if (!courseCode) {
+    return res.status(200).json({ status: true, hasReviewed: false });
+  }
+
+  if (!studentId) {
+    return res.status(200).json({ status: true, hasReviewed: false });
   }
 
   try {
@@ -354,10 +359,9 @@ export const hasStudentReviewed = async (req, res) => {
       where: { studentId, courseCode }
     });
 
-    return res.status(200).json({ hasReviewed: !!review });
+    return res.status(200).json({ status: true, hasReviewed: !!review });
   } catch (error) {
     console.error("Error checking review status:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(200).json({ status: true, hasReviewed: false });
   }
-
 };

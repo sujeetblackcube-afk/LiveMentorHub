@@ -46,10 +46,20 @@ export function Navbar() {
   useEffect(() => {
     const fetchStudentProfile = async () => {
       try {
-        const studentId = user?.studentId || (typeof window !== "undefined" ? localStorage.getItem("studentId") : null);
-        if (!studentId) return;
-
+        let studentId = user?.studentId || (typeof window !== "undefined" ? localStorage.getItem("studentId") : null);
+        
         const token = typeof window !== "undefined" ? localStorage.getItem("cp_token") : null;
+        if (!studentId && token) {
+          try {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            if (payload.specificId) {
+              studentId = payload.specificId;
+              localStorage.setItem("studentId", payload.specificId);
+              updateUser({ studentId: payload.specificId });
+            }
+          } catch {}
+        }
+        if (!studentId) return;
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
@@ -92,10 +102,15 @@ export function Navbar() {
 
   const fetchNotifications = async () => {
     try {
-      const studentId = user?.studentId;
+      const studentId = user?.studentId || (typeof window !== "undefined" ? localStorage.getItem("studentId") : null);
       if (!studentId) return;
+      const token = typeof window !== "undefined" ? localStorage.getItem("cp_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const res = await fetch(
         `${API_BASE}${NOTIFICATION_PATHS.getNotifications(studentId)}`,
+        { headers }
       );
       const data = await res.json();
       if (Array.isArray(data)) {
@@ -114,9 +129,13 @@ export function Navbar() {
   const deleteNotification = async (notificationId: string) => {
     if (!notificationId) return;
     try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("cp_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       await fetch(
         `${API_BASE}${NOTIFICATION_PATHS.deleteNotification(notificationId)}`,
-        { method: "DELETE" },
+        { method: "DELETE", headers },
       );
       setNotifications((prev) =>
         prev.filter((n) => n.notificationId !== notificationId),
@@ -128,9 +147,15 @@ export function Navbar() {
 
   const clearAllNotifications = async () => {
     try {
+      const studentId = user?.studentId || (typeof window !== "undefined" ? localStorage.getItem("studentId") : null);
+      if (!studentId) return;
+      const token = typeof window !== "undefined" ? localStorage.getItem("cp_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       await fetch(
-        `${API_BASE}${NOTIFICATION_PATHS.clearAllNotifications(STUDENT_ID!)}`,
-        { method: "DELETE" },
+        `${API_BASE}${NOTIFICATION_PATHS.clearAllNotifications(studentId)}`,
+        { method: "DELETE", headers },
       );
       setNotifications([]);
     } catch (err) {

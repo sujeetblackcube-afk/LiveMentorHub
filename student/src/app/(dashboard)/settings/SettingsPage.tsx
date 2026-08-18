@@ -164,8 +164,13 @@ export default function SettingsPage() {
       setLoading(true);
       setError("");
 
+      const token = typeof window !== "undefined" ? localStorage.getItem("cp_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const response = await axios.get(
         `${API_AUTH_BASE}${GETPROFILE.getprofile(studentId)}`,
+        { headers }
       );
 
       if (response.data.status) {
@@ -233,11 +238,11 @@ export default function SettingsPage() {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        name: studentData?.name,
-        email: studentData?.email,
-        phone: studentData?.mobile,
+        name: studentData?.name || user?.name || "Student User",
+        email: studentData?.email || user?.email || "student@livementorhub.com",
+        phone: studentData?.mobile || "",
         role: "student",
-        specificId: studentData?.studentId,
+        specificId: studentData?.studentId || user?.studentId || (typeof window !== "undefined" ? localStorage.getItem("studentId") : ""),
         subject: contactForm.subject,
         message: contactForm.message,
       }),
@@ -252,8 +257,9 @@ export default function SettingsPage() {
       return;
     }
 
-    if (data.status) {
+    if (data.status || data.success || data.contact) {
       setContactSuccess("Message sent successfully ✅");
+      alert("Message sent successfully! ✅");
 
       setContactList((prev) => [
         {
@@ -410,14 +416,16 @@ export default function SettingsPage() {
         formData.append("profileImage", editFormData.profileImage);
       }
 
+      const token = typeof window !== "undefined" ? localStorage.getItem("cp_token") : null;
+      const headers: Record<string, string> = {
+        "Content-Type": "multipart/form-data",
+      };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const response = await axios.put(
         `${API_AUTH_BASE}${EDITPROFILE.editprofile(studentData.studentId)}`,
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
+        { headers }
       );
 
       if (response.data.status) {

@@ -27,15 +27,17 @@ const requireTeacherRole = (req, res, next) => {
 };
 
 router.use(authMiddleware);
+
+router.get('/student/:studentId', getStudentTeacherAssignments);
+router.post('/students/submission', uploadTeacherAssignmentFile, submitTeacherAssignment);
+
 router.use(requireTeacherRole);
 
 router.post('/:teacherId', uploadTeacherAssignmentFile, addTeacherAssignment);
-router.post('/students/submission', uploadTeacherAssignmentFile, submitTeacherAssignment);
 router.get('/', getTeacherAssignments);
 router.get('/:id', getTeacherAssignmentById);
 router.put('/:id', editTeacherAssignment);
 router.delete('/:id', deleteTeacherAssignment);
-router.get('/student/:studentId', getStudentTeacherAssignments);
 router.get('/teacher/:teacherId', getTeacherAssignmentOfStudentByTeacher);
 router.put('/teacher/submission/:submissionId', checkTeacherAssignmentByTeacher);
 

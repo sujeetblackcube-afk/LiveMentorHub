@@ -22,21 +22,18 @@ const authMiddleware = async (req, res, next) => {
 
     switch (payload.role) {
       case "student":
-        user = await Student.findOne({
-          where: { studentId: payload.specificId },
-        });
+        user = (payload.specificId ? await Student.findOne({ where: { studentId: payload.specificId } }) : null) ||
+               (payload.userId ? await Student.findOne({ where: { userId: payload.userId } }) : null);
         break;
 
       case "teacher":
-        user = await Teacher.findOne({
-          where: { teacherId: payload.specificId },
-        });
+        user = (payload.specificId ? await Teacher.findOne({ where: { teacherId: payload.specificId } }) : null) ||
+               (payload.userId ? await Teacher.findOne({ where: { userId: payload.userId } }) : null);
         break;
 
       case "parent":
-        user = await Parent.findOne({
-          where: { parentId: payload.specificId },
-        });
+        user = (payload.specificId ? await Parent.findOne({ where: { parentId: payload.specificId } }) : null) ||
+               (payload.userId ? await Parent.findOne({ where: { userId: payload.userId } }) : null);
         break;
 
       case "superadmin":
@@ -62,7 +59,8 @@ const authMiddleware = async (req, res, next) => {
 
     if (
       payload.role === "student" &&
-      (!user.isLoggedIn || user.activeToken !== token)
+      user.activeToken &&
+      user.activeToken !== token
     ) {
       return res.status(401).json({
         status: false,

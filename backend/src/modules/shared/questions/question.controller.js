@@ -85,6 +85,29 @@ export const createQuestion = async (req, res) => {
       }
     }
 
+    let normCorrectAnswer = correctAnswer;
+    if (questionType === 'MCQ' && correctAnswer) {
+      const map = {
+        'A': 'optionA',
+        'B': 'optionB',
+        'C': 'optionC',
+        'D': 'optionD',
+        'OPTION_A': 'optionA',
+        'OPTION_B': 'optionB',
+        'OPTION_C': 'optionC',
+        'OPTION_D': 'optionD',
+        'OPTIONA': 'optionA',
+        'OPTIONB': 'optionB',
+        'OPTIONC': 'optionC',
+        'OPTIOND': 'optionD',
+        'OPTION A': 'optionA',
+        'OPTION B': 'optionB',
+        'OPTION C': 'optionC',
+        'OPTION D': 'optionD',
+      };
+      normCorrectAnswer = map[String(correctAnswer).trim().toUpperCase()] || correctAnswer;
+    }
+
     const question = await Question.create({
       teacherId,
       questionText,
@@ -93,7 +116,7 @@ export const createQuestion = async (req, res) => {
       optionB: questionType === 'MCQ' ? optionB : null,
       optionC: questionType === 'MCQ' ? optionC : null,
       optionD: questionType === 'MCQ' ? optionD : null,
-      correctAnswer: questionType === 'MCQ' ? correctAnswer : null,
+      correctAnswer: questionType === 'MCQ' ? normCorrectAnswer : null,
       answerText: questionType === 'TEXT' ? answerText : null,
       difficultyLevel: difficultyLevel || 'easy',
       marks: marks || 1,

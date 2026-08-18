@@ -133,14 +133,19 @@ const getStudentById = async (req, res) => {
   try {
     const { studentId } = req.params;
 
-    if (!studentId) {
+    let targetId = studentId;
+    if (studentId === 'profile' || studentId === 'me') {
+      targetId = req.user?.studentId || req.auth?.specificId;
+    }
+
+    if (!targetId) {
       return res.status(400).json({
         status: false,
         message: "studentId is required",
       });
     }
 
-    const student = await Student.findByPk(studentId, {
+    const student = await Student.findByPk(targetId, {
       attributes: {
         exclude: [
           "passwordHash",

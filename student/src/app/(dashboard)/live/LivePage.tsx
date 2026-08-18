@@ -350,8 +350,7 @@ export default function LivePage() {
           <CardContent className="flex flex-col items-center justify-center py-20 text-center">
             <Video className="h-10 w-10 text-gray-300 mb-6" />
             <h3 className="text-xl font-bold text-[#0d1f5c] mb-2">Empty Broadcast Room</h3>
-            <p className="text-sm text-gray-500 max-w-sm mb-8 font-medium italic">No live sessions in this category yet.</p>
-            <Button className="bg-[#0d1f5c] hover:bg-[#d4940a] text-white font-black h-12 rounded-xl px-8 transition-all duration-300"><Calendar className="h-4 w-4 mr-2" />View Schedule</Button>
+            <p className="text-sm text-gray-500 max-w-sm font-medium italic">No live sessions in this category yet.</p>
           </CardContent>
         </Card>
       )}

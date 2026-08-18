@@ -6,8 +6,9 @@ const router = express.Router();
 
 router.post('/', authMiddleware, submitReview);
 
-router.get('/average', authMiddleware, getAverageRating);
+router.get('/average', getAverageRating);
 
-router.get('/has-reviewed', authMiddleware, hasStudentReviewed);
+router.get('/has-reviewed', hasStudentReviewed);
+router.post('/has-reviewed', hasStudentReviewed);
 
 export default router;

@@ -88,9 +88,9 @@ export default function CourseDetailsPage() {
 
     const isEnrolled = isAuthenticated ? isEnrolledIn(courseId) : false;
 
-    // Fetch content when enrolled, studentId/course ready
+    // Fetch content whenever course/studentId ready
     useEffect(() => {
-        if (!isEnrolled || !studentId || !course) {
+        if (!course || !course.id) {
             setContent([]);
             return;
         }
@@ -98,9 +98,10 @@ export default function CourseDetailsPage() {
         const fetchContent = async () => {
             setContentLoading(true);
             try {
-                const data = await fetchCourseContent(studentId, course.id, activeContentType === 'ALL' ? undefined : activeContentType as CourseContentType);
+                const activeSid = studentId || (typeof window !== "undefined" ? localStorage.getItem("studentId") : null) || "demo";
+                const data = await fetchCourseContent(activeSid, course.id, activeContentType === 'ALL' ? undefined : activeContentType as CourseContentType);
                 
-                setContent(data);
+                setContent(Array.isArray(data) ? data : []);
             } catch (e) {
                 setContent([]);
             } finally {
@@ -109,7 +110,7 @@ export default function CourseDetailsPage() {
         };
 
         fetchContent();
-    }, [isEnrolled, studentId, course?.id, activeContentType]);
+    }, [course?.id, studentId, activeContentType]);
 
   
 

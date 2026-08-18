@@ -56,6 +56,7 @@ const Courses = () => {
 
   const handleScheduleClass = (course) => {
     setSelectedCourse(course);
+    setSessionData((prev) => ({ ...prev, courseCode: course.courseCode }));
     setShowModal(true);
   };
 
@@ -255,14 +256,16 @@ const Courses = () => {
           showModal &&
           
           <ClassCreationModal 
-          isActive={showModal} 
-          onClose={() => setShowModal(false)} 
-          sessionData={sessionData} 
-          setSessionData={setSessionData} 
-          setThumbnail={setThumbnail} 
-          isSubmitting={isSubmitting} 
-          handleSubmitSession={handleSubmitSession}
-          allowCourseSelection={false}
+            isActive={showModal} 
+            onClose={() => setShowModal(false)} 
+            sessionData={sessionData} 
+            setSessionData={setSessionData} 
+            setThumbnail={setThumbnail} 
+            isSubmitting={isSubmitting} 
+            onSubmit={handleSubmitSession}
+            selectedCourse={selectedCourse}
+            setSelectedCourse={setSelectedCourse}
+            courses={courses}
           />
         }
         

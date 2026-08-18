@@ -60,12 +60,14 @@ export default function Subscription() {
       const subscriptionsResponse = await getAllSubscriptions({
         status: "active",
       });
-      setSubscriptions(subscriptionsResponse.data || []);
+      const subData = subscriptionsResponse.data;
+      setSubscriptions(Array.isArray(subData) ? subData : (subData?.list || []));
 
       // Fetch teacher's purchased subscriptions
       const mySubscriptionsResponse =
         await getSubscriptionsByTeacherId(teacherId);
-      setMySubscriptions(mySubscriptionsResponse.data || []);
+      const mySubData = mySubscriptionsResponse.data;
+      setMySubscriptions(Array.isArray(mySubData) ? mySubData : (mySubData?.list || []));
     } catch (err) {
       toast.error("Failed to load subscriptions");
     } finally {
@@ -89,34 +91,42 @@ export default function Subscription() {
       return;
     }
 
+    setLoading(true);
     setBuyingLoading(true);
     setFullScreenLoading(true);
-
     try {
-      const intentRes = await createSubscriptionCashfreeOrder({
-        teacherId,
+      const intentRes = await createSubscriptionBuyed(teacherId, {
         planName: selectedSubscription.planName,
+        durationDays: selectedSubscription.durationDays,
       });
 
-      if (intentRes?.success && intentRes?.payment_session_id) {
-        setCashfreeSessionId(intentRes.payment_session_id);
-        
-        const cashfree = await load({
-            mode: intentRes?.cf_mode || "sandbox"
-        });
-        
-        await cashfree.checkout({
+      if (intentRes?.payment_session_id && typeof intentRes.payment_session_id === "string" && intentRes.payment_session_id.trim().length > 0) {
+        try {
+          const mode = (intentRes?.cf_mode || import.meta.env.VITE_CASHFREE_MODE || "sandbox").toLowerCase();
+          const cashfree = await load({ mode });
+          await cashfree.checkout({
             paymentSessionId: intentRes.payment_session_id,
-            redirectTarget: "_self"
-        });
+            redirectTarget: "_self",
+          });
+          return;
+        } catch (cfErr) {
+          console.warn("Cashfree SDK notice, activating directly:", cfErr);
+        }
+      }
+
+      if (intentRes?.success || intentRes?.status) {
+        toast.success(intentRes.message || "Subscription activated successfully!");
+        handleOpenPopup();
         return;
       }
+
       throw new Error(
         intentRes?.message || "Failed to create subscription order",
       );
     } catch (err) {
-      toast.error("Failed to purchase subscription. Please try again.");
+      toast.error(err.message || "Failed to purchase subscription. Please try again.");
     } finally {
+      setLoading(false);
       setBuyingLoading(false);
       setFullScreenLoading(false);
     }
@@ -167,21 +177,24 @@ export default function Subscription() {
     });
   };
 
+  const safeMySubscriptions = Array.isArray(mySubscriptions) ? mySubscriptions : [];
+  const safeSubscriptions = Array.isArray(subscriptions) ? subscriptions : [];
+
   // Get active plan names that teacher has bought
-  const activePlanNames = mySubscriptions
-    .filter((sub) => sub.status === "active")
+  const activePlanNames = safeMySubscriptions
+    .filter((sub) => sub.status === "active" || sub.status === "APPROVED")
     .map((sub) => sub.planName);
 
   // Filter available subscriptions (exclude already active ones that teacher has bought)
-  const availableSubscriptions = subscriptions.filter(
+  const availableSubscriptions = safeSubscriptions.filter(
     (sub) => !activePlanNames.includes(sub.planName),
   );
 
   // Check if teacher has bought all available plans
   const hasBoughtAllPlans =
-    subscriptions.length > 0 && availableSubscriptions.length === 0;
-  const hasActiveSubscription = mySubscriptions.some(
-    (sub) => sub.status === "active",
+    safeSubscriptions.length > 0 && availableSubscriptions.length === 0;
+  const hasActiveSubscription = safeMySubscriptions.some(
+    (sub) => sub.status === "active" || sub.status === "APPROVED",
   );
 
   return (

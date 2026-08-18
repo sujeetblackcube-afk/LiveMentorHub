@@ -31,26 +31,27 @@ export const ClassCreationModal = ({
         <h2 className="text-xl font-bold mb-4">Create Live Class</h2>
         
         <form onSubmit={onSubmit}>
-          {courses.length > 0 && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Select Course *</label>
-              <select 
-                value={selectedCourse?.courseCode || ''} 
-                onChange={(e) => {
-                  const c = courses.find(item => item.courseCode === e.target.value);
-                  setSelectedCourse?.(c || null);
-                }}
-                className="w-full p-2 border rounded"
-                required
-                disabled={isSubmitting}
-              >
-                <option value="">-- Choose Course --</option>
-                {courses.map(c => (
-                  <option key={c.courseCode} value={c.courseCode}>{c.courseName}</option>
-                ))}
-              </select>
-            </div>
-          )}
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Select Course *</label>
+            <select 
+              value={selectedCourse?.courseCode || sessionData?.courseCode || ''} 
+              onChange={(e) => {
+                const c = courses.find(item => item.courseCode === e.target.value);
+                setSelectedCourse?.(c || { courseCode: e.target.value, courseName: e.target.value });
+                setSessionData?.({ ...sessionData, courseCode: e.target.value });
+              }}
+              className="w-full p-2 border rounded text-sm"
+              required
+              disabled={isSubmitting}
+            >
+              <option value="">-- Select Course --</option>
+              {courses.map(c => (
+                <option key={c.courseCode || c.id} value={c.courseCode}>
+                  {c.courseName || c.title} ({c.courseCode})
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Session Title *</label>

@@ -60,7 +60,11 @@ export default function ProgressPage() {
 
     if (studentId) {
       setLoading(true);
-      fetch(`${API_BASE}${PROGRESS_PATHS.getProgress(studentId)}`)
+      const token = typeof window !== "undefined" ? localStorage.getItem("cp_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      fetch(`${API_BASE}${PROGRESS_PATHS.getProgress(studentId)}`, { headers })
         .then((res) => res.json())
         .then((res) => {
           if (res.status && res.data) {
@@ -69,7 +73,6 @@ export default function ProgressPage() {
           setLoading(false);
         })
         .catch((err) => {
-
           setLoading(false);
         });
     } else {

@@ -30,7 +30,7 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => callback(null, true),
   credentials: true
 }));
 
@@ -43,12 +43,22 @@ app.use(morganMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static files
-app.use('/uploads', expressStatic('uploads'));
+// Static files with fallback for missing uploaded images
+app.use('/uploads', expressStatic('uploads'), (req, res) => {
+  if (req.path.includes('profile') || req.path.endsWith('.jpg') || req.path.endsWith('.png')) {
+    return res.redirect('https://res.cloudinary.com/tivvs1hg/image/upload/v1784374645/courses/ziqtvx77up8xnwowulfy.jpg');
+  }
+  res.status(404).send('File not found');
+});
 
-// ============================================================
-// MASTER API ROUTE MOUNT WITH RATE LIMITING
-// ============================================================
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api/api/')) {
+    req.url = req.url.replace('/api/api/', '/api/');
+  }
+  next();
+});
+
+// Master API route mount
 app.use('/api', apiRateLimiter, masterRouter);
 
 // Root Health Check

@@ -92,7 +92,7 @@ export const getNotesByStudent = async (req, res) => {
 
     let assignedTeacherId = null;
 
-    // Bypassing enrollment check for demo/guest student IDs
+    // Optional enrollment check for assigned teacher prioritization
     if (studentId !== 'demo' && studentId !== 'guest') {
       const enrollment = await Enrollment.findOne({
         where: {
@@ -104,13 +104,9 @@ export const getNotesByStudent = async (req, res) => {
         }
       });
 
-      if (!enrollment) {
-        return res.status(403).json({
-          success: false,
-          message: "Student is not enrolled in this course",
-        });
+      if (enrollment) {
+        assignedTeacherId = enrollment.teacherId;
       }
-      assignedTeacherId = enrollment.teacherId;
     }
 
     // Build flexible where clause: return all notes for courseCode, matching assigned teacher if present

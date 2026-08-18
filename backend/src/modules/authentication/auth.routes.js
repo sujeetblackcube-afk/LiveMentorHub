@@ -38,6 +38,8 @@ router.use(authRateLimiter);
  * SIGNUP ENDPOINTS
  */
 router.post('/register/student', validate(registerSchema), studentSignup);
+router.post('/student/signup', validate(registerSchema), studentSignup);
+router.post('/signup', validate(registerSchema), studentSignup);
 router.post('/register/teacher', validate(registerSchema), teacherSignup);
 router.post('/register/parent', validate(registerSchema), parentSignup);
 router.post('/register/superadmin', validate(registerSchema), superAdminSignup);

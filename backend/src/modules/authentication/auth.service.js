@@ -8,11 +8,9 @@ import multer from "multer";
 import path from "path";
 import pkg from 'sequelize';
 const { Op } = pkg;
+import sequelize from '../../config/db.config.js';
 
-import Student from '../../models/Student.js';
-import Teacher from '../../models/Teacher.js';
-import Parent from '../../models/Parent.js';
-import SuperAdmin from '../../models/SuperAdmin.js';
+import { Student, Teacher, Parent, SuperAdmin } from '../../models/index.js';
 import Login from '../../models/Login.js';
 import Enrollment from '../../models/Enrollment.js';
 import { generateOTP, verifyOTP, sendOTP } from '../../utils/otp.js';
@@ -100,15 +98,47 @@ export const checkEmailExists = async (email, excludeRole = null) => {
  * @returns {Promise<Object|null>} User object if found
  */
 export const findUserByIdentifier = async (identifier, role) => {
+  const cleanIdentifier = (identifier || '').trim();
+  const lowerIdentifier = cleanIdentifier.toLowerCase();
+
+  // Handle phone number variations (+918787878787 vs 8787878787)
+  const allDigits = cleanIdentifier.replace(/\D/g, '');
+  const last10Digits = allDigits.length >= 10 ? allDigits.slice(-10) : allDigits;
+  const mobileWithPlus91 = last10Digits.length === 10 ? `+91${last10Digits}` : cleanIdentifier;
+  const mobileWithoutPlus91 = last10Digits.length === 10 ? last10Digits : cleanIdentifier;
+
   const query = {
-    where: { [Op.or]: [{ email: identifier }, { mobile: identifier }] },
+    where: {
+      [Op.or]: [
+        { email: cleanIdentifier },
+        { email: lowerIdentifier },
+        { mobile: cleanIdentifier },
+        { mobile: mobileWithPlus91 },
+        { mobile: mobileWithoutPlus91 }
+      ]
+    },
   };
+
+  if (!role) {
+    const student = await Student.findOne(query);
+    if (student) return student;
+    const teacher = await Teacher.findOne(query);
+    if (teacher) return teacher;
+    const parent = await Parent.findOne(query);
+    if (parent) return parent;
+    const superadmin = await SuperAdmin.findOne(query);
+    if (superadmin) return superadmin;
+    return null;
+  }
 
   switch (role) {
     case "student":
       return await Student.findOne(query);
-    case "teacher":
-      return await Teacher.findOne(query);
+    case "teacher": {
+      const resTeacher = await Teacher.findOne(query);
+      console.log(`[FIND TEACHER RESULT] cleanIdentifier: "${cleanIdentifier}", found: ${Boolean(resTeacher)}`);
+      return resTeacher;
+    }
     case "parent":
       return await Parent.findOne(query);
     case "superadmin":

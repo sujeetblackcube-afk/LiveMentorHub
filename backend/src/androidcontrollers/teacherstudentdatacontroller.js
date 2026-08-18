@@ -12,11 +12,11 @@ const { Op } = pkg;
 
 const getTeacherStudentData = async (req, res) => {
   try {
-    const teacherId = req.user?.teacherId;
+    const teacherId = req.user?.teacherId || req.params?.teacherId;
     if (!teacherId) {
       return res
         .status(401)
-        .json({ success: false, message: "Teacher ID not found in token" });
+        .json({ success: false, message: "Teacher ID not found in request" });
     }
 
     const teacher = await Teacher.findOne({ where: { teacherId } });

@@ -94,7 +94,7 @@ export const getHomeData = async (req, res) => {
             ForClass: classItem.className,
             status: "ACTIVE",
           },
-          order: [["created_at", "DESC"]],
+          order: [["createdAt", "DESC"]],
         });
 
         return {

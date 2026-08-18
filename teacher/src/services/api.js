@@ -43,8 +43,15 @@ export const getTeacherCourseStudents = async (courseCode, params = {}) => {
 };
 
 export const getTeacherCourses = async (params = {}) => {
-  const query = new URLSearchParams(params).toString();
-  const url = `${TEACHER_BASE_URL}/courses${query ? `?${query}` : ""}`;
+  let queryString = "";
+  if (typeof params === "string") {
+    queryString = `?teacherId=${params}`;
+  } else if (params && typeof params === "object") {
+    const searchParams = new URLSearchParams(params);
+    queryString = searchParams.toString();
+    if (queryString) queryString = `?${queryString}`;
+  }
+  const url = `${TEACHER_BASE_URL}/courses${queryString}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 

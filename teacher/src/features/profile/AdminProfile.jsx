@@ -90,18 +90,20 @@ const AdminProfile = () => {
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/teachers/profile`, {
+      const baseUrl = (import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+      const response = await fetch(`${baseUrl}/api/teacher/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        setProfile(result.data);
-        setPreviewImage(getImageUrl(result.data.profileImage, ''));
+      const result = await response.json();
+      if (response.ok && (result.data || result.teacherId || result.name)) {
+        const data = result.data || result;
+        setProfile(data);
+        setPreviewImage(getImageUrl(data.profileImage, ''));
       } else {
-        toast.error('Failed to fetch profile data');
+        toast.error(result.message || 'Failed to fetch profile data');
       }
     } catch (error) {
       toast.error('Error fetching profile data');
@@ -294,7 +296,8 @@ const AdminProfile = () => {
                 if (editData.qualificationCertificates) formData.append('qualificationCertificates', editData.qualificationCertificates);
                 if (editData.experienceCertificates) formData.append('experienceCertificates', editData.experienceCertificates);
 
-                const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/teachers/profile`, {
+                const baseUrl = (import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+                const response = await fetch(`${baseUrl}/api/teacher/profile`, {
                   method: 'PUT',
                   headers: {
                     'Authorization': `Bearer ${token}`

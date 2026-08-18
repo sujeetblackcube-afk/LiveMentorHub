@@ -29,13 +29,37 @@ export function EnrollmentModal({ isOpen, onClose, onSuccess, courseCode, price,
         remarks: ""
     });
 
+    const getStudentId = () => {
+        if (user?.studentId) return user.studentId;
+        if (typeof window !== "undefined") {
+            const directId = localStorage.getItem("studentId");
+            if (directId) return directId;
+            const authData = localStorage.getItem("auth-storage");
+            if (authData) {
+                try {
+                    const parsed = JSON.parse(authData);
+                    if (parsed.state?.user?.studentId) return parsed.state.user.studentId;
+                } catch {}
+            }
+            const token = localStorage.getItem("cp_token");
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split(".")[1]));
+                    if (payload.specificId) return payload.specificId;
+                    if (payload.studentId) return payload.studentId;
+                } catch {}
+            }
+        }
+        return "";
+    };
+
     // Get studentId from auth on mount
     useEffect(() => {
         setFormData(prev => ({
             ...prev,
-            studentId: user?.studentId || localStorage.getItem("studentId") || ""
+            studentId: getStudentId()
         }));
-    }, [user]);
+    }, [user, isOpen]);
 
     // Reset state when modal opens/closes
     useEffect(() => {
@@ -44,10 +68,8 @@ export function EnrollmentModal({ isOpen, onClose, onSuccess, courseCode, price,
             setLoading(false);
             setError(null);
             
-            // Refresh studentId - ensure it's always a string
-            const id = user?.studentId || localStorage.getItem("studentId") || "";
             setFormData({
-                studentId: id,
+                studentId: getStudentId(),
                 remarks: ""
             });
         }

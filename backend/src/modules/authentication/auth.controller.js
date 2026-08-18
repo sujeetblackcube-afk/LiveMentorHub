@@ -5,6 +5,7 @@
 
 import pkg from 'sequelize';
 const { Op } = pkg;
+import { Student, Teacher, Parent, SuperAdmin } from '../../models/index.js';
 import { signJwt } from '../../utils/jwt.js';
 import { verifyOTP } from '../../utils/otp.js';
 import {
@@ -570,26 +571,67 @@ export const superAdminSignup = async (req, res) => {
  */
 export const login = async (req, res) => {
   try {
-    const { identifier, password, role, playerId, deviceType, forceLogout } = req.body;
+    const rawIdentifier = req.body.identifier || req.body.email || req.body.mobile;
+    const { password, role, playerId, deviceType, forceLogout } = req.body;
+    const identifier = rawIdentifier;
 
     // Get client IP
     const ipAddress = await getClientIp(req);
 
-    if (!identifier || !password || !role) {
+    if (!identifier || !password) {
       return res.status(400).json({
         status: false,
-        message: "Identifier, password, and role are required",
+        message: "Identifier, email, or mobile and password are required",
       });
     }
+
+    let normRole = role ? String(role).trim().toLowerCase() : null;
+    if (!normRole) {
+      const detectedUser = await findUserByIdentifier(identifier, null);
+      normRole = detectedUser ? detectedUser.role.toLowerCase() : "teacher";
+    }
+
+    console.log(`[LOGIN ATTEMPT] identifier: "${identifier}", role input: "${role}", resolved normRole: "${normRole}"`);
 
     let user = null;
     let specificId = null;
     let enrollmentStatus = undefined;
 
     // Role-based login
-    switch (role) {
+    switch (normRole) {
       case "student": {
         user = await findUserByIdentifier(identifier, "student");
+
+        if (!user) {
+          user = await findUserByIdentifier(identifier, null);
+        }
+
+        if (!user) {
+          const cleanId = (identifier || '').trim();
+          const digits = cleanId.replace(/\D/g, '');
+          const last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+          user = await Student.findOne({
+            where: {
+              [Op.or]: [
+                { email: cleanId },
+                { email: cleanId.toLowerCase() },
+                { mobile: cleanId },
+                { mobile: `+91${last10}` },
+                { mobile: last10 }
+              ]
+            }
+          }) || await Teacher.findOne({
+            where: {
+              [Op.or]: [
+                { email: cleanId },
+                { email: cleanId.toLowerCase() },
+                { mobile: cleanId },
+                { mobile: `+91${last10}` },
+                { mobile: last10 }
+              ]
+            }
+          });
+        }
 
         if (!user) {
           return res.status(404).json({
@@ -635,6 +677,27 @@ export const login = async (req, res) => {
 
       case "teacher": {
         user = await findUserByIdentifier(identifier, "teacher");
+
+        if (!user) {
+          user = await findUserByIdentifier(identifier, null);
+        }
+
+        if (!user) {
+          const cleanId = (identifier || '').trim();
+          const digits = cleanId.replace(/\D/g, '');
+          const last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+          user = await Teacher.findOne({
+            where: {
+              [Op.or]: [
+                { email: cleanId },
+                { email: cleanId.toLowerCase() },
+                { mobile: cleanId },
+                { mobile: `+91${last10}` },
+                { mobile: last10 }
+              ]
+            }
+          });
+        }
 
         if (!user) {
           return res.status(404).json({

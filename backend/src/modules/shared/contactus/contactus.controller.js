@@ -59,7 +59,9 @@ export const getContactById = async (req, res) => {
 // Create new contact message (public route)
 export const createContact = async (req, res) => {
   try {
-    const { name, email, phone, subject, message, role, specificId } = req.body;
+    const { phone, subject, message, role, specificId } = req.body;
+    const name = req.body.name || req.user?.name || 'Student User';
+    const email = req.body.email || req.user?.email || 'student@livementorhub.com';
 
     // Validate required fields
     if (!name || !email || !subject || !message) {
@@ -75,14 +77,21 @@ export const createContact = async (req, res) => {
       });
     }
 
-    const contact = await ContactUs.create({
+    const newContact = await ContactUs.create({
       name,
       email,
-      phone: phone || null,
+      phone,
       subject,
       message,
-      role: role || null,
-      specificId: specificId || null
+      role: role || 'student',
+      specificId
+    });
+
+    res.status(201).json({
+      status: true,
+      success: true,
+      message: 'Contact message sent successfully',
+      contact: newContact
     });
 
     // Send notification to superadmin

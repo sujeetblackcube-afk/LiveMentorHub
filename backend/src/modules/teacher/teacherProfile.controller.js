@@ -195,7 +195,21 @@ export const updateCoursename = async (req, res) => {
 
 export const getTeacherProfile = async (req, res) => {
   try {
-    const teacher = req.user;
+    let teacher = req.user;
+    if (!teacher && req.auth) {
+      const { specificId, userId } = req.auth;
+      teacher = (specificId ? await Teacher.findOne({ where: { teacherId: specificId } }) : null) ||
+                (userId ? await Teacher.findOne({ where: { userId } }) : null);
+    }
+
+    if (!teacher) {
+      return res.status(404).json({
+        success: false,
+        status: false,
+        message: 'Teacher profile not found',
+      });
+    }
+
     const courseCodes = teacher.courseCode
       ? (Array.isArray(teacher.courseCode) ? teacher.courseCode : [teacher.courseCode])
       : [];
@@ -577,7 +591,20 @@ export const getTotalStudentCountForTeacher = async (req, res) => {
 
 export const updateTeacherProfile = async (req, res) => {
   try {
-    const teacher = req.user;
+    let teacher = req.user;
+    if (!teacher && req.auth) {
+      const { specificId, userId } = req.auth;
+      teacher = (specificId ? await Teacher.findOne({ where: { teacherId: specificId } }) : null) ||
+                (userId ? await Teacher.findOne({ where: { userId } }) : null);
+    }
+
+    if (!teacher) {
+      return res.status(404).json({
+        success: false,
+        status: false,
+        message: 'Teacher profile not found',
+      });
+    }
 
     if (req.files && req.files.profileImage && req.files.profileImage[0]) {
       teacher.profileImage = '/uploads/teacher-profiles/' + req.files.profileImage[0].filename;
