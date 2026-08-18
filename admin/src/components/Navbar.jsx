@@ -11,7 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../context/AuthContext";
 import { theme } from "../theme.js";
 import {
   getNotificationBySuperAdminId,
@@ -76,9 +76,7 @@ export default function Navbar({ collapsed, setCollapsed }) {
           setProfileImage("");
         }
       }
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-    }
+    } catch (error) {}
   };
 
   const fetchNotifications = async () => {
@@ -88,9 +86,7 @@ export default function Navbar({ collapsed, setCollapsed }) {
       if (response.success) {
         setNotifications(response.notifications || []);
       }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    } finally {
+    } catch (error) {} finally {
       setLoadingNotifications(false);
     }
   };
@@ -110,9 +106,7 @@ export default function Navbar({ collapsed, setCollapsed }) {
       setNotifications(
         notifications.filter((n) => n.notificationId !== notificationId),
       );
-    } catch (error) {
-      console.error("Failed to delete notification:", error);
-    }
+    } catch (error) {}
   };
 
   const handleNotificationItemClick = (notification) => {
@@ -149,9 +143,7 @@ export default function Navbar({ collapsed, setCollapsed }) {
     try {
       await deleteAllNotificationBySuperAdmin();
       setNotifications([]);
-    } catch (error) {
-      console.error("Error deleting all notifications:", error);
-    }
+    } catch (error) {}
   };
 
   const handleLogout = () => {

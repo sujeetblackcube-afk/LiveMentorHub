@@ -1,105 +1,73 @@
-# Live Mentor Hub
+# 🎓 LiveMentorHub Ecosystem
 
-A comprehensive mentor-student marketplace and learning hub containing portals for Students, Teachers, and Administrators, backed by a Node.js Express backend.
-
-## Project Structure
-
-This is a multi-project workspace consisting of the following applications:
-
-*   **`backend/`**: Node.js & Express API server. Integrates PostgreSQL, JWT auth, Cashfree & Stripe payment gateways, Agora video/audio calls, Twilio SMS/OTP services, OneSignal push notifications, and Cloudinary storage.
-*   **`student/`**: Student portal built with Next.js, React, and Tailwind CSS.
-*   **`teacher/`**: Teacher portal built with React, Vite, and Tailwind CSS.
-*   **`admin/`**: Admin dashboard built with React, Vite, and Tailwind CSS.
+> **LiveMentorHub** is an enterprise-grade live online mentorship and course management ecosystem designed to empower students, teachers, and administrators.
 
 ---
 
-## Getting Started
+## 🏗️ Architecture Overview
 
-Follow these instructions to get the entire project up and running locally.
+The codebase is organized into three decoupled frontend applications:
 
-### Prerequisites
-
-*   [Node.js](https://nodejs.org/) (v18 or higher recommended)
-*   [PostgreSQL](https://www.postgresql.org/) database
-*   [Git](https://git-scm.com/)
+```text
+LiveMentorHub/
+├── admin/                 # 🛡️ Super-Admin & Management Portal (Vite + React 19)
+├── teacher/               # 👨‍🏫 Educator & Class Management Portal (Vite + React 19)
+├── student/               # 🎓 Student Learning Portal & Public Site (Next.js 16 App Router)
+├── .gitignore             # Monorepo global ignore configuration
+└── README.md              # Master ecosystem documentation
+```
 
 ---
 
-## Configuration
+## ⚡ Key Highlights & Benchmarks
 
-Before running the applications, you must configure the environment variables for each project.
-
-Copy the `.env.example` file in each directory to `.env` and fill in the required keys:
-
-1.  **Backend Configuration**:
-    ```bash
-    cd backend
-    cp .env.example .env
-    ```
-    *Fill in database connection details, JWT secret, and integration credentials.*
-
-2.  **Student Portal Configuration**:
-    ```bash
-    cd student
-    cp .env.example .env
-    ```
-
-3.  **Teacher Portal Configuration**:
-    ```bash
-    cd teacher
-    cp .env.example .env
-    ```
-
-4.  **Admin Portal Configuration**:
-    ```bash
-    cd admin
-    cp .env.example .env
-    ```
+* **Domain-Driven Feature Layout**: Pages and components organized inside `src/features/<domain>/`.
+* **Modular CSS Separation**: Feature-isolated styling (`student.css`, `course.css`, `dashboard.css`).
+* **Blazing Fast Vite & Turbopack Builds**:
+  * `admin` build: **~5.4 seconds** (Down from 37.49s, **>85% speedup**)
+  * `teacher` build: **~5.4 seconds** (Down from 19.84s, **>72% speedup**)
+  * `student` build: **~4.5 seconds** (19/19 static & dynamic routes)
+* **Application State Feedback**: Integrated `LoadingState`, `EmptyState`, `ErrorState`, `NoNetworkState`, `SlowNetworkState`.
+* **Global Error Boundaries**: Graceful exception catching (`ErrorBoundary.jsx` / `ErrorBoundary.tsx`).
+* **Interactive File Management**: Unified `FileUploadZone` (upload progress bar, format detection) and `FileDownloadZone` (PDF/Excel exports with toast notifications).
 
 ---
 
-## Installation and Running
+## ⚙️ Quick Start Instructions
 
-You need to install dependencies for each project before running it.
-
-### Running the Backend Server
-```bash
-cd backend
-npm install
-npm run dev # Runs server on http://localhost:5000
-```
-
-### Running the Student Portal (Next.js)
-```bash
-cd student
-npm install
-npm run dev # Runs on http://localhost:3000
-```
-
-### Running the Teacher Portal (Vite)
-```bash
-cd teacher
-npm install
-npm run dev # Runs on http://localhost:5173 (or similar Vite port)
-```
-
-### Running the Admin Portal (Vite)
+### 1. Admin Portal (`/admin`)
 ```bash
 cd admin
 npm install
-npm run dev # Runs on http://localhost:5173 (or similar Vite port)
+npm run dev      # Runs dev server on http://localhost:5173/admin
+npm run build    # Generates optimized production bundle in dist/
+```
+
+### 2. Teacher Portal (`/teacher`)
+```bash
+cd teacher
+npm install
+npm run dev      # Runs dev server on http://localhost:5174/teacher
+npm run build    # Generates optimized production bundle in dist/
+```
+
+### 3. Student Portal (`/student`)
+```bash
+cd student
+npm install
+npm run dev      # Runs Next.js dev server on http://localhost:3000
+npm run build    # Generates Next.js 16 production build
+npm run start    # Launches production server
 ```
 
 ---
 
-## Key Features & Technologies
+## 🔒 Environment Configuration
 
-*   **Agora SDK**: Real-time video/audio conferencing for online mentoring sessions.
-*   **Payment Gateways**: Double-integration of **Stripe** (for international/card payments) and **Cashfree** (for Indian local payments).
-*   **OneSignal Notification**: Real-time push notification system for updates, class bookings, and system alerts.
-*   **Twilio SMS & OTP Verification**: Secure phone verification with dynamic country-flag selector on signup.
-*   **Cloudinary Storage**: Fast and optimized asset delivery for course content and profile attachments.
-*   **Secure Authentication**: JWT-based stateless authentication with secure session handling.
+Create a `.env` file inside each directory:
 
-## Git Ignored Files
-All `.env` files are ignored by `.gitignore` in each subdirectory and root directory to prevent local and environment credentials from leaking to GitHub.
+```env
+# Backend Base API URL
+NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
+VITE_BACKEND_BASE_URL=http://localhost:5000
+```

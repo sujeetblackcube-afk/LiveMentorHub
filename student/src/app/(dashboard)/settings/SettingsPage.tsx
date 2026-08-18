@@ -245,7 +245,7 @@ export default function SettingsPage() {
 
     const data = await response.json();
 
-    // console.log("Contact API Response:", data);
+    
 
     if (!response.ok) {
       alert(`Error ${response.status}: ${data.message || "Failed to send"}`);
@@ -268,7 +268,6 @@ export default function SettingsPage() {
       alert(data.message || "Backend rejected the request");
     }
   } catch (error) {
-    console.error("Contact Error:", error);
     alert("Unexpected error occurred");
   } finally {
     setContactLoading(false);
@@ -297,9 +296,7 @@ export default function SettingsPage() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          console.error("Unauthorized - Please login again");
         } else {
-          console.error("Failed to load content");
         }
         setContentData([]);
         return;
@@ -313,7 +310,6 @@ export default function SettingsPage() {
         setContentData([]);
       }
     } catch (error) {
-      console.error("Failed to fetch content:", error);
       setContentData([]);
     } finally {
       setContentLoading(false);
@@ -351,7 +347,6 @@ export default function SettingsPage() {
         setEnrollments([]);
       }
     } catch (error) {
-      console.error("Failed to fetch enrollments:", error);
       setEnrollments([]);
     } finally {
       setEnrollmentLoading(false);

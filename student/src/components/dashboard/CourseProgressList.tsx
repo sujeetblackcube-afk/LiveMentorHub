@@ -87,10 +87,7 @@ export default function CourseProgressList({ courseType }: CourseProgressListPro
         setCourses(updated);
       }
     } catch (error: any) {
-      console.error(
-        "Course Fetch Error:",
-        error.response?.data || error.message,
-      );
+
     } finally {
       setLoading(false);
     }

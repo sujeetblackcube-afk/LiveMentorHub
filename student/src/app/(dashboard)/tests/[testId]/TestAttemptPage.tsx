@@ -186,7 +186,6 @@ export default function TestAttemptPage() {
         setTimeRemaining(durationSeconds);
       }
     } catch (err: any) {
-      console.error("Failed to fetch test:", err);
       setError(err.response?.data?.message || "Failed to load test.");
     } finally {
       setLoading(false);
@@ -255,8 +254,6 @@ export default function TestAttemptPage() {
         selectedAnswer: answer.selectedAnswer,
       }));
 
-      // console.log("Submitting answers:", JSON.stringify(formattedAnswers));
-
       await axios.post(
         `${API_BASE}${TEST_PATHS.submitTest}`,
         {
@@ -269,7 +266,6 @@ export default function TestAttemptPage() {
       alert("Test submitted successfully!");
       fetchTest();
     } catch (err: any) {
-      console.error("Failed to submit test:", err);
       alert(err.response?.data?.message || "Failed to submit test.");
     } finally {
       setSubmitting(false);

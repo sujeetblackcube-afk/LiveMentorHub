@@ -1,51 +1,37 @@
-# Dependency directories
-node_modules/
+# Global Root .gitignore for LiveMentorHub Monorepo
 
-# Logs
-logs
+# Dependencies
+node_modules/
+.pnpm-store/
+jspm_packages/
+web_modules/
+
+# Next.js & Vite Build Outputs
+.next/
+dist/
+out/
+build/
+*.tsbuildinfo
+
+# Environment Variables & Local Configs
+.env*.local
+.env.production
+.env.staging
+.env.development
+
+# Logs & Operating System Files
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-
-# Environment Variables
-.env
-.env.example
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Build output
-dist/
-dist-ssr/
-build/
-.next/
-out/
-
-# Coverage
-coverage/
-.nyc_output/
-
-# OS generated files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
-
-# Backend uploads (assuming they shouldn't be tracked)
-backend/uploads/
-
-# IDE and Editor files
-.idea/
-.vscode/
 *.swp
 *.swo
 
-# Typescript cache
-*.tsbuildinfo
-.eslintcache
+# IDE & Tooling Metadata
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.gemini/

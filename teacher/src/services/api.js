@@ -65,7 +65,7 @@ export const createLiveSession = async (sessionData) => {
 
 // Bulk create live sessions (for weekly/monthly scheduling)
 export const createBulkLiveSessions = async (bulkData) => {
-  console.log("Creating bulk live sessions with data:", bulkData);
+  
 
   const url = `${TEACHER_BASE_URL}/livesessions`;
   return fetch(url, {
@@ -171,7 +171,7 @@ export const editNote = async (id, data) => {
 };
 
 export const getNotesCount = async (teacherId) => {
-  const url = `${BASE_URL}/notes/count?teacherId=${teacherId}`;
+  const url = `${TEACHER_BASE_URL}/notes/count?teacherId=${teacherId}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
@@ -405,13 +405,13 @@ export const deleteTest = async (id) => {
 
 // Get test submissions for a specific teacher
 export const getTeacherTestSubmissions = async (teacherId) => {
-  const url = `${BASE_URL}/tests/${teacherId}/test-submissions`;
+  const url = `${TEACHER_BASE_URL}/tests/${teacherId}/test-submissions`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 // Update marks and feedback for a specific test submission
 export const updateTestSubmissionMarks = async (submissionId, data) => {
-  const url = `${BASE_URL}/tests/grade-submission/${submissionId}`;
+  const url = `${TEACHER_BASE_URL}/tests/grade-submission/${submissionId}`;
   return fetch(url, {
     method: 'PUT',
     headers: {

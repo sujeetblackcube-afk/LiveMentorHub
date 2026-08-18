@@ -116,7 +116,7 @@ export function EnrollmentModal({ isOpen, onClose, onSuccess, courseCode, price,
                 throw new Error(data.message || "Failed to initialize payment");
             }
         } catch (error) {
-            console.error("Payment initialization error:", error);
+
             setError(error instanceof Error ? error.message : "Failed to initialize payment");
             setLoading(false);
         }

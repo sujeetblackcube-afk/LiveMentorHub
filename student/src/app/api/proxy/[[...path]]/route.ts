@@ -70,7 +70,6 @@ async function handleRequest(req: NextRequest, paramsPromise: Promise<{ path?: s
         if (err.name === 'AbortError') {
             return NextResponse.json({ success: false, message: "Backend response timeout" }, { status: 504 });
         }
-        console.error("[Proxy Error]:", err);
         return NextResponse.json({ success: false, message: "Backend unreachable via proxy" }, { status: 502 });
     }
 }

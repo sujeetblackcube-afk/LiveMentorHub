@@ -1,25 +1,26 @@
-import React from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { theme } from '../theme';
 
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  const handlePrev = () => {
+const Pagination = memo(function Pagination({ currentPage, totalPages, onPageChange }) {
+  const handlePrev = useCallback(() => {
     if (currentPage > 1) {
       onPageChange(currentPage - 1);
     }
-  };
+  }, [currentPage, onPageChange]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentPage < totalPages) {
       onPageChange(currentPage + 1);
     }
-  };
+  }, [currentPage, totalPages, onPageChange]);
 
-  const handlePageClick = (page) => {
+  const handlePageClick = useCallback((page) => {
     onPageChange(page);
-  };
+  }, [onPageChange]);
 
-  const renderPageNumbers = () => {
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 1) return [];
     const pages = [];
     const maxVisiblePages = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
@@ -30,27 +31,11 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     }
 
     for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <button
-          key={i}
-          onClick={() => handlePageClick(i)}
-          className={`px-3 py-2 mx-1 rounded-md text-sm font-medium transition-colors ${
-            currentPage === i
-              ? 'text-white'
-              : 'text-gray-700 hover:bg-gray-100'
-          }`}
-          style={{
-            backgroundColor: currentPage === i ? theme.colors.primary : 'transparent',
-            color: currentPage === i ? 'white' : theme.colors.textPrimary,
-          }}
-        >
-          {i}
-        </button>
-      );
+      pages.push(i);
     }
 
     return pages;
-  };
+  }, [currentPage, totalPages]);
 
   if (totalPages <= 1) return null;
 
@@ -69,7 +54,23 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         Previous
       </button>
 
-      {renderPageNumbers()}
+      {pageNumbers.map((i) => (
+        <button
+          key={i}
+          onClick={() => handlePageClick(i)}
+          className={`px-3 py-2 mx-1 rounded-md text-sm font-medium transition-colors ${
+            currentPage === i
+              ? 'text-white'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+          style={{
+            backgroundColor: currentPage === i ? theme.colors.primary : 'transparent',
+            color: currentPage === i ? 'white' : theme.colors.textPrimary,
+          }}
+        >
+          {i}
+        </button>
+      ))}
 
       <button
         onClick={handleNext}
@@ -85,6 +86,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
       </button>
     </div>
   );
-};
+});
 
 export default Pagination;
+

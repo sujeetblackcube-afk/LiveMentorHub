@@ -1,0 +1,12 @@
+/* Parent Feature Module Styles */
+.parent-page-container {
+  padding: 16px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+.parent-table-wrapper {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}

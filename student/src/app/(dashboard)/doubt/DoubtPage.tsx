@@ -143,7 +143,7 @@ export default function DoubtPage() {
 
       if (!res.ok) {
         const text = await res.text();
-        console.error("Create doubt failed:", res.status, text);
+
         alert("Failed to create doubt");
         return;
       }
@@ -156,7 +156,7 @@ export default function DoubtPage() {
 
       fetchDoubts();
     } catch (err) {
-      console.error(err);
+
     } finally {
       setSubmitting(false);
     }

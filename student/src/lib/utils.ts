@@ -72,8 +72,7 @@ export async function downloadFile(url: string, fallbackName: string = "download
         }, 1000);
 
     } catch (error) {
-        console.warn("Direct blob download failed, falling back to attachment URL:", error);
-        
+
         let downloadUrl = url;
         if (url.includes("cloudinary.com") && !url.includes("fl_attachment")) {
             const urlParts = url.split("/upload/");

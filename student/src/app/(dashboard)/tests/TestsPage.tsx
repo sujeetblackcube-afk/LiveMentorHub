@@ -104,7 +104,7 @@ export default function TestsPage() {
       const testsArray = Array.isArray(res.data.tests) ? res.data.tests : [];
       setTests(testsArray);
     } catch (err: any) {
-      console.error("Failed to fetch tests:", err);
+
       setError(err.response?.data?.message || "Failed to load tests.");
     } finally {
       setLoading(false);

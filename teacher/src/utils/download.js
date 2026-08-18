@@ -8,7 +8,7 @@
  */
 export const downloadFile = async (url, fallbackName = "download", contentType = "") => {
   if (!url) {
-    console.error("No download URL provided");
+
     return;
   }
 
@@ -65,8 +65,7 @@ export const downloadFile = async (url, fallbackName = "download", contentType =
     }, 1000);
 
   } catch (error) {
-    console.warn("Direct blob download failed, falling back to attachment URL:", error);
-    
+
     // Fallback: For Cloudinary URLs, insert fl_attachment to force extension & download header
     let downloadUrl = url;
     if (url.includes("cloudinary.com") && !url.includes("fl_attachment")) {

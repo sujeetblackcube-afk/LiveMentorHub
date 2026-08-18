@@ -69,7 +69,7 @@ export default function ProgressPage() {
           setLoading(false);
         })
         .catch((err) => {
-          console.error("Progress fetch error:", err);
+
           setLoading(false);
         });
     } else {

@@ -1,0 +1,6 @@
+/* DASHBOARD Feature Module Styles */
+.dashboard-page-container {
+  padding: 16px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}

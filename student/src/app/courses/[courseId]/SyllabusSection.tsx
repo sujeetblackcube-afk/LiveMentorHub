@@ -38,12 +38,11 @@ export function SyllabusSection({ courseId }: SyllabusSectionProps) {
       try {
         setLoading(true);
         setError(null);
-        console.log('Initiating fetch for courseId:', courseId);
+        
         const syllabus = await getSyllabus(courseId);
-        console.log('Fetched syllabus successfully:', syllabus);
+        
         setData(syllabus);
       } catch (err) {
-        console.error('Error fetching syllabus:', err);
         setError(err instanceof Error ? err.message : 'Failed to load syllabus');
       } finally {
         setLoading(false);
@@ -53,7 +52,6 @@ export function SyllabusSection({ courseId }: SyllabusSectionProps) {
     if (courseId) {
       fetchData();
     } else {
-      console.warn('courseId is missing or falsy. Fetch skipped.');
       setLoading(false);
     }
   }, [courseId]);

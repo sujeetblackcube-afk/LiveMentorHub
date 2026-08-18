@@ -143,7 +143,6 @@ const reverseGeocode = async (
 
     return { address: fullAddress, country };
   } catch (error) {
-    console.error("Reverse geocoding error:", error);
     return { address: "", country: "India" };
   }
 };

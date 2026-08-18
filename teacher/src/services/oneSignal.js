@@ -26,17 +26,16 @@ export const getWebPlayerId = async () => {
         const permission = await window.OneSignal.Notifications.requestPermission();
 
         if (permission !== "granted") {
-          // console.log("Notification permission denied");
+          
           return resolve(null);
         }
 
         // Get OneSignal Player ID (Subscription ID)
         const playerId = window.OneSignal.User.PushSubscription.id;
 
-        // console.log("OneSignal Player ID:", playerId);
+        
         resolve(playerId || null);
       } catch (error) {
-        console.error("OneSignal Error:", error);
         resolve(null);
       }
     });

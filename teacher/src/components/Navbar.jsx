@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Search, MessageSquare, Bell, ChevronDown, Menu, LogOut, User, X, Trash2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { theme } from "../theme.js";
 import { getNotificationByTeacherId, deleteAllNotificationByTeacher, deleteNotification } from '../services/api';
 
@@ -57,7 +57,6 @@ export default function Navbar({ collapsed, setCollapsed }) {
         }
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
     }
   };
 
@@ -69,7 +68,6 @@ export default function Navbar({ collapsed, setCollapsed }) {
         setNotifications(response.notifications || []);
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
     } finally {
       setLoadingNotifications(false);
     }
@@ -89,7 +87,6 @@ export default function Navbar({ collapsed, setCollapsed }) {
       await deleteNotification(notificationId);
       setNotifications(notifications.filter(n => n.notificationId !== notificationId));
     } catch (error) {
-      console.error('Error deleting notification:', error);
     }
   };
 
@@ -125,7 +122,6 @@ export default function Navbar({ collapsed, setCollapsed }) {
       await deleteAllNotificationByTeacher();
       setNotifications([]);
     } catch (error) {
-      console.error('Error deleting all notifications:', error);
     }
   };
 

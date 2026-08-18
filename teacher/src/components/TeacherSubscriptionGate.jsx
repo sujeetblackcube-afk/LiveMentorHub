@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../context/AuthContext";
 import { getSubscriptionsByTeacherId } from "../services/api";
 
 export default function TeacherSubscriptionGate({ children }) {
@@ -37,7 +37,6 @@ export default function TeacherSubscriptionGate({ children }) {
           setHasActive(active);
         }
       } catch (err) {
-        console.error("Subscription check failed:", err);
 
         if (!cancelled) {
           setHasActive(false);

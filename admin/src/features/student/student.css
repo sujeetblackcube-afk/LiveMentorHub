@@ -1,0 +1,75 @@
+/* Student Feature Module Styles */
+.student-page-container {
+  padding: 16px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.student-table-header {
+  background-color: #f8fafc;
+  color: #64748b;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.student-table-row {
+  border-top: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+.student-table-row:hover {
+  background-color: #f8fafc;
+}
+
+.student-profile-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.student-th {
+  padding: 16px 20px;
+  font-weight: 600;
+  text-align: left;
+  font-size: 14px;
+  color: #64748b;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.student-td {
+  padding: 18px 20px;
+  font-size: 14px;
+  color: #1e293b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.student-tab-active {
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #f8fafc;
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.student-tab-inactive {
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: transparent;
+  color: #1e293b;
+}
+
+.student-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 10px 0;
+}

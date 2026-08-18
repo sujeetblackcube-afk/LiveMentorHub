@@ -385,16 +385,15 @@ export function useCoursePageData(studentId?: string, country?: string) {
         try {
             // Use provided country or fall back to initial country
             const countryParam = countryToUse ?? effectiveCountry ?? country;
-            // console.log("[useCoursePageData] fetching course page data", { studentId, countryParam });
+            
             const result = await fetchCoursePageData(studentId, countryParam);
-            // console.log("[useCoursePageData] result", result);
+            
             setCourses(result.courses);
             setEnrolledIds(result.enrolledIds);
             setMyCourses(result.myCourses);
             setAllCourses(result.allCourses);
         } catch (e) {
             const message = e instanceof Error ? e.message : "Failed to load courses";
-            console.error("[useCoursePageData] fetch error", message);
             setError(message);
             setCourses([]);
             setEnrolledIds([]);
@@ -441,7 +440,6 @@ export async function fetchCourseContent(
             id: String(item.id),
         }));
     } catch (err) {
-        console.error("Error fetching course content:", err);
         return [];
     }
 }

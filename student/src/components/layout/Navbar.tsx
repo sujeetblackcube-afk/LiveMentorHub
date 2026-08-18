@@ -67,7 +67,7 @@ export function Navbar() {
           }
         }
       } catch (err) {
-        console.error("Error fetching student profile for navbar:", err);
+
       }
     };
 
@@ -106,7 +106,7 @@ export function Navbar() {
         setNotifications([]);
       }
     } catch (err) {
-      console.error("Failed to fetch notifications:", err);
+
       setNotifications([]);
     }
   };
@@ -122,7 +122,7 @@ export function Navbar() {
         prev.filter((n) => n.notificationId !== notificationId),
       );
     } catch (err) {
-      console.error("Delete notification error:", err);
+
     }
   };
 
@@ -134,7 +134,7 @@ export function Navbar() {
       );
       setNotifications([]);
     } catch (err) {
-      console.error("Clear all notifications error:", err);
+
     }
   };
 

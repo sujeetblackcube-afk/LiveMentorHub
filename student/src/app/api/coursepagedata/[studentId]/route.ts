@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /** Backend base for course page data — path is android/coursepagedata/:userId (no /api). */
-const COURSE_BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
+const COURSE_BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
 export async function GET(
     _request: NextRequest,
@@ -23,7 +23,6 @@ export async function GET(
         }
         return NextResponse.json(data);
     } catch (err) {
-        console.error("[coursepagedata proxy]", err);
         return NextResponse.json(
             { error: "Backend unreachable" },
             { status: 502 }

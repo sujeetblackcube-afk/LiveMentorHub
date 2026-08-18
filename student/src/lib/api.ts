@@ -3,7 +3,7 @@
  * Uses environment variables for dev & production.
  */
 
-export const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL as string;
+export const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
 // if (!API_BASE) {
 //   throw new Error(

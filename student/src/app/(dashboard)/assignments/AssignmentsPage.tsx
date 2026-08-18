@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { FileUploadZone } from "@/components/FileUploadZone";
+import { FileDownloadZone } from "@/components/FileDownloadZone";
 import { Button } from "@/components/ui/Button";
 import { Footer } from "@/components/layout/Footer";
 import { useAuth } from "@/store/useAuth";
@@ -109,7 +111,7 @@ export default function AssignmentsPage() {
 
       setAssignments(mapped);
     } catch (err: any) {
-      console.error("Failed to fetch assignments:", err);
+
       setError(err.response?.data?.message || "Failed to load assignments.");
     } finally {
       setLoading(false);
@@ -177,7 +179,7 @@ export default function AssignmentsPage() {
       fetchAssignments();
       
     } catch (err: any) {
-      console.error("Submission failed:", err);
+
       alert(err.response?.data?.message || "Failed to submit assignment. Please try again.");
     } finally {
       setUploading(false);
@@ -443,30 +445,11 @@ export default function AssignmentsPage() {
 
               {/* File Input */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select File (Required)
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-indigo-500 transition-colors">
-                  <input
-                    type="file"
-                    id="submission-file"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                  <label htmlFor="submission-file" className="cursor-pointer">
-                    {selectedFile ? (
-                      <div className="flex items-center justify-center gap-2 text-green-600">
-                        <File className="h-5 w-5" />
-                        <span className="text-sm font-medium">{selectedFile.name}</span>
-                      </div>
-                    ) : (
-                      <div className="text-gray-500">
-                        <Upload className="h-8 w-8 mx-auto mb-2" />
-                        <p className="text-sm">Click to select a file</p>
-                      </div>
-                    )}
-                  </label>
-                </div>
+                <FileUploadZone
+                  label="Upload Solution File (PDF, Image, Video)"
+                  accept="application/pdf,image/*,video/*"
+                  onFileSelect={(f) => setSelectedFile(f)}
+                />
               </div>
 
               {/* Text Input */}

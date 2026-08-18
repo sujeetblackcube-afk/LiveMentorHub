@@ -4,6 +4,7 @@ import {
   getNotes,
   streamVideo,
 } from '../../controllers/notesController.js';
+import { getTeacherNoteCount } from '../../teacher/notes/teacherNotes.controller.js';
 
 const router = express.Router();
 
@@ -11,6 +12,9 @@ const router = express.Router();
 router.get('/stream', streamVideo);
 
 router.use(authMiddleware);
+
+// Get notes count
+router.get('/count', getTeacherNoteCount);
 
 // Get notes for student
 router.get('/', getNotes);

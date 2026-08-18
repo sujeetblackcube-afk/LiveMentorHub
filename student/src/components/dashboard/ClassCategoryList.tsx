@@ -76,10 +76,7 @@ export function ClassCategoryList() {
         }
       }
     } catch (error: any) {
-      console.error(
-        "Class Fetch Error:",
-        error.response?.data || error.message,
-      );
+
     } finally {
       setLoading(false);
     }

@@ -98,10 +98,9 @@ export default function CourseDetailsPage() {
             setContentLoading(true);
             try {
                 const data = await fetchCourseContent(studentId, course.id, activeContentType === 'ALL' ? undefined : activeContentType as CourseContentType);
-                console.log('DATA FETCHED FOR COURSES: ',data)
+                
                 setContent(data);
             } catch (e) {
-                console.error('Content fetch error:', e);
                 setContent([]);
             } finally {
                 setContentLoading(false);

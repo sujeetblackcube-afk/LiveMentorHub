@@ -69,19 +69,15 @@ export function DashboardCarousel() {
 
       const studentId = user?.studentId || "demo";
       const url = `${API_AUTH_BASE}${HOME_PATHS.homeData(studentId, undefined, country)}`;
-      // console.log("[DashboardCarousel] fetching homeData", { studentId, country, url });
+      
 
       const res = await axios.get(url);
-      // console.log("[DashboardCarousel] response", res?.data);
+      
 
       if (res.data?.success) {
         setBanners(res.data.data.banners || []);
       }
     } catch (error: any) {
-      console.error(
-        "Banner Fetch Error:",
-        error.response?.data || error.message
-      );
     } finally {
       setLoading(false);
     }

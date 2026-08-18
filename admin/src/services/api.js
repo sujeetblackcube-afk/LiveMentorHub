@@ -1,10 +1,10 @@
-//  const BASE_URL = "http://localhost:5000/api"; // Adjust if backend runs on different port
-// // const BASE_URL = "http://16.171.61.121:5000/api"; // Adjust if backend runs on different port
-  const BASE_URL = `${import.meta.env.VITE_BACKEND_BASE_URL}/api`;
-export const BACKEND_BASE_URL = `${import.meta.env.VITE_BACKEND_BASE_URL}`; // For static files
+import { API_BASE_URL, BACKEND_BASE_URL as CONST_BACKEND_BASE_URL, STORAGE_KEYS } from '../utils/constants';
+
+const BASE_URL = API_BASE_URL;
+export const BACKEND_BASE_URL = CONST_BACKEND_BASE_URL;
 
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
   return token ? { 'Authorization': `Bearer ${token}` } : {};
 };
 
@@ -438,6 +438,11 @@ export const getEnrollmentsByTeacherId = async (teacherId, params = {}) => {
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
+// Dashboard API
+export const getDashboardStats = async () => {
+  return fetch(`${BASE_URL}/dashboard/stats`, { headers: getAuthHeaders() }).then(json);
+};
+
 // Banner API
 export const addBanner = async (bannerData) => {
   const formData = new FormData();
@@ -631,13 +636,13 @@ export const deleteNotification = async (notificationId) => {
 
 // Get notifications for the authenticated superadmin
 export const getNotificationBySuperAdminId = async () => {
-  const url = `${BASE_URL}/notifications/superadmin/notifications`;
+  const url = `${BASE_URL}/notifications/notifications`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 // Delete all notifications for the authenticated superadmin
 export const deleteAllNotificationBySuperAdmin = async () => {
-  const url = `${BASE_URL}/notifications/superadmin/notifications/all`;
+  const url = `${BASE_URL}/notifications/notifications/all`;
   return fetch(url, {
     method: 'DELETE',
     headers: getAuthHeaders(),
@@ -653,57 +658,41 @@ export const getSyllabus = async (courseCode) => {
       headers: getAuthHeaders() 
     });
     const result = await response.json();
-    // The API returns { success: true, data: { ... } }
-    // We need to return { data: result.data } to match what your component expects
     return { data: result.data };
   } catch (error) {
-    console.error('Error fetching syllabus:', error);
-    return { data: { syllabusPoints: [], syllabusUrl: "" } };
+    throw error;
   }
 };
 
-// Add/Update syllabus file - Fixed
 export const addUpdateSyllabusFile = async (formData) => {
-  try {
-    const headers = getAuthHeaders();
-    // Remove Content-Type for FormData
-    delete headers['Content-Type'];
-    
-    const response = await fetch(`${BASE_URL}/syllabus`, {
-      method: 'POST',
-      headers: headers,
-      body: formData
-    });
-    const result = await response.json();
-    return { data: result.data };
-  } catch (error) {
-    console.error('Error uploading syllabus file:', error);
-    throw error;
-  }
+  return fetch(`${BASE_URL}/syllabus`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: formData,
+  }).then(json);
 };
 
-// Update syllabus bullet points - Fixed
-export const updateSyllabusBullets = async (courseCode, { syllabusPoints }) => {
-  try {
-    const points = Array.isArray(syllabusPoints) ? syllabusPoints.join(', ') : syllabusPoints;
-    const response = await fetch(`${BASE_URL}/syllabus/${courseCode}/bullet-points`, {
-        method: 'PUT',
-        headers: { 
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify({ bulletPoints: points, courseName: '' })
-    });
-
-    const result = await response.json();
-    return { data: result.data };
-  } catch (error) {
-    console.error('Error updating syllabus bullets:', error);
-    throw error;
-  }
+export const updateSyllabusBullets = async (courseCode, points) => {
+  return fetch(`${BASE_URL}/syllabus/${courseCode}/bullet-points`, {
+    method: "PUT",
+    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ points }),
+  }).then(json);
 };
 
-// ============== DASHBOARD STATS API ==============
-export const getDashboardStats = async () => {
-  return fetch(`${BASE_URL}/dashboard/stats`, { headers: getAuthHeaders() }).then(json);
+// ============== SUPERADMIN PROFILE API FUNCTIONS ==============
+
+export const getSuperAdminProfile = async () => {
+  return fetch(`${BASE_URL}/superadmin/profile`, {
+    headers: getAuthHeaders(),
+  }).then(json);
 };
+
+export const updateSuperAdminProfile = async (formData) => {
+  return fetch(`${BASE_URL}/superadmin/profile`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: formData,
+  }).then(json);
+};
+

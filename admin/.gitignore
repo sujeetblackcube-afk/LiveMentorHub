@@ -1,4 +1,9 @@
-node_modules
-.env
-.env.example
-dist
+# Admin Portal .gitignore
+
+node_modules/
+dist/
+build/
+.env.local
+.env.production
+*.log
+.DS_Store

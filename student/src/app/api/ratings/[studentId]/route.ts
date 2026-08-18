@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
+const BACKEND_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
 export async function POST(
     request: NextRequest,
@@ -8,7 +8,6 @@ export async function POST(
 ) {
     const { studentId } = await params;
     if (!studentId) {
-        console.error("[reviews proxy POST] Missing studentId in route params");
         return NextResponse.json({ error: "Missing studentId" }, { status: 400 });
     }
 
@@ -17,7 +16,6 @@ export async function POST(
         const { courseId, reviewNumber, reviewComment } = body;
 
         if (!courseId || reviewNumber === undefined) {
-            console.error("[reviews proxy POST] Missing required fields in body:", { courseId, reviewNumber });
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
@@ -30,7 +28,7 @@ export async function POST(
         };
 
         const url = `${BACKEND_BASE}/api/reviews`;
-        console.log(`[reviews proxy POST] Dispatching POST to ${url} with payload:`, backendPayload);
+        
 
         const res = await fetch(url, {
             method: "POST",
@@ -44,18 +42,12 @@ export async function POST(
         const data = await res.json().catch(() => ({}));
         
         if (!res.ok) {
-            console.error("[reviews proxy POST] Backend responded with error status:", {
-                status: res.status,
-                statusText: res.statusText,
-                errorBody: data,
-            });
             return NextResponse.json(data || { error: res.statusText }, { status: res.status });
         }
 
-        console.log("[reviews proxy POST] Successfully posted review:", data);
+        
         return NextResponse.json(data);
     } catch (err) {
-        console.error("[reviews proxy POST] Exception caught during fetch or parsing:", err);
         return NextResponse.json(
             { error: err instanceof Error ? err.message : "Backend unreachable or invalid request" },
             { status: 502 }

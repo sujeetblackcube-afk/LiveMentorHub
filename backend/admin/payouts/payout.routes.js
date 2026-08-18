@@ -18,21 +18,14 @@ const requireSuperAdmin = (req, res, next) => {
 };
 
 router.use(authMiddleware);
-router.use(requireSuperAdmin);
 
-// Create a new payment/payout request
-router.post("/", createPayment);
-
-// Get all payments with optional filtering
-router.get("/", getAllPayments);
-
-// Get total earnings for authenticated teacher (protected route)
+// Teacher-accessible payout routes (authenticated teacher)
 router.get("/earning", getTotalEarningsByTeacher);
-
-// Get payout transactions for authenticated teacher (protected route)
 router.get("/transactions", getTeacherPayoutTransactions);
 
-// Get payment by ID
-router.get("/:id", getPaymentById);
+// Admin-only payout management routes
+router.post("/", requireSuperAdmin, createPayment);
+router.get("/", requireSuperAdmin, getAllPayments);
+router.get("/:id", requireSuperAdmin, getPaymentById);
 
 export default router;

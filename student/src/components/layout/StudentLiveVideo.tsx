@@ -190,7 +190,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
           onClose();
         }
       } catch (error) {
-        console.error('Join session error:', error);
         if (axios.isAxiosError(error)) {
           toast.error(error.response?.data?.message || 'Failed to join session');
         } else {
@@ -309,7 +308,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
             if (mounted && error instanceof Error && 
                 !error.message?.includes('cancel token canceled') && 
                 !error.message?.includes('OPERATION_ABORTED')) {
-              console.error('Subscribe error:', error);
             }
           }
         };
@@ -354,7 +352,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
                 timestamp: Date.now()
               }]);
             } catch (e) {
-              console.error('Error parsing message:', e);
             }
           }
         };
@@ -443,7 +440,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
             const encoder = new TextEncoder();
             await client.sendStreamMessage(encoder.encode(studentMetadata));
           } catch (metaErr) {
-            console.warn('Failed to broadcast student metadata:', metaErr);
           }
 
         } catch (mediaError) {
@@ -455,7 +451,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
           toast.success('Connected to live session!');
         }
       } catch (error) {
-        console.error('Agora Init Error:', error);
         if (error instanceof Error && 
             (error.message?.includes('cancel token canceled') || 
              error.message?.includes('OPERATION_ABORTED'))) {
@@ -506,7 +501,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
         videoTrack.setEnabled(newState);
         setIsCameraOn(newState);
       } catch (e) {
-        console.warn('Camera track toggle ignored:', e);
       }
     }
   };
@@ -521,7 +515,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
         audioTrack.setEnabled(newState);
         setIsMicOn(newState);
       } catch (e) {
-        console.warn('Mic track toggle ignored:', e);
       }
     }
   };
@@ -601,7 +594,6 @@ const StudentLiveVideo: React.FC<StudentLiveVideoProps> = ({
       toast.success('Left session');
       onClose();
     } catch (error) {
-      console.error('Leave session error:', error);
       toast.error('Failed to leave session');
     }
   };

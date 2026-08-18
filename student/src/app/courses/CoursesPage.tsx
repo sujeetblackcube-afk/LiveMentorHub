@@ -25,7 +25,7 @@ export default function CoursesPage() {
     const isDemoMode = searchParams?.get("demo") === "true";
 
     const { courses, enrolledIds, myCourses, allCourses, loading, error, refetch } = useCoursePageData(studentId);
-    console.log('COURSES DATA FETCHED FOR PAGE :',courses);
+    
     const effectiveEnrolledIds = isDemoMode ? [] : enrolledIds;
 
     const subjectFilter = searchParams?.get("subject");

@@ -31,10 +31,10 @@ import {
 import authMiddleware from '../middleware/authmiddleware.js';
 
 const requireTeacherRole = (req, res, next) => {
-  if (!req.auth || req.auth.role !== 'teacher') {
+  if (!req.auth || (req.auth.role !== 'teacher' && req.auth.role !== 'superadmin')) {
     return res.status(403).json({
       success: false,
-      message: 'Teacher access required',
+      message: 'Teacher or Admin access required',
     });
   }
 

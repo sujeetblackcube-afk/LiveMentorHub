@@ -23,7 +23,7 @@ export const useAuth = create<AuthState>()(
                 if (typeof window !== "undefined") {
                     const token = localStorage.getItem("cp_token");
                     if (token) {
-                        const apiBase = process.env.NEXT_PUBLIC_BACKEND_URL;
+                        const apiBase = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
                         fetch(`${apiBase}/api/auth/logout`, {
                             method: "POST",
                             headers: {
