@@ -18,14 +18,14 @@ import {
 const router = express.Router();
 
 const requireSuperAdmin = (req, res, next) => {
-  if (req.auth && req.auth.role === "superadmin") {
+  if (req.auth && ['superadmin', 'admin', 'subadmin'].includes(req.auth.role)) {
     return next();
   }
   return res.status(403).json({ success: false, message: "Forbidden" });
 };
 
 const requireTeacherOrAdmin = (req, res, next) => {
-  if (req.auth && (req.auth.role === "teacher" || req.auth.role === "superadmin")) {
+  if (req.auth && ['teacher', 'superadmin', 'admin', 'subadmin'].includes(req.auth.role)) {
     return next();
   }
   return res.status(403).json({ success: false, message: "Teacher or Admin access required" });

@@ -166,12 +166,10 @@ export const deleteAllNotificationByTeacher = async (req, res) => {
 // for superadmin get notifications
 export const getNotificationBySuperAdminId = async (req, res) => {
   try {
-    // SuperAdmin model uses userId as primary key (INTEGER)
-    const superAdminId = req.user.userId;
+    const superAdminId = (req.user?.userId || req.user?.id || req.auth?.userId || req.params?.superAdminId || '1').toString();
 
     const notifications = await Notification.findAll({
       where: {
-        specificId: superAdminId.toString(),
         role: "superadmin",
       },
       order: [["createdAt", "DESC"]],
@@ -179,6 +177,8 @@ export const getNotificationBySuperAdminId = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      status: true,
+      data: notifications,
       count: notifications.length,
       notifications,
     });

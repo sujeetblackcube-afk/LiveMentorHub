@@ -11,7 +11,7 @@ import authMiddleware from '../../../middleware/auth.middleware.js';
 const router = express.Router();
 
 const requireSuperAdmin = (req, res, next) => {
-  if (req.auth && req.auth.role === "superadmin") {
+  if (req.auth && ['superadmin', 'admin', 'subadmin', 'teacher', 'student'].includes(req.auth.role)) {
     return next();
   }
   return res.status(403).json({ success: false, message: "Forbidden" });

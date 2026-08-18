@@ -31,10 +31,11 @@ export default function Navbar({ collapsed, setCollapsed }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (role === "superadmin") {
-      fetchProfile();
-    }
-  }, [role]);
+    fetchProfile();
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -195,7 +196,7 @@ export default function Navbar({ collapsed, setCollapsed }) {
             onClick={handleNotificationClick}
           />
           {notifications.length > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
+            <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center px-1 animate-pulse shadow-md ring-2 ring-white">
               {notifications.length > 9 ? "9+" : notifications.length}
             </span>
           )}
