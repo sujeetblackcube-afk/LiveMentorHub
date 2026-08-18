@@ -3,7 +3,8 @@
  * Handles database operations for admin course management
  */
 
-import { Op } from 'sequelize';
+import pkg from 'sequelize';
+const { Op } = pkg;
 import Course from '../../../models/Course.js';
 import Subject from '../../../models/Subject.js';
 import Enrollment from '../../../models/Enrollment.js';

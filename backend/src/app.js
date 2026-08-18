@@ -9,6 +9,9 @@ dotenv.config({ override: true });
 
 const app = express();
 
+// Trust reverse proxy (Nginx) for rate limiting & IP detection
+app.set('trust proxy', 1);
+
 // ============================================================
 // CASHFREE WEBHOOKS - MUST BE BEFORE express.json() MIDDLEWARE
 // ============================================================

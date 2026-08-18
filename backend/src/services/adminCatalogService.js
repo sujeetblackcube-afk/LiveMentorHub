@@ -1,4 +1,5 @@
-import { Op } from 'sequelize';
+import pkg from 'sequelize';
+const { Op } = pkg;
 import Class from '../models/Class.js';
 import Course from '../models/Course.js';
 import Subject from '../models/Subject.js';
