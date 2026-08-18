@@ -1,0 +1,13 @@
+import express from 'express';
+import { submitReview, getAverageRating, hasStudentReviewed } from '../../../modules/student/reviews/studentReview.controller.js';
+import authMiddleware from '../../../middleware/auth.middleware.js';
+
+const router = express.Router();
+
+router.post('/', authMiddleware, submitReview);
+
+router.get('/average', authMiddleware, getAverageRating);
+
+router.get('/has-reviewed', authMiddleware, hasStudentReviewed);
+
+export default router;
