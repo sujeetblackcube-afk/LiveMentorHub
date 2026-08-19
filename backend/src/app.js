@@ -53,6 +53,8 @@ app.use('/uploads', expressStatic('uploads'), (req, res) => {
 app.use((req, res, next) => {
   if (req.url.startsWith('/api/api/')) {
     req.url = req.url.replace('/api/api/', '/api/');
+  } else if (!req.url.startsWith('/api') && req.url !== '/' && !req.url.startsWith('/uploads')) {
+    req.url = '/api' + (req.url.startsWith('/') ? '' : '/') + req.url;
   }
   next();
 });

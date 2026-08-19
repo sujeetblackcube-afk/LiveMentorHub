@@ -91,12 +91,19 @@ export const deleteNotification = async (req, res) => {
 // for teacher get notifications
 export const getNotificationByTeacherId = async (req, res) => {
   try {
-    const { teacherId } = req.user;
+    const teacherId = req.user?.teacherId || req.user?.id || req.auth?.specificId || req.auth?.userId;
     const { page, limit } = req.query;
+
+    if (!teacherId) {
+      return res.status(400).json({
+        success: false,
+        message: "Teacher ID missing from user payload",
+      });
+    }
 
     const queryOptions = {
       where: {
-        specificId: teacherId,
+        specificId: String(teacherId),
         role: "teacher",
       },
       order: [["createdAt", "DESC"]],
@@ -141,11 +148,18 @@ export const getNotificationByTeacherId = async (req, res) => {
 // for delete all notification by teacher
 export const deleteAllNotificationByTeacher = async (req, res) => {
   try {
-    const { teacherId } = req.user;
+    const teacherId = req.user?.teacherId || req.user?.id || req.auth?.specificId || req.auth?.userId;
+
+    if (!teacherId) {
+      return res.status(400).json({
+        success: false,
+        message: "Teacher ID missing from user payload",
+      });
+    }
 
     await Notification.destroy({
       where: {
-        specificId: teacherId,
+        specificId: String(teacherId),
         role: "teacher",
       },
     });
@@ -155,7 +169,7 @@ export const deleteAllNotificationByTeacher = async (req, res) => {
       message: "All notifications deleted successfully",
     });
   } catch (error) {
-    console.error("Delete All Teacher Notifications Error:", error);
+    console.error("Delete Notification Error:", error);
     res.status(500).json({
       success: false,
       message: error.message,
