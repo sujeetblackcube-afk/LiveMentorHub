@@ -96,7 +96,7 @@ const Login = () => {
         ? getPhoneIdentifierValue()
         : identifier;
 
-      const baseUrl = (import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+      const baseUrl = (import.meta.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
       const response = await fetch(`${baseUrl}/api/auth/login`, {
         method: 'POST',
         headers: {

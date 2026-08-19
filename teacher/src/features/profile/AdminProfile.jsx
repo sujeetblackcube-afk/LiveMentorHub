@@ -90,7 +90,7 @@ const AdminProfile = () => {
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const baseUrl = (import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+      const baseUrl = (import.meta.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
       const response = await fetch(`${baseUrl}/api/teacher/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -296,7 +296,7 @@ const AdminProfile = () => {
                 if (editData.qualificationCertificates) formData.append('qualificationCertificates', editData.qualificationCertificates);
                 if (editData.experienceCertificates) formData.append('experienceCertificates', editData.experienceCertificates);
 
-                const baseUrl = (import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+                const baseUrl = (import.meta.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
                 const response = await fetch(`${baseUrl}/api/teacher/profile`, {
                   method: 'PUT',
                   headers: {

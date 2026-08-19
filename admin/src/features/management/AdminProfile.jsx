@@ -27,7 +27,7 @@ const AdminProfile = () => {
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/superadmin/profile`, {
+      const response = await fetch(`${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/superadmin/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -37,7 +37,7 @@ const AdminProfile = () => {
         const data = await response.json();
         setProfile(data);
         const img = data.profileImage;
-        setPreviewImage(img ? (img.startsWith('http') ? img : `${import.meta.env.VITE_BACKEND_BASE_URL}/${img}`) : '');
+        setPreviewImage(img ? (img.startsWith('http') ? img : `${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/${img}`) : '');
       } else {
         toast.error('Failed to fetch profile data');
       }
@@ -86,7 +86,7 @@ const AdminProfile = () => {
         formData.append('profileImage', selectedFile);
       }
 
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/superadmin/profile`, {
+      const response = await fetch(`${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/superadmin/profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -99,7 +99,7 @@ const AdminProfile = () => {
         const updatedProfile = updatedData.profile || updatedData;
         setProfile(updatedProfile);
         const img = updatedProfile.profileImage;
-        setPreviewImage(img ? (img.startsWith('http') ? img : `${import.meta.env.VITE_BACKEND_BASE_URL}/${img}`) : '');
+        setPreviewImage(img ? (img.startsWith('http') ? img : `${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/${img}`) : '');
         setSelectedFile(null);
         toast.success('Profile updated successfully!');
       } else {

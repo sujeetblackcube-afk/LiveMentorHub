@@ -27,9 +27,14 @@ import {
   getEnrollmentsByCourseCode,
   createCashfreeOrder,
   getEnrollmentsByStudentId,
+  cashfreeWebhook,
 } from '../../../modules/student/enrollments/studentEnrollment.controller.js';
 
 const router = express.Router();
+
+// Public Webhook Route (from Cashfree server)
+router.post('/cashfree-webhook', cashfreeWebhook);
+router.post('/webhook', cashfreeWebhook);
 
 // Cashfree Create Order Route (for students to purchase courses)
 router.post('/create-cashfree-order', authMiddleware, createCashfreeOrder);

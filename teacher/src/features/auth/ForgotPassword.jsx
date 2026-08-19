@@ -22,7 +22,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/forgot-password`,
+        `${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/forgot-password`,
         {
           method: "POST",
           headers: {
@@ -70,7 +70,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/verify-forgot-password-otp`,
+        `${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/verify-forgot-password-otp`,
         {
           method: "POST",
           headers: {
@@ -106,7 +106,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/resend-otp`,
+        `${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/resend-otp`,
         {
           method: "POST",
           headers: {
@@ -152,7 +152,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/reset-password`,
+        `${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/reset-password`,
         {
           method: "POST",
           headers: {

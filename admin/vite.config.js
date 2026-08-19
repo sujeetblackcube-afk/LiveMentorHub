@@ -6,6 +6,10 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   base: '/admin',
   plugins: [react(), tailwindcss()],
+  envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
+  define: {
+    'process.env': {},
+  },
   esbuild: {
     legalComments: 'none',
     drop: ['console', 'debugger'],
@@ -28,7 +32,3 @@ export default defineConfig({
     },
   },
 });
-
-
-
-

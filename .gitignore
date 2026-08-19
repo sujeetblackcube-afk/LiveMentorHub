@@ -13,14 +13,14 @@ out/
 build/
 *.tsbuildinfo
 
-# Environment Variables & Local Configs
+# Environment Variables (Keep .env.example tracked)
 .env
-.env.*
-.env*.local
-*.env
-.env.production
-.env.staging
-.env.development
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+!**/.env.example
 
 # Logs & Operating System Files
 *.log
@@ -46,4 +46,3 @@ scratch_doc_text.txt
 scratch/
 backend/check_*.js
 backend/test_*.js
-

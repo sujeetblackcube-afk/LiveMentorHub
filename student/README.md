@@ -1,6 +1,16 @@
-# 🎓 LiveMentorHub — Student Portal & Public Landing Site
+# 🎓 LiveMentorHub — Student Portal
 
-The **Student Portal** is built using **Next.js 16 (App Router)** and **Turbopack**, delivering a high-converting public landing page, SEO Metadata, OpenGraph cards, JSON-LD Schema, and interactive student learning dashboards.
+The **Student Portal** is built using **Vite + React 19 JavaScript (`.jsx`)**, delivering a fast, responsive student learning dashboard, live HD mentorship classes, notes, recorded video vault, mock test scorecards, and doubt resolution.
+
+---
+
+## 🏗️ Technical Stack
+
+- **Framework**: React 19 + Vite 7
+- **Router**: React Router DOM v7 (`basename="/student"`)
+- **Styling**: Tailwind CSS v4 (`@tailwindcss/vite`)
+- **State & Data Fetching**: Context API & Axios
+- **Environment Key**: `NEXT_PUBLIC_BACKEND_URL`
 
 ---
 
@@ -9,25 +19,25 @@ The **Student Portal** is built using **Next.js 16 (App Router)** and **Turbopac
 ```text
 student/src/
 ├── app/
-│   ├── (dashboard)/   # Student Learning Dashboard & Classes
-│   ├── courses/       # Public Course Showcases
-│   ├── auth/          # Student Login & Signup Modals
-│   ├── robots.ts      # Dynamic Robots.txt for Search Indexers
-│   └── sitemap.ts     # Dynamic Sitemap.xml Generator
-└── features/
-    ├── landing/       # Landing Page, Hero & Testimonial Styles
-    ├── auth/          # Auth Components & CSS
-    ├── course/        # Course Cards & Showcases
-    ├── dashboard/     # Student Widgets & Progress Charts
-    └── assessment/    # Assignment Submissions & Test Attempts
+│   ├── auth/          # Student Login & Signup Pages
+│   └── (dashboard)/   # Student Learning Dashboard & Classes
+├── components/        # Layout, Navbar, Footer & Common UI Widgets
+├── features/          # Course, Doubt, Test & Assessment Features
+├── lib/               # API Client & Helper Utilities
+└── routes/            # AppRoutes.jsx & ProtectedRoute.jsx
 ```
 
 ---
 
-## 🚀 Build Commands
+## 🚀 Build & Run Commands
 
 ```bash
-npm run dev      # Launch Next.js dev server on http://localhost:3000
-npm run build    # Compile Next.js 16 production build (~4.5s compile time)
-npm run start    # Start production server
+# 1. Install dependencies
+npm install
+
+# 2. Start local development server
+npm run dev      # Runs Vite dev server at http://localhost:5173/student/
+
+# 3. Build for production
+npm run build    # Compiles Vite production bundle to /dist
 ```

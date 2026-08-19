@@ -60,7 +60,7 @@ export default function Navbar({ collapsed, setCollapsed }) {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/superadmin/profile`,
+        `${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/superadmin/profile`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -72,7 +72,7 @@ export default function Navbar({ collapsed, setCollapsed }) {
         const data = await response.json();
         const img = data.profileImage;
         if (img) {
-          setProfileImage(img.startsWith('http') ? img : `${import.meta.env.VITE_BACKEND_BASE_URL}/${img}`);
+          setProfileImage(img.startsWith('http') ? img : `${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/${img}`);
         } else {
           setProfileImage("");
         }

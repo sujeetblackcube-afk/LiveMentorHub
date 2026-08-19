@@ -23,7 +23,7 @@ const Avatar = memo(({ src, name = "", alt = "Avatar", size = "w-9 h-9", classNa
       }
       return trimmed;
     }
-    const baseUrl = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
+    const baseUrl = import.meta.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
     const cleanBase = baseUrl.replace(/\/$/, "");
     const cleanPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
     return `${cleanBase}${cleanPath}`;

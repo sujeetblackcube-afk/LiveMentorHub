@@ -46,7 +46,7 @@ export default function Navbar({ collapsed, setCollapsed }) {
       const token = localStorage.getItem('token');
       if (!token) return;
       
-      const baseUrl = (import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+      const baseUrl = (import.meta.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
       const response = await fetch(`${baseUrl}/api/teacher/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`

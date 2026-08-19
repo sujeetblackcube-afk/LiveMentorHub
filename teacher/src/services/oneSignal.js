@@ -6,7 +6,7 @@ export const initOneSignal = async () => {
   return new Promise((resolve) => {
     window.OneSignal.push(async function () {
       await window.OneSignal.init({
-        appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
+        appId: import.meta.env.VITE_ONESIGNAL_APP_ID || import.meta.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
         allowLocalhostAsSecureOrigin: true, // important for localhost
         notifyButton: {
           enable: false,

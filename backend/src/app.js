@@ -2,8 +2,12 @@ import cors from 'cors';
 import express, { static as expressStatic } from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
+import helmet from 'helmet';
 
 import masterRouter from './routes/index.js';
+import { cashfreeWebhook } from './modules/student/enrollments/studentEnrollment.controller.js';
+import { apiRateLimiter } from './middleware/rateLimit.middleware.js';
+import { morganMiddleware } from './utils/logger.js';
 
 dotenv.config({ override: true });
 
@@ -15,13 +19,8 @@ app.set('trust proxy', 1);
 // ============================================================
 // CASHFREE WEBHOOKS - MUST BE BEFORE express.json() MIDDLEWARE
 // ============================================================
-if (typeof cashfreeWebhook === 'function') {
-  app.post('/api/cashfree-webhook', express.raw({ type: 'application/json' }), cashfreeWebhook);
-}
-
-import helmet from 'helmet';
-import { apiRateLimiter } from './middleware/rateLimit.middleware.js';
-import { morganMiddleware } from './utils/logger.js';
+const webhookRawParser = express.raw({ type: '*/*' });
+app.post(['/api/cashfree-webhook', '/api/api/cashfree-webhook', '/cashfree-webhook'], webhookRawParser, cashfreeWebhook);
 
 // Global Middleware & Security Headers (Helmet.js)
 app.use(helmet({

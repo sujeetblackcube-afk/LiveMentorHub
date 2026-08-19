@@ -176,7 +176,7 @@ const SignupForm = ({ onSwitchToLogin, onSignupSuccess, onStepChange }) => {
       const fullMobile = phoneNumber;
 
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/register/teacher`,
+        `${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/register/teacher`,
         {
           method: "POST",
           headers: {
@@ -235,7 +235,7 @@ const SignupForm = ({ onSwitchToLogin, onSignupSuccess, onStepChange }) => {
       const fullMobile = phoneNumber;
 
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/verify-otp`,
+        `${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/verify-otp`,
         {
           method: "POST",
           headers: {
@@ -273,7 +273,7 @@ const SignupForm = ({ onSwitchToLogin, onSignupSuccess, onStepChange }) => {
       const fullMobile = phoneNumber;
 
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/resend-otp`,
+        `${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/resend-otp`,
         {
           method: "POST",
           headers: {

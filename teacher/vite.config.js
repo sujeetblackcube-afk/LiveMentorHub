@@ -6,6 +6,10 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   base: '/teacher',
   plugins: [react(), tailwindcss()],
+  envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
+  define: {
+    'process.env': {},
+  },
   esbuild: {
     legalComments: 'none',
     drop: ['console', 'debugger'],

@@ -1,4 +1,17 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Environment Files (Ignore .env, keep .env.example)
 .env
-.env.example
-uploads
+.env.local
+.env.production
+!.env.example
+
+# Uploads & Logs
+*.log
+uploads/*
+!uploads/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db

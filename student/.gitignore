@@ -1,11 +1,22 @@
-# Student Portal .gitignore (Next.js)
-
+# Dependencies
 node_modules/
+
+# Build Outputs
+dist/
+build/
 .next/
 out/
-build/
+
+# Environment Files (Ignore .env, keep .env.example)
+.env
 .env.local
-.env.production
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# Logs & OS files
 *.log
 .DS_Store
+Thumbs.db
 *.tsbuildinfo

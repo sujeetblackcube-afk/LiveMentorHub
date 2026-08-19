@@ -591,8 +591,6 @@ export const login = async (req, res) => {
       normRole = detectedUser ? detectedUser.role.toLowerCase() : "teacher";
     }
 
-    console.log(`[LOGIN ATTEMPT] identifier: "${identifier}", role input: "${role}", resolved normRole: "${normRole}"`);
-
     let user = null;
     let specificId = null;
     let enrollmentStatus = undefined;

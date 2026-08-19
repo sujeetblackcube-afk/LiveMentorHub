@@ -1,4 +1,4 @@
-const envBase = (import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+const envBase = (import.meta.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
 const BASE_URL = `${envBase}/api`;
 export const TEACHER_BASE_URL = `${BASE_URL}/teacher`;
 export const BACKEND_BASE_URL = envBase; // For static files
