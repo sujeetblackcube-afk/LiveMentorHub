@@ -254,6 +254,13 @@ export const getAllCourses = async (req, res) => {
     if (classname) where.classname = { [Op.like]: `%${classname}%` };
     if (subject) where.subject = { [Op.like]: `%${subject}%` };
     if (category) where.category = { [Op.like]: `%${category}%` };
+    if (req.query.search) {
+      where[Op.or] = [
+        { courseName: { [Op.like]: `%${req.query.search}%` } },
+        { courseCode: { [Op.like]: `%${req.query.search}%` } },
+        { courseDescription: { [Op.like]: `%${req.query.search}%` } },
+      ];
+    }
 
     const queryOptions = {
       where,

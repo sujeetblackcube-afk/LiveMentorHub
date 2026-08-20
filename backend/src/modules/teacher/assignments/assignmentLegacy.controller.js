@@ -575,9 +575,27 @@ export const getStudentAssignments = async (req, res) => {
       };
     });
 
+    const pageNum = parseInt(req.query.page || "1", 10);
+    const limitNum = parseInt(req.query.limit || "10", 10);
+    const totalCount = result.length;
+    const totalPages = Math.ceil(totalCount / limitNum) || 1;
+
+    let paginatedAssignments = result;
+    if (req.query.page || req.query.limit) {
+      const offset = (pageNum - 1) * limitNum;
+      paginatedAssignments = result.slice(offset, offset + limitNum);
+    }
+
     res.status(200).json({
       success: true,
-      assignments: result, // array of assignments with submission and assignment details
+      count: totalCount,
+      assignments: paginatedAssignments,
+      pagination: {
+        totalItems: totalCount,
+        totalPages,
+        currentPage: pageNum,
+        limit: limitNum,
+      },
     });
   } catch (error) {
     console.error("Error fetching student assignments:", error);

@@ -35,16 +35,15 @@ const json = async (response) => {
 // Students API
 export const getStudents = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/students${query ? `?${query}` : ""}`;
+  const url = `${BASE_URL}/admin/students${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getStudentById = async (studentId) => {
-  return fetch(`${BASE_URL}/students/${studentId}`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/students/${studentId}`, { headers: getAuthHeaders() }).then(json);
 };
 export const updateStudentData = async (studentId, studentData) => {
   const formData = new FormData();
-  // Append all fields to FormData
   Object.keys(studentData).forEach(key => {
     if (studentData[key] !== null && studentData[key] !== undefined) {
       if (key === 'profileImage' && studentData[key] instanceof File) {
@@ -55,7 +54,7 @@ export const updateStudentData = async (studentId, studentData) => {
     }
   });
 
-  return fetch(`${BASE_URL}/students/${studentId}`, {
+  return fetch(`${BASE_URL}/admin/students/${studentId}`, {
     method: "PUT",
     headers: getAuthHeaders(),
     body: formData,
@@ -63,7 +62,7 @@ export const updateStudentData = async (studentId, studentData) => {
 }
 
 export const updateStudentStatus = async (studentId, status) => {
-  return fetch(`${BASE_URL}/students/${studentId}/status`, {
+  return fetch(`${BASE_URL}/admin/students/${studentId}/status`, {
     method: "PATCH",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
@@ -72,34 +71,34 @@ export const updateStudentStatus = async (studentId, status) => {
 
 export const getStudentCount = async (status = null) => {
   const query = status ? `?status=${status}` : '';
-  return fetch(`${BASE_URL}/students/count${query}`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/students/count${query}`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getTeacherCount = async () => {
-  return fetch(`${BASE_URL}/teachers/count`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/teachers/count`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getParentCount = async () => {
-  return fetch(`${BASE_URL}/parents/count`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/parents/count`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getCourseCount = async () => {
   return fetch(`${BASE_URL}/courses/count`, { headers: getAuthHeaders() }).then(json);
 };
 
-// Teachers API (if needed)
+// Teachers API
 export const getTeachers = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/teachers${query ? `?${query}` : ""}`;
+  const url = `${BASE_URL}/admin/teachers${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getTeacherById = async (teacherId) => {
-  return fetch(`${BASE_URL}/reports/${teacherId}`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/reports/${teacherId}`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const updateTeacherStatus = async (teacherId, status) => {
-  return fetch(`${BASE_URL}/teachers/${teacherId}/status`, {
+  return fetch(`${BASE_URL}/admin/teachers/${teacherId}/status`, {
     method: "PATCH",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
@@ -107,7 +106,7 @@ export const updateTeacherStatus = async (teacherId, status) => {
 };
 
 export const updateTeacherCourse = async (teacherId, coursename) => {
-  return fetch(`${BASE_URL}/teachers/${teacherId}/course`, {
+  return fetch(`${BASE_URL}/admin/teachers/${teacherId}/course`, {
     method: "PATCH",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ coursename }),
@@ -117,33 +116,33 @@ export const updateTeacherCourse = async (teacherId, coursename) => {
 // Report APIs
 export const getAllParentsReport = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/reports/parents${query ? `?${query}` : ""}`;
+  const url = `${BASE_URL}/admin/reports/parents${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getParentReportById = async (parentId) => {
-  return fetch(`${BASE_URL}/reports/parents/${parentId}`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/reports/parents/${parentId}`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getStudentReport = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/reports/students${query ? `?${query}` : ""}`;
+  const url = `${BASE_URL}/admin/reports/students${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getStudentReportById = async (studentId) => {
-  return fetch(`${BASE_URL}/reports/students/${studentId}`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/reports/students/${studentId}`, { headers: getAuthHeaders() }).then(json);
 };
 
-// Parents API (if needed)
+// Parents API
 export const getParents = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/parents${query ? `?${query}` : ""}`;
+  const url = `${BASE_URL}/admin/parents${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const updateParentStatus = async (parentId, status) => {
-  return fetch(`${BASE_URL}/parents/${parentId}/status`, {
+  return fetch(`${BASE_URL}/admin/parents/${parentId}/status`, {
     method: "PATCH",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
@@ -152,7 +151,7 @@ export const updateParentStatus = async (parentId, status) => {
 
 // Classes API
 export const createClass = async (classData) => {
-  return fetch(`${BASE_URL}/superadmin/classes`, {
+  return fetch(`${BASE_URL}/admin/classes`, {
     method: "POST",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(classData),
@@ -162,28 +161,28 @@ export const createClass = async (classData) => {
 export const createSuperAdminClass = async (classData) => createClass(classData);
 
 export const getSuperAdminClassSummary = async () => {
-  const response = await fetch(`${BASE_URL}/superadmin/classes`, {
+  const response = await fetch(`${BASE_URL}/admin/classes/summary`, {
     headers: getAuthHeaders(),
   });
   return json(response);
 };
 
 export const getSuperAdminClassHierarchy = async (classId) => {
-  const response = await fetch(`${BASE_URL}/superadmin/classes/${classId}/hierarchy`, {
+  const response = await fetch(`${BASE_URL}/admin/classes/${classId}/hierarchy`, {
     headers: getAuthHeaders(),
   });
   return json(response);
 };
 
 export const getSuperAdminSubjectCourses = async (subjectCode) => {
-  const response = await fetch(`${BASE_URL}/superadmin/subjects/${encodeURIComponent(subjectCode)}/courses`, {
+  const response = await fetch(`${BASE_URL}/admin/subjects/${encodeURIComponent(subjectCode)}/courses`, {
     headers: getAuthHeaders(),
   });
   return json(response);
 };
 
 export const getSuperAdminCourseParticipants = async (courseCode) => {
-  const response = await fetch(`${BASE_URL}/superadmin/courses/${encodeURIComponent(courseCode)}/participants`, {
+  const response = await fetch(`${BASE_URL}/admin/courses/${encodeURIComponent(courseCode)}/participants`, {
     headers: getAuthHeaders(),
   });
   return json(response);
@@ -197,7 +196,7 @@ export const getCourseByCode = async (courseCode) => {
 };
 
 export const updateSuperAdminCourse = async (courseCode, payload) => {
-  const response = await fetch(`${BASE_URL}/superadmin/courses/${encodeURIComponent(courseCode)}`, {
+  const response = await fetch(`${BASE_URL}/admin/courses/${encodeURIComponent(courseCode)}`, {
     method: 'PATCH',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -207,12 +206,12 @@ export const updateSuperAdminCourse = async (courseCode, payload) => {
 
 export const getAllClasses = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/classes${query ? `?${query}` : ""}`;
+  const url = `${BASE_URL}/admin/classes${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const editClass = async (id, classData) => {
-  return fetch(`${BASE_URL}/classes/${id}`, {
+  return fetch(`${BASE_URL}/admin/classes/${id}`, {
     method: "PUT",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(classData),
@@ -220,14 +219,14 @@ export const editClass = async (id, classData) => {
 };
 
 export const deleteClass = async (id) => {
-  return fetch(`${BASE_URL}/classes/${id}`, {
+  return fetch(`${BASE_URL}/admin/classes/${id}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   }).then(json);
 };
 
 export const updateClassStatus = async (id, status) => {
-  return fetch(`${BASE_URL}/classes/${id}/status`, {
+  return fetch(`${BASE_URL}/admin/classes/${id}/status`, {
     method: "PATCH",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
@@ -236,7 +235,7 @@ export const updateClassStatus = async (id, status) => {
 
 // Subjects API
 export const createSubject = async (subjectData) => {
-  return fetch(`${BASE_URL}/subjects`, {
+  return fetch(`${BASE_URL}/admin/subjects`, {
     method: "POST",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(subjectData),
@@ -245,12 +244,12 @@ export const createSubject = async (subjectData) => {
 
 export const getAllSubjects = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/subjects${query ? `?${query}` : ""}`;
+  const url = `${BASE_URL}/admin/subjects${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const editSubject = async (subjectCode, subjectData) => {
-  return fetch(`${BASE_URL}/subjects/${subjectCode}`, {
+  return fetch(`${BASE_URL}/admin/subjects/${subjectCode}`, {
     method: "PUT",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(subjectData),
@@ -258,14 +257,14 @@ export const editSubject = async (subjectCode, subjectData) => {
 };
 
 export const deleteSubject = async (subjectCode) => {
-  return fetch(`${BASE_URL}/subjects/${subjectCode}`, {
+  return fetch(`${BASE_URL}/admin/subjects/${subjectCode}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   }).then(json);
 };
 
 export const updateSubjectStatus = async (subjectCode, status) => {
-  return fetch(`${BASE_URL}/subjects/${subjectCode}/status`, {
+  return fetch(`${BASE_URL}/admin/subjects/${subjectCode}/status`, {
     method: "PUT",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
@@ -274,7 +273,6 @@ export const updateSubjectStatus = async (subjectCode, status) => {
 export const createCourse = async (courseData) => {
   const formData = new FormData();
 
-  // Append all fields to FormData
   Object.keys(courseData).forEach(key => {
     if (courseData[key] !== null && courseData[key] !== undefined) {
       if (key === 'thumbnail' && courseData[key] instanceof File) {
@@ -301,7 +299,6 @@ export const getAllCourses = async (params = {}) => {
 export const editCourse = async (courseCode, courseData) => {
   const formData = new FormData();
 
-  // Append all fields to FormData
   Object.keys(courseData).forEach(key => {
     if (courseData[key] !== null && courseData[key] !== undefined) {
       if (key === 'thumbnail' && courseData[key] instanceof File) {
@@ -340,7 +337,7 @@ export const getCourseById = async (courseCode) => {
 
 // Enrollments API
 export const createEnrollment = async (enrollmentData) => {
-  return fetch(`${BASE_URL}/enrollments`, {
+  return fetch(`${BASE_URL}/admin/enrollments`, {
     method: "POST",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(enrollmentData),
@@ -349,16 +346,16 @@ export const createEnrollment = async (enrollmentData) => {
 
 export const getAllEnrollments = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/enrollments${query ? `?${query}` : ""}`;
+  const url = `${BASE_URL}/admin/enrollments${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getEnrollmentById = async (enrollmentCode) => {
-  return fetch(`${BASE_URL}/enrollments/${enrollmentCode}`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/enrollments/${enrollmentCode}`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const updateEnrollment = async (enrollmentCode, updateData) => {
-  return fetch(`${BASE_URL}/enrollments/${enrollmentCode}`, {
+  return fetch(`${BASE_URL}/admin/enrollments/${enrollmentCode}`, {
     method: "PUT",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(updateData),
@@ -366,56 +363,54 @@ export const updateEnrollment = async (enrollmentCode, updateData) => {
 };
 
 export const deleteEnrollment = async (enrollmentCode) => {
-  return fetch(`${BASE_URL}/enrollments/${enrollmentCode}`, {
+  return fetch(`${BASE_URL}/admin/enrollments/${enrollmentCode}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   }).then(json);
 };
 
-// Enrollment API
 export const getEnrollmentCount = async () => {
-  return fetch(`${BASE_URL}/enrollments/count`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/enrollments/count`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getEnrollmentCountThisMonth = async () => {
-  return fetch(`${BASE_URL}/enrollments/count/month`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/enrollments/count/month`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getEnrollmentCountThisWeek = async () => {
-  return fetch(`${BASE_URL}/enrollments/count/week`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/enrollments/count/week`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getEnrollmentCountByCourse = async (courseCode) => {
-  return fetch(`${BASE_URL}/enrollments/count/course/${courseCode}`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/enrollments/count/course/${courseCode}`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getEnrollmentDataThisWeek = async () => {
-  return fetch(`${BASE_URL}/enrollments/data/week`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/enrollments/data/week`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getEnrollmentDataThisMonth = async () => {
-  return fetch(`${BASE_URL}/enrollments/data/month`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/enrollments/data/month`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getSalesDataThisWeek = async () => {
-  return fetch(`${BASE_URL}/enrollments/sales/week`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/enrollments/sales/week`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getSalesDataThisMonth = async () => {
-  return fetch(`${BASE_URL}/enrollments/sales/month`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/enrollments/sales/month`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getTotalSalesThisMonth = async () => {
-  return fetch(`${BASE_URL}/enrollments/sales/total/month`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/enrollments/sales/total/month`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getTotalSalesThisWeek = async () => {
-  return fetch(`${BASE_URL}/enrollments/sales/total/week`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/enrollments/sales/total/week`, { headers: getAuthHeaders() }).then(json);
 };
 
-// Teacher-related Enrollment APIs
 export const updateTeacherIdInEnrollments = async (teacherId, studentIds = null, courseCode = null) => {
-  return fetch(`${BASE_URL}/enrollments/update-teacher`, {
+  return fetch(`${BASE_URL}/admin/enrollments/update-teacher`, {
     method: "PUT",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ teacherId, studentIds, courseCode }),
@@ -424,30 +419,28 @@ export const updateTeacherIdInEnrollments = async (teacherId, studentIds = null,
 
 export const getEnrollmentsByCourseCode = async (courseCode, params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/enrollments/course/${courseCode}${query ? `?${query}` : ""}`;
+  const url = `${BASE_URL}/admin/enrollments/course/${courseCode}${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getEnrollmentCountByTeacherId = async (teacherId) => {
-  return fetch(`${BASE_URL}/enrollments/count/teacher/${teacherId}`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/enrollments/count/teacher/${teacherId}`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getEnrollmentsByTeacherId = async (teacherId, params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/enrollments/teacher/${teacherId}${query ? `?${query}` : ""}`;
+  const url = `${BASE_URL}/admin/enrollments/teacher/${teacherId}${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 // Dashboard API
 export const getDashboardStats = async () => {
-  return fetch(`${BASE_URL}/dashboard/stats`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/dashboard/stats`, { headers: getAuthHeaders() }).then(json);
 };
 
 // Banner API
 export const addBanner = async (bannerData) => {
   const formData = new FormData();
-
-  // Append all fields to FormData
   Object.keys(bannerData).forEach(key => {
     if (bannerData[key] !== null && bannerData[key] !== undefined) {
       if (key === 'image' && bannerData[key] instanceof File) {
@@ -547,7 +540,7 @@ export const resendForgotPasswordOtp = async (identifier, role) => {
 
 // Subscriptions API
 export const createSubscription = async (subscriptionData) => {
-  return fetch(`${BASE_URL}/subscriptions`, {
+  return fetch(`${BASE_URL}/admin/subscriptions`, {
     method: "POST",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(subscriptionData),
@@ -556,16 +549,16 @@ export const createSubscription = async (subscriptionData) => {
 
 export const getAllSubscriptions = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/subscriptions${query ? `?${query}` : ""}`;
+  const url = `${BASE_URL}/admin/subscriptions${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getSubscriptionById = async (id) => {
-  return fetch(`${BASE_URL}/subscriptions/${id}`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/subscriptions/${id}`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const updateSubscription = async (id, subscriptionData) => {
-  return fetch(`${BASE_URL}/subscriptions/${id}`, {
+  return fetch(`${BASE_URL}/admin/subscriptions/${id}`, {
     method: "PUT",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(subscriptionData),
@@ -573,7 +566,7 @@ export const updateSubscription = async (id, subscriptionData) => {
 };
 
 export const deleteSubscription = async (id) => {
-  return fetch(`${BASE_URL}/subscriptions/${id}`, {
+  return fetch(`${BASE_URL}/admin/subscriptions/${id}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   }).then(json);
@@ -581,22 +574,22 @@ export const deleteSubscription = async (id) => {
 
 // Subscription Buyed APIs
 export const getSubscriptionsByTeacherId = async (teacherId) => {
-  return fetch(`${BASE_URL}/subscriptions/buyed/teacher/${teacherId}`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/subscriptions/buyed/teacher/${teacherId}`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getSubscriptionBuyedById = async (id) => {
-  return fetch(`${BASE_URL}/subscriptions/buyed/${id}`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/subscriptions/buyed/${id}`, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getAllSubscriptionsBuyed = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/subscriptions/buyed/all${query ? `?${query}` : ""}`;
+  const url = `${BASE_URL}/admin/subscriptions/buyed/all${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 // Payouts API
 export const createPayment = async (paymentData) => {
-  return fetch(`${BASE_URL}/payouts`, {
+  return fetch(`${BASE_URL}/admin/payouts`, {
     method: "POST",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(paymentData),
@@ -605,53 +598,46 @@ export const createPayment = async (paymentData) => {
 
 export const getAllPayments = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/payouts${query ? `?${query}` : ""}`;
+  const url = `${BASE_URL}/admin/payouts${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getPaymentById = async (id) => {
-  return fetch(`${BASE_URL}/payouts/${id}`, { headers: getAuthHeaders() }).then(json);
+  return fetch(`${BASE_URL}/admin/payouts/${id}`, { headers: getAuthHeaders() }).then(json);
 };
 
 // Broadcast API
 export const sendBroadcast = async (broadcastData) => {
-  return fetch(`${BASE_URL}/notifications/broadcast`, {
+  return fetch(`${BASE_URL}/admin/notifications/broadcast`, {
     method: "POST",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(broadcastData),
   }).then(json);
 };
 
-// ============== SUPERADMIN NOTIFICATION API FUNCTIONS ==============
-// Delete a single notification by ID
+// Notifications API
 export const deleteNotification = async (notificationId) => {
-  const url = `${BASE_URL}/notifications/${notificationId}`;
+  const url = `${BASE_URL}/admin/notifications/${notificationId}`;
   return fetch(url, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   }).then(json);
 };
 
-// ============== SUPERADMIN NOTIFICATION API FUNCTIONS ==============
-
-// Get notifications for the authenticated superadmin
 export const getNotificationBySuperAdminId = async () => {
-  const url = `${BASE_URL}/notifications/notifications`;
+  const url = `${BASE_URL}/admin/notifications/notifications`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
-// Delete all notifications for the authenticated superadmin
 export const deleteAllNotificationBySuperAdmin = async () => {
-  const url = `${BASE_URL}/notifications/notifications/all`;
+  const url = `${BASE_URL}/admin/notifications/notifications/all`;
   return fetch(url, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   }).then(json);
 };
 
-// ============== SYLLABUS API FUNCTIONS ==============
-// Get syllabus for a course
-// Get syllabus - Fixed to properly parse the response
+// Syllabus API
 export const getSyllabus = async (courseCode) => {
   try {
     const response = await fetch(`${BASE_URL}/syllabus/${courseCode}`, { 
@@ -680,19 +666,17 @@ export const updateSyllabusBullets = async (courseCode, points) => {
   }).then(json);
 };
 
-// ============== SUPERADMIN PROFILE API FUNCTIONS ==============
-
+// Profile API
 export const getSuperAdminProfile = async () => {
-  return fetch(`${BASE_URL}/superadmin/profile`, {
+  return fetch(`${BASE_URL}/admin/profile`, {
     headers: getAuthHeaders(),
   }).then(json);
 };
 
 export const updateSuperAdminProfile = async (formData) => {
-  return fetch(`${BASE_URL}/superadmin/profile`, {
+  return fetch(`${BASE_URL}/admin/profile`, {
     method: "PUT",
     headers: getAuthHeaders(),
     body: formData,
   }).then(json);
 };
-

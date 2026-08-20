@@ -27,12 +27,19 @@ const getInitialCountry = () => {
   return countryValue;
 };
 
-export function DashboardCarousel() {
+export function DashboardCarousel({ banners: propBanners }) {
   const [current, setCurrent] = useState(0);
-  const [banners, setBanners] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [banners, setBanners] = useState(propBanners || []);
+  const [loading, setLoading] = useState(!propBanners);
   const [country, setCountry] = useState(() => getInitialCountry());
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (propBanners) {
+      setBanners(propBanners);
+      setLoading(false);
+    }
+  }, [propBanners]);
 
   // Update country from useAuth when it becomes available
   useEffect(() => {
@@ -42,8 +49,10 @@ export function DashboardCarousel() {
   }, [user]);
 
   useEffect(() => {
-    fetchBanners();
-  }, [country]);
+    if (!propBanners) {
+      fetchBanners();
+    }
+  }, [country, propBanners]);
 
   useEffect(() => {
     if (!banners.length) return;
@@ -61,10 +70,8 @@ export function DashboardCarousel() {
 
       const studentId = user?.studentId || "demo";
       const url = `${API_AUTH_BASE}${HOME_PATHS.homeData(studentId, undefined, country)}`;
-      
 
       const res = await axios.get(url);
-      
 
       if (res.data?.success) {
         setBanners(res.data.data.banners || []);

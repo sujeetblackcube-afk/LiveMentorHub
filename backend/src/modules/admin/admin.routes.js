@@ -1,43 +1,38 @@
 /**
- * Admin Routes
- * Combines admin module routes for students and teachers
- * Routes for classes and courses are mounted in superAdminRoute.js at /api/superadmin
+ * Unified Admin & SuperAdmin Router
+ * Combines all admin domain modules under /api/admin and /api/superadmin
  */
 
 import express from 'express';
 import studentRoutes from './students/student.routes.js';
 import teacherRoutes from './teachers/teacher.routes.js';
-import subscriptionRoutes from './subscription/adminSubscription.routes.js';
+import parentRoutes from './parents/parent.routes.js';
+import classRoutes from './classes/classes.routes.js';
+import subjectRoutes from './subjects/subject.routes.js';
+import dashboardRoutes from './dashboard/dashboard.routes.js';
+import payoutRoutes from './payouts/payout.routes.js';
 import reportRoutes from './reports/adminReport.routes.js';
+import subscriptionRoutes from './subscription/adminSubscription.routes.js';
 import notificationRoutes from './notifications/adminNotification.routes.js';
+import enrollmentRoutes from '../student/enrollments/studentEnrollment.routes.js';
 import superAdminRoute from './superadmin.routes.js';
 
 const router = express.Router();
 
-/**
- * Admin Student Management Routes
- * Mounted at: /api/superadmin/students
- */
+// Domain Sub-modules
 router.use('/students', studentRoutes);
-
-/**
- * Admin Teacher Management Routes
- * Mounted at: /api/superadmin/teachers
- */
 router.use('/teachers', teacherRoutes);
-
-/**
- * Admin Subscription Management Routes
- * Mounted at: /api/superadmin/subscriptions
- */
-router.use('/subscriptions', subscriptionRoutes);
+router.use('/parents', parentRoutes);
+router.use('/classes', classRoutes);
+router.use('/subjects', subjectRoutes);
+router.use('/dashboard', dashboardRoutes);
+router.use('/enrollments', enrollmentRoutes);
+router.use('/payouts', payoutRoutes);
 router.use('/reports', reportRoutes);
+router.use('/subscriptions', subscriptionRoutes);
 router.use('/notifications', notificationRoutes);
 
-/**
- * Core Superadmin Routes (Profile, Classes, Courses, Reviews)
- * Mounted at: /api/superadmin
- */
+// Core Superadmin profile & utility routes
 router.use('/', superAdminRoute);
 
 export default router;

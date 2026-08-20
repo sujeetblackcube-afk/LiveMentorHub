@@ -3,6 +3,7 @@ import Teacher from '../../../models/Teacher.js';
 import Parent from '../../../models/Parent.js';
 import Course from '../../../models/Course.js';
 import Enrollment from '../../../models/Enrollment.js';
+import Banner from '../../../models/Banner.js';
 import pkg from "sequelize";
 const { Op } = pkg;
 
@@ -34,7 +35,8 @@ export const getDashboardStats = async (req, res) => {
       approvedEnrollmentCount,
       passoutEnrollmentCount,
       enrollmentCountThisMonth,
-      enrollmentCountThisWeek
+      enrollmentCountThisWeek,
+      banners
     ] = await Promise.all([
       Student.count(),
       Student.count({ where: { status: 'APPROVED' } }),
@@ -46,6 +48,7 @@ export const getDashboardStats = async (req, res) => {
       Enrollment.count({ where: { status: 'PASSOUT' } }),
       Enrollment.count({ where: { createdAt: { [Op.between]: [startOfMonth, endOfMonth] } } }),
       Enrollment.count({ where: { createdAt: { [Op.between]: [startOfWeek, endOfWeek] } } }),
+      Banner.findAll({ order: [["createdAt", "DESC"]] })
     ]);
 
     // Enrollment Data This Week
@@ -148,6 +151,7 @@ export const getDashboardStats = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
+        banners: banners || [],
         counts: {
           student: studentCount,
           approvedStudent: approvedStudentCount,

@@ -73,6 +73,7 @@ router.use('/courses', courseRoutes);  // Public course catalog listings
 // ============================================================
 // 2️⃣ STUDENT ACCESS ROUTES
 // ============================================================
+router.use('/student', studentRoutes);
 router.use('/students', studentRoutes);
 router.use('/enrollments', enrollmentRoutes);
 router.use('/tests', studentTestRoutes);
@@ -91,6 +92,7 @@ router.use('/assignments', assignmentRoutes);
 // ============================================================
 // 4️⃣ PARENT & ADMIN ACCESS ROUTES
 // ============================================================
+router.use('/admin', superAdminRoutes);
 router.use('/superadmin', superAdminRoutes);
 router.use('/parents', parentRoutes);
 router.use('/classes', classRoutes);

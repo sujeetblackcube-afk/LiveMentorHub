@@ -565,10 +565,27 @@ export const fetchAllTestsForStudent = async (req, res) => {
       };
     });
 
+    const pageNum = parseInt(req.query.page || "1", 10);
+    const limitNum = parseInt(req.query.limit || "10", 10);
+    const totalCount = combinedData.length;
+    const totalPages = Math.ceil(totalCount / limitNum) || 1;
+
+    let paginatedData = combinedData;
+    if (req.query.page || req.query.limit) {
+      const offset = (pageNum - 1) * limitNum;
+      paginatedData = combinedData.slice(offset, offset + limitNum);
+    }
+
     res.status(200).json({
       success: true,
-      count: combinedData.length,
-      tests: combinedData,
+      count: totalCount,
+      tests: paginatedData,
+      pagination: {
+        totalItems: totalCount,
+        totalPages,
+        currentPage: pageNum,
+        limit: limitNum,
+      },
     });
   } catch (error) {
     res.status(500).json({

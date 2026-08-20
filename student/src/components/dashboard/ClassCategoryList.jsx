@@ -26,13 +26,23 @@ const getInitialCountry = () => {
   return countryValue;
 };
 
-export function ClassCategoryList() {
-  const [classes, setClasses] = useState([]);
-  const [loading, setLoading] = useState(true);
+export function ClassCategoryList({ classes: propClasses }) {
+  const [classes, setClasses] = useState(propClasses || []);
+  const [loading, setLoading] = useState(!propClasses);
   const [country, setCountry] = useState(() => getInitialCountry());
   const { user } = useAuth();
 
   const [expandedClassId, setExpandedClassId] = useState(null);
+
+  useEffect(() => {
+    if (propClasses) {
+      setClasses(propClasses);
+      if (propClasses.length > 0 && expandedClassId === null) {
+        setExpandedClassId(propClasses[0].id);
+      }
+      setLoading(false);
+    }
+  }, [propClasses]);
 
   useEffect(() => {
     if (user?.country) {
@@ -41,8 +51,10 @@ export function ClassCategoryList() {
   }, [user]);
 
   useEffect(() => {
-    fetchClasses();
-  }, [country]);
+    if (!propClasses) {
+      fetchClasses();
+    }
+  }, [country, propClasses]);
 
   const fetchClasses = async () => {
     try {

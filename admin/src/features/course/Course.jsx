@@ -125,43 +125,22 @@ export default function Course({ status = "Active" }) {
     fetchCourses();
   }, [status, filterType, filterDifficulty, searchTerm, currentPage]);
 
-  useEffect(() => {
-    const fetchSubjects = async () => {
-      try {
-        const subjectsResponse = await getAllSubjects();
-        setSubjects(subjectsResponse.data || []);
-      } catch (err) {}
-    };
-    fetchSubjects();
-  }, []);
-
-  // Fetch classes on component mount
-  useEffect(() => {
-    const fetchClasses = async () => {
+  const ensureClassesAndSubjectsLoaded = async () => {
+    if (classes.length === 0) {
       try {
         const response = await getAllClasses();
         setClasses(response.data || []);
       } catch (err) {}
-    };
-    fetchClasses();
-  }, []);
-
-  // Pre-fetch syllabus for all courses when courses change
-  useEffect(() => {
-    if (courses.length > 0) {
-      const loadAllSyllabusData = async () => {
-        const courseCodes = [...new Set(courses.map(c => c.courseCode))];
-        for (const courseCode of courseCodes) {
-          try {
-            const response = await getSyllabus(courseCode);
-            const syllabusData = response.data || { syllabusPoints: [], syllabusUrl: "" };
-            updateCourseSyllabus(courseCode, syllabusData);
-          } catch (err) {}
-        }
-      };
-      loadAllSyllabusData();
     }
-  }, [courses]);
+    if (subjects.length === 0) {
+      try {
+        const response = await getAllSubjects();
+        setSubjects(response.data || []);
+      } catch (err) {}
+    }
+  };
+
+
 
   const fetchCourses = async () => {
     setLoading(true);
@@ -267,6 +246,7 @@ export default function Course({ status = "Active" }) {
   };
 
   const handleAddCourse = () => {
+    ensureClassesAndSubjectsLoaded();
     setEditingCourse(null);
     setFormData({
       courseName: "",
@@ -304,6 +284,7 @@ export default function Course({ status = "Active" }) {
   };
 
   const handleEditCourse = (course) => {
+    ensureClassesAndSubjectsLoaded();
     setEditingCourse(course);
     setFormData({
       courseName: course.courseName,

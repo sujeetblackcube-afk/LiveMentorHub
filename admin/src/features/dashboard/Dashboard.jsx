@@ -69,8 +69,12 @@ export default function Dashboard() {
       try {
         const response = await getDashboardStats();
         if (response.success && response.data) {
-          const { counts, charts } = response.data;
+          const { counts, charts, banners: fetchedBanners } = response.data;
           
+          if (fetchedBanners && Array.isArray(fetchedBanners)) {
+            setBanners(fetchedBanners);
+          }
+
           setStudentCount(counts.student);
           setApprovedStudentCount(counts.approvedStudent);
           setTeacherCount(counts.teacher);
@@ -95,20 +99,6 @@ export default function Dashboard() {
     };
 
     fetchCounts();
-  }, []);
-
-  // Fetch banners on component mount
-  useEffect(() => {
-    const fetchBanners = async () => {
-      try {
-        const response = await getBanners();
-        if (response.success) {
-          setBanners(response.data);
-        }
-      } catch (error) {}
-    };
-
-    fetchBanners();
   }, []);
 
   // Reset currentBannerIndex if it exceeds banners length

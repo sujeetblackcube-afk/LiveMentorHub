@@ -10,6 +10,7 @@ import {
 } from '../utils/currencyRates.js';
 import {convertCoursePrices} from '../modules/shared/courses/course.controller.js'
 import Review from '../models/Review.js'
+import { getPaginatedData } from '../utils/pagination.js';
 
 export const getCoursesBySubject = async (req, res) => {
   try {
@@ -223,26 +224,56 @@ export const getCoursePageData = async (req, res) => {
       };
     }
 
-    // Fetch allCourses with filters (return all active courses)
-    const courses = await Course.findAll({
-      where: whereClause,
-      order: [["rating", "DESC"]],
-    });
+    const { page, limit } = req.query;
+    let pagination = null;
 
-    // Add enrollmentStatus: 0, hasReviewed, and convert prices to all allCourses
-    allCourses = courses.map(course => {
-      const courseData = convertCoursePrices(course, currencyInfo);
-      return {
-        ...courseData,
-        enrollmentStatus: 0,
-        hasReviewed: reviewedCourseCodes.has(course.courseCode),
+    if (page || limit) {
+      const paginatedResult = await getPaginatedData(
+        Course,
+        {
+          where: whereClause,
+          order: [["rating", "DESC"]],
+        },
+        page || 1,
+        limit || 10
+      );
+
+      allCourses = paginatedResult.data.map(course => {
+        const courseData = convertCoursePrices(course, currencyInfo);
+        return {
+          ...courseData,
+          enrollmentStatus: 0,
+          hasReviewed: reviewedCourseCodes.has(course.courseCode),
+        };
+      });
+
+      pagination = {
+        totalItems: paginatedResult.totalItems,
+        totalPages: paginatedResult.totalPages,
+        currentPage: paginatedResult.currentPage,
+        limit: paginatedResult.limit,
       };
-    });
+    } else {
+      const courses = await Course.findAll({
+        where: whereClause,
+        order: [["rating", "DESC"]],
+      });
+
+      allCourses = courses.map(course => {
+        const courseData = convertCoursePrices(course, currencyInfo);
+        return {
+          ...courseData,
+          enrollmentStatus: 0,
+          hasReviewed: reviewedCourseCodes.has(course.courseCode),
+        };
+      });
+    }
 
     return res.status(200).json({
       success: true,
       message: "Course data fetched successfully",
       data: { mycourses, allCourses },
+      pagination,
       currencyInfo: currencyInfo,
     });
   } catch (error) {

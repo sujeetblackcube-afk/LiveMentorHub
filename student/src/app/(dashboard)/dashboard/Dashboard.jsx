@@ -11,6 +11,9 @@ import {
     ArrowRight, Info, Calendar, BookOpen, Clock, ChevronRight
 } from "lucide-react";
 
+import axios from "axios";
+import { HOME_PATHS, API_AUTH_BASE } from "@/lib/api";
+
 export default function DashboardPage() {
     const { isAuthenticated, user } = useAuth();
 
@@ -19,6 +22,26 @@ export default function DashboardPage() {
     const [selectedFilter, setSelectedFilter] = useState("all");
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchHomeDataOnce = async () => {
+            try {
+                setLoading(true);
+                const studentId = user?.studentId || "demo";
+                const country = user?.country || localStorage.getItem("country") || undefined;
+                const url = `${API_AUTH_BASE}${HOME_PATHS.homeData(studentId, undefined, country)}`;
+                const res = await axios.get(url);
+                if (res.data?.success) {
+                    setHomeData(res.data.data);
+                }
+            } catch (err) {
+                console.error("Home data fetch error:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchHomeDataOnce();
+    }, [user?.studentId, user?.country]);
 
     const QUICK_ACTIONS = [
         { label: "Live Classes", desc: "Join daily interactive sessions", icon: PlayCircle, color: "text-red-500", bg: "bg-red-50", href: "/live" },
@@ -75,7 +98,7 @@ export default function DashboardPage() {
 
             {/* ── BANNER / CAROUSEL ── */}
             <section>
-                <DashboardCarousel />
+                <DashboardCarousel banners={homeData?.banners} />
             </section>
 
             {/* ── HIGH-PRIORITY QUICK ACTIONS (Clean Grid) ── */}
@@ -148,7 +171,7 @@ export default function DashboardPage() {
             {showClassCategory && (
                 <section className="pt-4">
                     <h2 className="text-xl font-bold text-[#0d1f5c] mb-5">Browse Subject Specifics</h2>
-                    <ClassCategoryList />
+                    <ClassCategoryList classes={homeData?.classes} />
                 </section>
             )}
         </div>

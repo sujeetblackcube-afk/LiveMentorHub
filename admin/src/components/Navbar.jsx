@@ -60,7 +60,7 @@ export default function Navbar({ collapsed, setCollapsed }) {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/superadmin/profile`,
+        `${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/profile`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

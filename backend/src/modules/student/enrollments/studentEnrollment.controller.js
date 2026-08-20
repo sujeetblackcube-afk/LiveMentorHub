@@ -279,16 +279,23 @@ export const createCashfreeOrder = async (req, res) => {
     const client = createCashfreeClient();
     const response = await client.PGCreateOrder(request);
 
+    const nowDate = new Date();
+    let expireDate = null;
+    if (course.courseDuration && Number(course.courseDuration) > 0) {
+      expireDate = new Date(nowDate);
+      expireDate.setDate(expireDate.getDate() + Number(course.courseDuration) + 30);
+    }
+
     console.log("making new enrollment record with orderId:", cfOrderId);
     const newEnrollment = await Enrollment.create({
       id: await generateEnrollmentId(),
       enrollmentCode: cfOrderId,
       enrollmentDate: nowDate,
-      enrollmentExpireDate: expireDate, // Pass calculated Date object
+      enrollmentExpireDate: expireDate,
       courseStartDate: nowDate,
-      courseExpiryDate: expireDate,     // Pass calculated Date object
+      courseExpiryDate: expireDate,
 
-      status: "PENDING", // Best practice: keep as PENDING until webhook/payment verification succeeds
+      status: "PENDING",
 
       // Student Snapshot
       studentId: student.studentId,
@@ -1300,6 +1307,7 @@ export const getEnrollmentCountByTeacherId = async (req, res) => {
 export const getEnrollmentsByStudentId = async (req, res) => {
   try {
     const { studentId } = req.params;
+    const { page, limit } = req.query;
 
     if (!studentId) {
       return res.status(400).json({
@@ -1320,13 +1328,36 @@ export const getEnrollmentsByStudentId = async (req, res) => {
       "updatedAt"
     ];
 
-    const enrollments = await Enrollment.findAll({
+    const queryOptions = {
       where: { studentId },
       attributes: {
         exclude: excludedAttributes
       },
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    if (page || limit) {
+      const paginatedResult = await getPaginatedData(
+        Enrollment,
+        queryOptions,
+        page || 1,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        message: "Enrollments fetched successfully",
+        data: paginatedResult.data,
+        count: paginatedResult.totalItems,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const enrollments = await Enrollment.findAll(queryOptions);
 
     return res.status(200).json({
       success: true,

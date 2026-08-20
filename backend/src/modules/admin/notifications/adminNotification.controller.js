@@ -9,14 +9,37 @@ import { getPaginatedData } from '../../../utils/pagination.js';
 export const getStudentNotifications = async (req, res) => {
   try {
     const { studentId } = req.params;
+    const { page, limit } = req.query;
 
-    const notifications = await Notification.findAll({
+    const queryOptions = {
       where: {
         specificId: studentId,
         role: "student",
       },
       order: [["createdAt", "DESC"]],
-    });
+    };
+
+    if (page || limit) {
+      const paginatedResult = await getPaginatedData(
+        Notification,
+        queryOptions,
+        page || 1,
+        limit || 10
+      );
+      return res.status(200).json({
+        success: true,
+        count: paginatedResult.totalItems,
+        notifications: paginatedResult.data,
+        pagination: {
+          totalItems: paginatedResult.totalItems,
+          totalPages: paginatedResult.totalPages,
+          currentPage: paginatedResult.currentPage,
+          limit: paginatedResult.limit,
+        },
+      });
+    }
+
+    const notifications = await Notification.findAll(queryOptions);
 
     res.status(200).json({
       success: true,

@@ -5,12 +5,6 @@
 
 export const API_BASE = import.meta.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
-// if (!API_BASE) {
-//   throw new Error(
-//     "NEXT_PUBLIC_BACKEND_URL is not defined in environment variables.",
-//   );
-// }
-
 export const API_AUTH_BASE = API_BASE;
 export const API_FORGOT_PASSWORD_BASE = API_BASE;
 
@@ -29,15 +23,17 @@ export const FORGOT_PASSWORD_PATHS = {
 };
 
 export const COURSE_PATHS = {
-  coursePageData: (studentId, country) =>
-    `/api/android/coursepagedata/${studentId}${
-      country ? `?country=${encodeURIComponent(country)}` : ""
-    }`,
+  coursePageData: (studentId, country, page = 1, limit = 10) => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (country) params.append("country", country);
+    return `/api/student/coursepagedata/${studentId}?${params.toString()}`;
+  },
 
-  getCoursesBySubject: (studentId, subjectCode, country) =>
-    `/api/android/coursepagedata/${studentId}/subject/${subjectCode}${
-      country ? `?country=${encodeURIComponent(country)}` : ""
-    }`,
+  getCoursesBySubject: (studentId, subjectCode, country, page = 1, limit = 10) => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (country) params.append("country", country);
+    return `/api/student/coursepagedata/${studentId}/subject/${subjectCode}?${params.toString()}`;
+  },
 
   getCourseContent: (
     studentId,
@@ -52,7 +48,7 @@ export const COURSE_PATHS = {
 
     const query = params.toString();
 
-    return `/api/android/coursepagedata/${studentId}/${courseCode}/content${
+    return `/api/student/coursepagedata/${studentId}/${courseCode}/content${
       query ? `?${query}` : ""
     }`;
   },
@@ -66,31 +62,33 @@ export const HOME_PATHS = {
     if (country) params.append("country", country);
 
     const query = params.toString();
-    return `/api/android/home/${studentId}${query ? `?${query}` : ""}`;
+    return `/api/student/home/${studentId}${query ? `?${query}` : ""}`;
   },
 };
 
 export const STUDENT_PATHS = {
-  getLiveSessions: (studentId, status) => {
-    const base = `/api/students/getlive-sessions/${studentId}`;
-    return status ? `${base}?status=${status}` : base;
+  getLiveSessions: (studentId, status, page = 1, limit = 10) => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (status) params.append("status", status);
+    return `/api/student/getlive-sessions/${studentId}?${params.toString()}`;
   },
 };
 
 export const CREATE_DOUBT = {
-  createDoubt: `/api/doubts`,
+  createDoubt: `/api/student/doubts`,
 };
 
 export const GET_DOUBT = {
-  getDoubt: (studentId) => `/api/doubts/student/${studentId}`,
+  getDoubt: (studentId, page = 1, limit = 10) =>
+    `/api/student/doubts/student/${studentId}?page=${page}&limit=${limit}`,
 };
 
 export const EDITPROFILE = {
-  editprofile: (studentId) => `/api/students/${studentId}`,
+  editprofile: (studentId) => `/api/student/${studentId}`,
 };
 
 export const GETPROFILE = {
-  getprofile: (studentId) => `/api/students/${studentId}`,
+  getprofile: (studentId) => `/api/student/${studentId}`,
 };
 
 export const GETCONTENT = {
@@ -98,18 +96,18 @@ export const GETCONTENT = {
 };
 
 export const ENROLLMENT_PATHS = {
-  getEnrollmentsByStudent: (studentId) =>
-    `/api/enrollments/student/${studentId}`,
-  createCashfreeOrder: "/api/enrollments/create-cashfree-order",
+  getEnrollmentsByStudent: (studentId, page = 1, limit = 10) =>
+    `/api/student/enrollments/student/${studentId}?page=${page}&limit=${limit}`,
+  createCashfreeOrder: "/api/student/enrollments/create-cashfree-order",
 };
 
 export const NOTIFICATION_PATHS = {
-  getNotifications: (studentId) =>
-    `/api/notifications/student/${studentId}`,
+  getNotifications: (studentId, page = 1, limit = 10) =>
+    `/api/student/notifications/student/${studentId}?page=${page}&limit=${limit}`,
   deleteNotification: (notificationId) =>
-    `/api/notifications/student/${notificationId}`,
+    `/api/student/notifications/student/${notificationId}`,
   clearAllNotifications: (studentId) =>
-    `/api/notifications/student/${studentId}/all`,
+    `/api/student/notifications/student/${studentId}/all`,
 };
 
 export const LIVESESSION_PATHS = {
@@ -117,16 +115,17 @@ export const LIVESESSION_PATHS = {
 };
 
 export const ASSIGNMENT_PATHS = {
-  getAssignmentsByStudent: (studentId) =>
-    `/api/assignments/student/${studentId}`,
-  submitAssignment: "/api/assignments/students/submission",
+  getAssignmentsByStudent: (studentId, page = 1, limit = 10) =>
+    `/api/student/assignments/student/${studentId}?page=${page}&limit=${limit}`,
+  submitAssignment: "/api/student/assignments/students/submission",
 };
 
 export const PROGRESS_PATHS = {
-  getProgress: (studentId) => `/api/students/${studentId}/progress`,
+  getProgress: (studentId) => `/api/student/${studentId}/progress`,
 };
 
 export const TEST_PATHS = {
-  getTestsByStudent: (studentId) => `/api/tests/student/${studentId}`,
-  submitTest: "/api/tests/submit",
+  getTestsByStudent: (studentId, page = 1, limit = 10) =>
+    `/api/student/tests/student/${studentId}?page=${page}&limit=${limit}`,
+  submitTest: "/api/student/tests/submit",
 };
