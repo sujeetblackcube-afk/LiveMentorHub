@@ -4,9 +4,14 @@ import {
   getTeacherSubscriptionStatusService,
 } from './teacherSubscription.service.js';
 
+import { getAllSubscriptions as getAllSubscriptionsAdmin } from '../../../modules/admin/subscription/adminSubscription.controller.js';
+
+export const getAllSubscriptions = getAllSubscriptionsAdmin;
+
 export const getSubscriptionsByTeacherId = async (req, res) => {
   try {
-    const data = await getTeacherActiveSubscriptionsService(req.params.teacherId);
+    const teacherId = req.params.teacherId || req.user?.teacherId;
+    const data = await getTeacherActiveSubscriptionsService(teacherId);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
@@ -16,7 +21,7 @@ export const getSubscriptionsByTeacherId = async (req, res) => {
 export const createSubscriptionBuyed = async (req, res) => {
   try {
     const data = await createTeacherSubscriptionOrderService({
-      teacherId: req.body.teacherId || req.user?.teacherId,
+      teacherId: req.body.teacherId || req.user?.teacherId || req.params?.teacherId,
       planName: req.body.planName,
       body: req.body,
       headers: req.headers,
@@ -29,7 +34,8 @@ export const createSubscriptionBuyed = async (req, res) => {
 
 export const getSubscriptionsWithTeacherStatus = async (req, res) => {
   try {
-    const data = await getTeacherSubscriptionStatusService(req.params.teacherId);
+    const teacherId = req.params.teacherId || req.user?.teacherId;
+    const data = await getTeacherSubscriptionStatusService(teacherId);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });

@@ -1,6 +1,6 @@
 /**
  * Internal teacher module aggregator.
- * Public API remains on /api/teachers and is served by backend/routes/teacherRoute.js.
+ * Centralized master router for all teacher APIs under /api/teacher/...
  */
 
 import express from 'express';
@@ -14,6 +14,12 @@ import subscriptionRoutes from './subscription/teacherSubscription.routes.js';
 import assignmentRoutes from './assignments/teacherAssignment.routes.js';
 import liveSessionRoutes from './livesessions/teacherLiveSession.routes.js';
 import notificationRoutes from './notifications/teacherNotification.routes.js';
+
+// Shared module imports for complete teacher centralization
+import questionRoutes from '../shared/questions/question.routes.js';
+import doubtRoutes from '../student/doubts/studentDoubt.routes.js';
+import payoutRoutes from '../admin/payouts/payout.routes.js';
+
 import {
   getAllTeachers,
   updateTeacherStatus,
@@ -28,6 +34,8 @@ import {
   updateTeacherProfile,
   deleteTeacher,
 } from './teacherProfile.controller.js';
+
+import { getTeacherHomepage, getAllTeacherStudents } from '../../androidcontrollers/teacherstudentdatacontroller.js';
 import authMiddleware from '../../middleware/auth.middleware.js';
 
 const requireTeacherRole = (req, res, next) => {
@@ -70,6 +78,17 @@ router.get('/count', authMiddleware, requireTeacherRole, getTeacherCount);
 router.patch('/:teacherId/status', authMiddleware, requireTeacherRole, updateTeacherStatus);
 router.patch('/:teacherId/course', authMiddleware, requireTeacherRole, updateCoursename);
 router.get('/profile', authMiddleware, requireTeacherRole, getTeacherProfile);
+
+// Unified homescreenData single API endpoint (Total Students, Live Classes, Total Courses, Earnings, Banners, Courses)
+router.get('/homescreenData', authMiddleware, getTeacherHomepage);
+router.get('/homescreenData/:teacherId', authMiddleware, getTeacherHomepage);
+router.get('/homescreen-data', authMiddleware, getTeacherHomepage);
+router.get('/homescreen-data/:teacherId', authMiddleware, getTeacherHomepage);
+router.get('/:teacherId/homescreenData', authMiddleware, getTeacherHomepage);
+
+// Unified teacher students endpoint
+router.get('/students', authMiddleware, getAllTeacherStudents);
+
 router.put(
   '/profile',
   upload.fields([
@@ -89,6 +108,7 @@ router.get('/:teacherId/coursecount', authMiddleware, requireTeacherRole, course
 router.get('/total-students', authMiddleware, requireTeacherRole, getTotalStudentCountForTeacher);
 router.delete('/delete-account/:teacherId', authMiddleware, requireTeacherRole, deleteTeacher);
 
+// Sub-domain routes mounted under /api/teacher/...
 router.use('/courses', courseRoutes);
 router.use('/tests', testRoutes);
 router.use('/notes', noteRoutes);
@@ -96,5 +116,8 @@ router.use('/subscriptions', subscriptionRoutes);
 router.use('/assignments', assignmentRoutes);
 router.use('/livesessions', liveSessionRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/questions', questionRoutes);
+router.use('/doubts', doubtRoutes);
+router.use('/payouts', payoutRoutes);
 
 export default router;

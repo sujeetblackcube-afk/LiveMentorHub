@@ -722,8 +722,16 @@ export const getAssignmentOfStudentByTeacher = async (req, res) => {
       });
     });
 
-    // Convert student map to array
-    const students = Object.values(studentMap);
+    const pageNum = parseInt(req.query.page || "1", 10);
+    const limitNum = parseInt(req.query.limit || "10", 10);
+    const totalStudentsCount = Object.keys(studentMap).length;
+    const totalPages = Math.ceil(totalStudentsCount / limitNum) || 1;
+
+    let paginatedStudents = Object.values(studentMap);
+    if (req.query.page || req.query.limit) {
+      const offset = (pageNum - 1) * limitNum;
+      paginatedStudents = paginatedStudents.slice(offset, offset + limitNum);
+    }
 
     // Get counts for each status
     const allSubmissions = await AssignmentSubmission.findAll({
@@ -747,7 +755,13 @@ export const getAssignmentOfStudentByTeacher = async (req, res) => {
       teacherName: teacher.name,
       courseCodes: courseCodes,
       statusCounts: statusCounts,
-      students: students,
+      students: paginatedStudents,
+      pagination: {
+        totalItems: totalStudentsCount,
+        totalPages,
+        currentPage: pageNum,
+        limit: limitNum,
+      },
     });
   } catch (error) {
     console.error("Error fetching student assignments by teacher:", error);

@@ -69,29 +69,23 @@ const Question = () => {
 
   const teacherId = user?.teacherId;
 
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
     if (teacherId) {
-      fetchQuestions();
-      fetchTeacherCourses();
+      fetchQuestions(currentPage);
     }
-  }, [teacherId]);
+  }, [teacherId, currentPage]);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowQuestionSelection(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const fetchQuestions = async () => {
+  const fetchQuestions = async (page = 1) => {
     try {
       setLoading(true);
-      const response = await getAllQuestions({ teacherId });
+      const response = await getAllQuestions({ teacherId, page, limit: itemsPerPage });
       if (response.success) {
         setQuestions(response.questions || []);
+        if (response.pagination) {
+          setTotalPages(response.pagination.totalPages || 1);
+        }
       } else {
         toast.error(response.message || 'Failed to fetch questions');
       }
@@ -103,9 +97,10 @@ const Question = () => {
   };
 
   const fetchTeacherCourses = async () => {
+    if (teacherCourses.length > 0) return;
     try {
       const response = await getTeacherCourses();
-      if (response.status) {
+      if (response.status || response.success) {
         setTeacherCourses(response.data || []);
       }
     } catch (error) {
@@ -130,9 +125,8 @@ const Question = () => {
   };
 
   const filteredQuestions = getFilteredQuestions();
-  const totalPages = Math.ceil(filteredQuestions.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedQuestions = filteredQuestions.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedQuestions = filteredQuestions;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

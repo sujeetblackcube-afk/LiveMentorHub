@@ -4,71 +4,51 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { GraduationCap, Search, Mail, Phone, MapPin, User, Users,Book,BookOpen } from 'lucide-react';
 import { theme } from "../../theme";
-import { getTeacherCourseStudents } from "../../services/api";
+import { getTeacherCourseStudents, getAllTeacherStudentsApi } from "../../services/api";
 import Pagination from "../../components/Pagination";
 
 const Students = () => {
   const { courseCode } = useParams();
   const [students, setStudents] = useState([]);
-  const [filteredStudents, setFilteredStudents] = useState([]);
   const [filters, setFilters] = useState({ name: '', email: '', studentId: '' });
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
-    fetchStudents();
-  }, [courseCode]);
+    fetchStudents(currentPage);
+  }, [courseCode, currentPage, filters.name, filters.studentId]);
 
-  useEffect(() => {
-    const filtered = students.filter(student => {
-      const nameMatch = filters.name === '' || 
-        (student.studentName && student.studentName.toLowerCase().includes(filters.name.toLowerCase()));
-      const studentIdMatch = filters.studentId === '' || 
-        (student.studentId && student.studentId.toLowerCase().includes(filters.studentId.toLowerCase()));
-      return nameMatch && studentIdMatch;
-    });
-    setFilteredStudents(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
-  }, [students, filters]);
-
-  const fetchStudents = async () => {
+  const fetchStudents = async (page = 1) => {
+    setLoading(true);
     try {
       if (courseCode) {
-        // Fetch students for specific course
-        const response = await getTeacherCourseStudents(courseCode);
+        // Fetch students for specific course with pagination
+        const response = await getTeacherCourseStudents(courseCode, { page, limit: itemsPerPage });
         if (response.success) {
-          setStudents(response.data);
+          setStudents(response.data || []);
+          if (response.pagination) {
+            setTotalPages(response.pagination.totalPages || 1);
+          }
         } else {
           toast.error(response.message || 'Failed to fetch students');
         }
       } else {
-        // Fetch all students from all courses
-        const token = localStorage.getItem('token');
-        const coursesResponse = await fetch(`${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/courses`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+        // Fetch all students directly with backend pagination
+        const response = await getAllTeacherStudentsApi({
+          page,
+          limit: itemsPerPage,
+          name: filters.name,
+          studentId: filters.studentId,
         });
-
-        if (coursesResponse.ok) {
-          const coursesResult = await coursesResponse.json();
-          if (coursesResult.status) {
-            const allEnrollments = [];
-
-            for (const course of coursesResult.data) {
-              const studentsResponse = await getTeacherCourseStudents(course.courseCode);
-              if (studentsResponse.success) {
-                // Add all enrollments without deduplication to show course information
-                allEnrollments.push(...studentsResponse.data);
-              }
-            }
-            setStudents(allEnrollments);
-          } else {
-            toast.error('Failed to fetch courses');
+        if (response.success) {
+          setStudents(response.data || []);
+          if (response.pagination) {
+            setTotalPages(response.pagination.totalPages || 1);
           }
         } else {
-          toast.error('Failed to fetch courses');
+          toast.error(response.message || 'Failed to fetch students');
         }
       }
     } catch (error) {
@@ -78,15 +58,11 @@ const Students = () => {
     }
   };
 
-  // Pagination logic
-  const displayStudents = filteredStudents.length > 0 ? filteredStudents : students;
-  const totalPages = Math.ceil(displayStudents.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedStudents = displayStudents.slice(startIndex, startIndex + itemsPerPage);
-
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
 
   if (loading) {
     return (
@@ -242,7 +218,7 @@ const Students = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedStudents.map((student, index) => (
+                    {students.map((student, index) => (
                       <tr
                         key={startIndex + index}
                         className="hover:scale-[1.02] transition-all duration-300"

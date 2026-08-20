@@ -31,14 +31,22 @@ const json = async (response) => {
   }
   return response.json();
 };
+
 export const getBanners = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
   const url = `${BASE_URL}/banners${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
+
 export const getTeacherCourseStudents = async (courseCode, params = {}) => {
   const query = new URLSearchParams(params).toString();
   const url = `${TEACHER_BASE_URL}/courses/${courseCode}/students${query ? `?${query}` : ""}`;
+  return fetch(url, { headers: getAuthHeaders() }).then(json);
+};
+
+export const getAllTeacherStudentsApi = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const url = `${TEACHER_BASE_URL}/students${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
@@ -60,6 +68,12 @@ export const getTotalStudentCountForTeacher = async () => {
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
+export const getTeacherHomescreenData = async (teacherId) => {
+  const queryString = teacherId ? `/${teacherId}` : "";
+  const url = `${TEACHER_BASE_URL}/homescreenData${queryString}`;
+  return fetch(url, { headers: getAuthHeaders() }).then(json);
+};
+
 export const createLiveSession = async (sessionData) => {
   const url = `${TEACHER_BASE_URL}/livesessions`;
   return fetch(url, {
@@ -71,8 +85,6 @@ export const createLiveSession = async (sessionData) => {
 
 // Bulk create live sessions (for weekly/monthly scheduling)
 export const createBulkLiveSessions = async (bulkData) => {
-  
-
   const url = `${TEACHER_BASE_URL}/livesessions`;
   return fetch(url, {
     method: 'POST',
@@ -102,7 +114,7 @@ export const deleteLiveSession = async (sessionId, teacherId) => {
   }).then(json);
 };
 
-// get live sessions for a specific teacher
+// Get live sessions for a specific teacher
 export const getTeacherLiveSessions = async (teacherId, params = {}) => {
   const query = new URLSearchParams(params).toString();
   const url = `${TEACHER_BASE_URL}/${teacherId}/livesessions${query ? `?${query}` : ""}`;
@@ -132,17 +144,19 @@ export const joinLiveSession = async (sessionId, studentId) => {
     body: JSON.stringify({ sessionId, studentId }),
   }).then(json);
 };
+
 export const getTeacherCourseCount = async (teacherId) => {
   const url = `${TEACHER_BASE_URL}/${teacherId}/coursecount`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
-export  const  getcountLiveClassesByTeacher = async (teacherId) => {
+
+export const getcountLiveClassesByTeacher = async (teacherId) => {
   const url = `${TEACHER_BASE_URL}/livesessions/teacher/${teacherId}/total`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const addNotes = async (formData) => {
-  const url = `${BASE_URL}/notes`;
+  const url = `${TEACHER_BASE_URL}/notes`;
   return fetch(url, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -152,12 +166,12 @@ export const addNotes = async (formData) => {
 
 export const getNotes = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/notes${query ? `?${query}` : ""}`;
+  const url = `${TEACHER_BASE_URL}/notes${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const deleteNote = async (id) => {
-  const url = `${BASE_URL}/notes/${id}`;
+  const url = `${TEACHER_BASE_URL}/notes/${id}`;
   return fetch(url, {
     method: 'DELETE',
     headers: getAuthHeaders(),
@@ -165,7 +179,7 @@ export const deleteNote = async (id) => {
 };
 
 export const editNote = async (id, data) => {
-  const url = `${BASE_URL}/notes/${id}`;
+  const url = `${TEACHER_BASE_URL}/notes/${id}`;
   return fetch(url, {
     method: 'PUT',
     headers: {
@@ -182,7 +196,7 @@ export const getNotesCount = async (teacherId) => {
 };
 
 export const createDoubt = async (doubtData) => {
-  const url = `${BASE_URL}/doubts`;
+  const url = `${TEACHER_BASE_URL}/doubts`;
   return fetch(url, {
     method: 'POST',
     headers: {
@@ -194,7 +208,7 @@ export const createDoubt = async (doubtData) => {
 };
 
 export const updateDoubt = async (id, updateData) => {
-  const url = `${BASE_URL}/doubts/${id}`;
+  const url = `${TEACHER_BASE_URL}/doubts/${id}`;
   return fetch(url, {
     method: 'PUT',
     headers: {
@@ -207,14 +221,13 @@ export const updateDoubt = async (id, updateData) => {
 
 export const getDoubtsByTeacherId = async (teacherId, params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/doubts/${teacherId}${query ? `?${query}` : ""}`;
+  const url = `${TEACHER_BASE_URL}/doubts/${teacherId}${query ? `?${query}` : ""}`;
   const result = await fetch(url, { headers: getAuthHeaders() }).then(json);
   return result;
 };
 
 export const createAssignment = async (teacherId, courseCode, data, file) => {
-  // Backend route: POST /:teacherId - teacherId in URL path
-  const url = `${BASE_URL}/assignments/${teacherId}`;
+  const url = `${TEACHER_BASE_URL}/assignments/${teacherId}`;
   const formData = new FormData();
   formData.append('courseCode', courseCode);
   formData.append('teacherId', teacherId);
@@ -227,23 +240,22 @@ export const createAssignment = async (teacherId, courseCode, data, file) => {
 };
 
 export const getAssignments = async (teacherId, courseCode = null, params = {}) => {
-  // Backend expects teacherId in query params based on controller
   const queryObj = { teacherId };
   if (courseCode) queryObj.courseCode = courseCode;
   if (params.page) queryObj.page = params.page;
   if (params.limit) queryObj.limit = params.limit;
   const query = new URLSearchParams(queryObj).toString();
-  const url = `${BASE_URL}/assignments?${query}`;
+  const url = `${TEACHER_BASE_URL}/assignments?${query}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const getAssignmentById = async (id) => {
-  const url = `${BASE_URL}/assignments/${id}`;
+  const url = `${TEACHER_BASE_URL}/assignments/${id}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const updateAssignment = async (id, assignmentData, file = null) => {
-  const url = `${BASE_URL}/assignments/${id}`;
+  const url = `${TEACHER_BASE_URL}/assignments/${id}`;
   
   const formData = new FormData();
   if (assignmentData.title !== undefined) formData.append('title', assignmentData.title);
@@ -263,23 +275,23 @@ export const updateAssignment = async (id, assignmentData, file = null) => {
 };
 
 export const deleteAssignment = async (id) => {
-  const url = `${BASE_URL}/assignments/${id}`;
+  const url = `${TEACHER_BASE_URL}/assignments/${id}`;
   return fetch(url, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   }).then(json);
 };
 
-export const getAssignmentOfStudentByTeacher = async (teacherId, status = null) => {
-  let url = `${BASE_URL}/assignments/teacher/${teacherId}`;
-  if (status) {
-    url += `?status=${encodeURIComponent(status)}`;
-  }
+export const getAssignmentOfStudentByTeacher = async (teacherId, status = null, params = {}) => {
+  const queryObj = { ...params };
+  if (status) queryObj.status = status;
+  const query = new URLSearchParams(queryObj).toString();
+  const url = `${TEACHER_BASE_URL}/assignments/teacher/${teacherId}${query ? `?${query}` : ''}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 export const updateSubmissionMarksAndFeedback = async (submissionId, data) => {
-  const url = `${BASE_URL}/assignments/teacher/submission/${submissionId}`;
+  const url = `${TEACHER_BASE_URL}/assignments/teacher/submission/${submissionId}`;
   return fetch(url, {
     method: 'PUT',
     headers: {
@@ -292,9 +304,8 @@ export const updateSubmissionMarksAndFeedback = async (submissionId, data) => {
 
 // ============== QUESTION API FUNCTIONS ==============
 
-// Create a single question
 export const createQuestion = async (questionData) => {
-  const url = `${BASE_URL}/questions`;
+  const url = `${TEACHER_BASE_URL}/questions`;
   return fetch(url, {
     method: 'POST',
     headers: {
@@ -305,22 +316,19 @@ export const createQuestion = async (questionData) => {
   }).then(json);
 };
 
-// Get all questions with optional filters
 export const getAllQuestions = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/questions${query ? `?${query}` : ""}`;
+  const url = `${TEACHER_BASE_URL}/questions${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
-// Get question by ID
 export const getQuestionById = async (id) => {
-  const url = `${BASE_URL}/questions/${id}`;
+  const url = `${TEACHER_BASE_URL}/questions/${id}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
-// Update a question
 export const updateQuestion = async (id, questionData) => {
-  const url = `${BASE_URL}/questions/${id}`;
+  const url = `${TEACHER_BASE_URL}/questions/${id}`;
   return fetch(url, {
     method: 'PUT',
     headers: {
@@ -331,18 +339,16 @@ export const updateQuestion = async (id, questionData) => {
   }).then(json);
 };
 
-// Delete a question
 export const deleteQuestion = async (id) => {
-  const url = `${BASE_URL}/questions/${id}`;
+  const url = `${TEACHER_BASE_URL}/questions/${id}`;
   return fetch(url, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   }).then(json);
 };
 
-// Create questions from Excel file
 export const createQuestionsFromExcel = async (teacherId, file) => {
-  const url = `${BASE_URL}/questions/excel`;
+  const url = `${TEACHER_BASE_URL}/questions/excel`;
   const formData = new FormData();
   formData.append('teacherId', teacherId);
   formData.append('file', file);
@@ -355,9 +361,8 @@ export const createQuestionsFromExcel = async (teacherId, file) => {
 
 // ============== TEST API FUNCTIONS ==============
 
-// Create a new test
 export const createTest = async (testData) => {
-  const url = `${BASE_URL}/tests`;
+  const url = `${TEACHER_BASE_URL}/tests`;
   return fetch(url, {
     method: 'POST',
     headers: {
@@ -368,28 +373,24 @@ export const createTest = async (testData) => {
   }).then(json);
 };
 
-// Get all tests with optional filters
 export const getAllTests = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/tests${query ? `?${query}` : ""}`;
+  const url = `${TEACHER_BASE_URL}/tests${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
-// Get test by ID
 export const getTestById = async (id) => {
-  const url = `${BASE_URL}/tests/${id}`;
+  const url = `${TEACHER_BASE_URL}/tests/${id}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
-// Get all tests by courseCode
 export const getAllTestsByCourseCode = async (courseCode) => {
-  const url = `${BASE_URL}/tests/course/${encodeURIComponent(courseCode)}`;
+  const url = `${TEACHER_BASE_URL}/tests/course/${encodeURIComponent(courseCode)}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
-// Update a test
 export const updateTest = async (id, testData) => {
-  const url = `${BASE_URL}/tests/${id}`;
+  const url = `${TEACHER_BASE_URL}/tests/${id}`;
   return fetch(url, {
     method: 'PUT',
     headers: {
@@ -400,22 +401,19 @@ export const updateTest = async (id, testData) => {
   }).then(json);
 };
 
-// Delete a test
 export const deleteTest = async (id) => {
-  const url = `${BASE_URL}/tests/${id}`;
+  const url = `${TEACHER_BASE_URL}/tests/${id}`;
   return fetch(url, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   }).then(json);
 };
 
-// Get test submissions for a specific teacher
 export const getTeacherTestSubmissions = async (teacherId) => {
   const url = `${TEACHER_BASE_URL}/tests/${teacherId}/test-submissions`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
-// Update marks and feedback for a specific test submission
 export const updateTestSubmissionMarks = async (submissionId, data) => {
   const url = `${TEACHER_BASE_URL}/tests/grade-submission/${submissionId}`;
   return fetch(url, {
@@ -430,16 +428,14 @@ export const updateTestSubmissionMarks = async (submissionId, data) => {
 
 // ============== SUBSCRIPTION API FUNCTIONS ==============
 
-// Get all available subscriptions
 export const getAllSubscriptions = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/subscriptions${query ? `?${query}` : ""}`;
+  const url = `${TEACHER_BASE_URL}/subscriptions${query ? `?${query}` : ""}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
-// Create a new subscription buyed (purchase)
 export const createSubscriptionBuyed = async (teacherId, data) => {
-  const url = `${BASE_URL}/subscriptions/buyed/${teacherId}`;
+  const url = `${TEACHER_BASE_URL}/subscriptions/buyed/${teacherId}`;
   return fetch(url, {
     method: 'POST',
     headers: {
@@ -450,9 +446,8 @@ export const createSubscriptionBuyed = async (teacherId, data) => {
   }).then(json);
 };
 
-// Cashfree: create order for subscription purchase
 export const createSubscriptionCashfreeOrder = async (payload) => {
-  const url = `${BASE_URL}/subscriptions/create-cashfree-order`;
+  const url = `${TEACHER_BASE_URL}/subscriptions/create-cashfree-order`;
   return fetch(url, {
     method: 'POST',
     headers: {
@@ -463,9 +458,8 @@ export const createSubscriptionCashfreeOrder = async (payload) => {
   }).then(json);
 };
 
-// Cashfree: verify order for subscription purchase
 export const verifySubscriptionCashfreeOrder = async (orderId) => {
-  const url = `${BASE_URL}/subscriptions/verify-cashfree-order/${orderId}`;
+  const url = `${TEACHER_BASE_URL}/subscriptions/verify-cashfree-order/${orderId}`;
   return fetch(url, {
     method: 'POST',
     headers: {
@@ -475,34 +469,31 @@ export const verifySubscriptionCashfreeOrder = async (orderId) => {
   }).then(json);
 };
 
-// Get all subscriptions buyed by teacher ID
 export const getSubscriptionsByTeacherId = async (teacherId) => {
-  const url = `${BASE_URL}/subscriptions/buyed/teacher/${teacherId}`;
+  const queryString = teacherId ? `/${teacherId}` : "";
+  const url = `${TEACHER_BASE_URL}/subscriptions/my-subscriptions${queryString}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 // ============== PAYOUT API FUNCTIONS ==============
 
-// Get total earnings for the authenticated teacher
 export const getTotalEarningsByTeacher = async () => {
-  const url = `${BASE_URL}/payouts/earning`;
+  const url = `${TEACHER_BASE_URL}/payouts/earning`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
-// Get all payout transactions for the authenticated teacher
 export const getTeacherPayoutTransactions = async (status = null, params = {}) => {
   const queryObj = { ...params };
   if (status && status !== 'all') {
     queryObj.status = status;
   }
   const query = new URLSearchParams(queryObj).toString();
-  const url = `${BASE_URL}/payouts/transactions${query ? `?${query}` : ''}`;
+  const url = `${TEACHER_BASE_URL}/payouts/transactions${query ? `?${query}` : ''}`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
 // ============== CONTACT US API FUNCTIONS ==============
 
-// Create a new contact message
 export const createContact = async (contactData) => {
   const url = `${BASE_URL}/contactus`;
   return fetch(url, {
@@ -517,29 +508,23 @@ export const createContact = async (contactData) => {
 
 // ============== NOTIFICATION API FUNCTIONS ==============
 
-// Get notifications for the authenticated teacher
 export const getNotificationByTeacherId = async () => {
-  const url = `${BASE_URL}/notifications/teacher/notifications`;
+  const url = `${TEACHER_BASE_URL}/notifications`;
   return fetch(url, { headers: getAuthHeaders() }).then(json);
 };
 
-// Delete all notifications for the authenticated teacher
 export const deleteAllNotificationByTeacher = async () => {
-  const url = `${BASE_URL}/notifications/teacher/notifications/all`;
+  const url = `${TEACHER_BASE_URL}/notifications/all`;
   return fetch(url, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   }).then(json);
 };
 
-// Delete a single notification by ID
 export const deleteNotification = async (notificationId) => {
-  const url = `${BASE_URL}/notifications/${notificationId}`;
+  const url = `${TEACHER_BASE_URL}/notifications/${notificationId}`;
   return fetch(url, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   }).then(json);
 };
-
-
-

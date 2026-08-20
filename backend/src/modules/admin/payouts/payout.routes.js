@@ -1,11 +1,10 @@
 /**
- * Admin Payout Routes
+ * Admin & Teacher Payout Routes
  * Manages teacher payouts and earnings
- * Public endpoint: /api/payouts
  */
 
 import express from "express";
-import { createPayment, getAllPayments, getPaymentById, getTotalEarningsByTeacher, getTeacherPayoutTransactions } from '../../../modules/admin/payouts/payout.controller.js';
+import { createPayment, getAllPayments, getPaymentById, getTotalEarningsByTeacher, getTeacherPayoutTransactions } from './payout.controller.js';
 import authMiddleware from '../../../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -23,9 +22,15 @@ router.use(authMiddleware);
 router.get("/earning", getTotalEarningsByTeacher);
 router.get("/transactions", getTeacherPayoutTransactions);
 
-// Admin-only payout management routes
+// Flexible GET / handler (returns earnings for teacher, all payments for admin)
+router.get("/", (req, res, next) => {
+  if (req.auth && req.auth.role === "teacher") {
+    return getTotalEarningsByTeacher(req, res);
+  }
+  return requireSuperAdmin(req, res, () => getAllPayments(req, res));
+});
+
 router.post("/", requireSuperAdmin, createPayment);
-router.get("/", requireSuperAdmin, getAllPayments);
 router.get("/:id", requireSuperAdmin, getPaymentById);
 
 export default router;

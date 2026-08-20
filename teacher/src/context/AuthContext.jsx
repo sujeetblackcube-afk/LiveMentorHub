@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { clearSubscriptionCache } from '../components/TeacherSubscriptionGate';
 
 const AuthContext = createContext();
 
@@ -65,10 +66,10 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      // ✅ Token exists (frontend-only mode)
+      // ✅ Token exists
       setIsAuthenticated(true);
 
-      // Restore user safely (prevents dashboard auto redirect bugs)
+      // Restore user safely
       if (savedUser) {
         try {
           setUser(JSON.parse(savedUser));
@@ -90,7 +91,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (token, userData, userRole) => {
-    // 🔐 Store all auth data (IMPORTANT)
+    clearSubscriptionCache();
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('role', userRole);
@@ -101,16 +102,19 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    // 🧹 Clear everything to stop auto dashboard access
+    clearSubscriptionCache();
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('role');
+
+    try {
+      sessionStorage.clear();
+    } catch (e) {}
 
     setIsAuthenticated(false);
     setUser(null);
     setRole(null);
 
-    // Force redirect
     window.location.href = "/teacher/login";
   };
 

@@ -1,7 +1,7 @@
 import express from "express";
 import { getHomeData } from '../../../androidcontrollers/homecontrollers.js';
 import { getCoursePageData, getCoursesBySubject, getNotesByStudent } from '../../../androidcontrollers/coursepagedataController.js';
-import { getTeacherStudentData } from '../../../androidcontrollers/teacherstudentdatacontroller.js';
+import { getTeacherStudentData, getTeacherHomepage } from '../../../androidcontrollers/teacherstudentdatacontroller.js';
 import authMiddleware from '../../../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -18,8 +18,12 @@ router.use(authMiddleware);
 // Get notes for a student in a specific course (Protected enrollment content)
 router.get("/coursepagedata/:studentId/:courseCode/content", getNotesByStudent);
 
-// ========== Teacher Student Data ==========
-// Get teacher student data
+// ========== Teacher Student Data & Homescreen ==========
+router.get("/teacherstudentdata/teacherhomepage", getTeacherHomepage);
+router.get("/teacherstudentdata/teacherhomepage/:teacherId", getTeacherHomepage);
 router.get("/teacherstudentdata/:teacherId", getTeacherStudentData);
+router.get("/teacher/homescreenData", getTeacherHomepage);
+router.get("/teacher/homescreenData/:teacherId", getTeacherHomepage);
+router.get("/homescreenData/:teacherId", getTeacherHomepage);
 
 export default router;

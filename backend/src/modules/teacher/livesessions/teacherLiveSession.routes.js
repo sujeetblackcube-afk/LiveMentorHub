@@ -10,10 +10,11 @@ import {
   getTeacherLiveClassTotal,
   renewRtcTokenTeacher,
 } from './teacherLiveSession.controller.js';
+import { getTeacherLiveSessions } from '../teacherProfile.controller.js';
 
 const router = express.Router();
 const requireTeacherRole = (req, res, next) => {
-  if (!req.auth || req.auth.role !== 'teacher') {
+  if (!req.auth || (req.auth.role !== 'teacher' && req.auth.role !== 'superadmin')) {
     return res.status(403).json({
       success: false,
       message: 'Teacher access required',
@@ -41,6 +42,7 @@ router.post('/join', joinTeacherLiveSession);
 
 router.use(requireTeacherRole);
 
+router.get('/', getTeacherLiveSessions);
 router.post('/', upload.single('thumbnail'), createTeacherLiveSession);
 router.post('/start', startTeacherLiveSession);
 router.post('/renew-token', renewRtcTokenTeacher);

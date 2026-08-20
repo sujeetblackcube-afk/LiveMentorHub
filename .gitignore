@@ -46,3 +46,6 @@ scratch_doc_text.txt
 scratch/
 backend/check_*.js
 backend/test_*.js
+
+# Temporary ignore for institute portal
+institute/

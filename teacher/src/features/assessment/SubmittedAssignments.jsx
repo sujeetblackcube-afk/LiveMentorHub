@@ -24,18 +24,23 @@ const SubmittedAssignments = () => {
 
   const teacherId = user?.teacherId;
 
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
     if (teacherId) {
-      fetchData();
+      fetchData(currentPage);
     }
-  }, [teacherId, statusFilter]);
+  }, [teacherId, statusFilter, currentPage]);
 
-const fetchData = async () => {
+  const fetchData = async (page = 1) => {
     try {
       setLoading(true);
-      const response = await getAssignmentOfStudentByTeacher(teacherId, statusFilter || null);
+      const response = await getAssignmentOfStudentByTeacher(teacherId, statusFilter || null, { page, limit: itemsPerPage });
       if (response.success) {
         setData(response);
+        if (response.pagination) {
+          setTotalPages(response.pagination.totalPages || 1);
+        }
       } else {
         toast.error(response.message || 'Failed to fetch assignments');
       }
@@ -122,9 +127,8 @@ const fetchData = async () => {
 
   // Pagination
   const filteredStudents = getFilteredStudents();
-  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedStudents = filteredStudents.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedStudents = filteredStudents;
 
   const handlePageChange = (page) => {
     setCurrentPage(page);

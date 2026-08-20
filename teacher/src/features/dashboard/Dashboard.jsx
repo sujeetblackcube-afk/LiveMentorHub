@@ -26,6 +26,7 @@ import {
   getTeacherCourseCount,
   getNotesCount,
   getTotalEarningsByTeacher,
+  getTeacherHomescreenData,
   createContact,
 } from "../../services/api.js";
 import { useAuth } from "../../context/AuthContext";
@@ -56,101 +57,32 @@ export default function Dashboard() {
   const [chatError, setChatError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch banners on component mount
+  // Single API call to fetch all homescreen metrics & banners
   useEffect(() => {
-    const fetchBanners = async () => {
+    const fetchHomescreenData = async () => {
       try {
-        const response = await getBanners();
-        if (response.success) {
-          setBanners(response.data);
+        const response = await getTeacherHomescreenData(user?.teacherId);
+        if (response.success && response.data) {
+          const d = response.data;
+          if (d.totalStudents !== undefined) setStudentCount(d.totalStudents);
+          if (d.totalLiveClasses !== undefined) setLiveClassesCount(d.totalLiveClasses);
+          if (d.totalCourse !== undefined || d.totalCourses !== undefined) {
+            setCourseCount(d.totalCourse ?? d.totalCourses);
+          }
+          if (d.totalEarnings !== undefined) setTotalEarnings(d.totalEarnings);
+          if (d.banners && d.banners.length > 0) setBanners(d.banners);
+        } else {
+          // Fallback if needed
+          const bannerRes = await getBanners().catch(() => null);
+          if (bannerRes?.success) setBanners(bannerRes.data);
         }
       } catch (error) {
+        console.error("Error loading teacher homescreen data:", error);
       }
     };
 
-    fetchBanners();
-  }, []);
-
-  // Fetch student count on component mount
-  useEffect(() => {
-    const fetchStudentCount = async () => {
-      try {
-        const response = await getTotalStudentCountForTeacher();
-        if (response.status) {
-          setStudentCount(response.studentCount);
-        }
-      } catch (error) {
-      }
-    };
-
-    fetchStudentCount();
-  }, []);
-
-  // Fetch live classes count on component mount
-  useEffect(() => {
-    const fetchLiveClassesCount = async () => {
-      try {
-        const response = await getcountLiveClassesByTeacher(user.teacherId);
-        if (response.success) {
-          setLiveClassesCount(response.total);
-        }
-      } catch (error) {
-      }
-    };
-
-    if (user?.teacherId) {
-      fetchLiveClassesCount();
-    }
-  }, [user]);
-
-  // Fetch course count on component mount
-  useEffect(() => {
-    const fetchCourseCount = async () => {
-      try {
-        const response = await getTeacherCourseCount(user.teacherId);
-        if (response.status) {
-          setCourseCount(response.courseCount);
-        }
-      } catch (error) {
-      }
-    };
-
-    if (user?.teacherId) {
-      fetchCourseCount();
-    }
-  }, [user]);
-
-  // Fetch notes count on component mount
-  useEffect(() => {
-    const fetchNotesCount = async () => {
-      try {
-        const response = await getNotesCount(user.teacherId);
-        if (response.success) {
-          setNotesCount(response.count);
-        }
-      } catch (error) {
-      }
-    };
-
-    if (user?.teacherId) {
-      fetchNotesCount();
-    }
-  }, [user]);
-
-  // Fetch total earnings on component mount
-  useEffect(() => {
-    const fetchTotalEarnings = async () => {
-      try {
-        const response = await getTotalEarningsByTeacher();
-        if (response.status) {
-          setTotalEarnings(response.totalEarnings || 0);
-        }
-      } catch (error) {
-      }
-    };
-
-    fetchTotalEarnings();
-  }, []);
+    fetchHomescreenData();
+  }, [user?.teacherId]);
 
   // Reset currentBannerIndex if it exceeds banners length
   useEffect(() => {

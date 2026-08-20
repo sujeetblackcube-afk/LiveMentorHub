@@ -24,18 +24,23 @@ const SubmittedTests = () => {
 
   const teacherId = user?.teacherId;
 
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
     if (teacherId) {
-      fetchData();
+      fetchData(currentPage);
     }
-  }, [teacherId]);
+  }, [teacherId, currentPage]);
 
-  const fetchData = async () => {
+  const fetchData = async (page = 1) => {
     try {
       setLoading(true);
-      const response = await getTeacherTestSubmissions(teacherId);
-      if (response.status) {
+      const response = await getTeacherTestSubmissions(teacherId, { page, limit: itemsPerPage });
+      if (response.success || response.status) {
         setData(response);
+        if (response.pagination) {
+          setTotalPages(response.pagination.totalPages || 1);
+        }
       } else {
         toast.error(response.message || 'Failed to fetch test submissions');
       }
@@ -48,16 +53,20 @@ const SubmittedTests = () => {
 
   // Get all submissions flattened with course code
   const getAllSubmissions = () => {
-    if (!data?.data) return [];
+    if (!data?.data || !Array.isArray(data.data)) return [];
     
     let allSubmissions = [];
-    data.data.forEach(course => {
-      course.submissions.forEach(sub => {
-        allSubmissions.push({
-          ...sub,
-          courseCode: course.courseCode
+    data.data.forEach(item => {
+      if (item.submissions && Array.isArray(item.submissions)) {
+        item.submissions.forEach(sub => {
+          allSubmissions.push({
+            ...sub,
+            courseCode: item.courseCode || sub.courseCode
+          });
         });
-      });
+      } else if (item && typeof item === 'object') {
+        allSubmissions.push(item);
+      }
     });
     
     return allSubmissions;
@@ -92,9 +101,8 @@ const SubmittedTests = () => {
 
   // Pagination
   const filteredSubmissions = getFilteredSubmissions();
-  const totalPages = Math.ceil(filteredSubmissions.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedSubmissions = filteredSubmissions.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedSubmissions = filteredSubmissions;
 
   const handlePageChange = (page) => {
     setCurrentPage(page);

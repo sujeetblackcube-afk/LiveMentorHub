@@ -21,13 +21,11 @@ export default function Navbar({ collapsed, setCollapsed }) {
   useEffect(() => {
     fetchProfile();
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 10000);
 
     const handleProfileUpdate = () => fetchProfile();
     window.addEventListener('profileUpdated', handleProfileUpdate);
     return () => {
       window.removeEventListener('profileUpdated', handleProfileUpdate);
-      clearInterval(interval);
     };
   }, []);
 

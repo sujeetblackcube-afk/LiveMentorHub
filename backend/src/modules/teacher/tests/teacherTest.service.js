@@ -97,7 +97,7 @@ export const getTeacherTestSubmissionsService = async (teacherId, query) => {
   }
 
   const submissions = await TestSubmission.findAll(queryOptions);
-  return { success: true, data: submissions };
+  return { success: true, status: true, data: submissions };
 };
 
 export const updateTeacherTestSubmissionMarksService = async (submissionId, payload) => {
