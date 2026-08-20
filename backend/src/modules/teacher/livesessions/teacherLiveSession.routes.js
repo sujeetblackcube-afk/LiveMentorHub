@@ -35,11 +35,14 @@ const upload = multer({
 });
 
 router.use(authMiddleware);
+
+// Allow any authenticated user (student or teacher) to join live sessions
+router.post('/join', joinTeacherLiveSession);
+
 router.use(requireTeacherRole);
 
 router.post('/', upload.single('thumbnail'), createTeacherLiveSession);
 router.post('/start', startTeacherLiveSession);
-router.post('/join', joinTeacherLiveSession);
 router.post('/renew-token', renewRtcTokenTeacher);
 router.put('/:sessionId', upload.single('thumbnail'), updateTeacherLiveSession);
 router.delete('/:sessionId', deleteTeacherLiveSession);

@@ -279,11 +279,6 @@ export const createCashfreeOrder = async (req, res) => {
     const client = createCashfreeClient();
     const response = await client.PGCreateOrder(request);
 
-    // FIXED: Proper Date Math
-    const nowDate = new Date();
-    const courseDurationDays = Number(course.courseDuration) || 30; // fallback if missing
-    const expireDate = new Date(nowDate.getTime() + courseDurationDays * 24 * 60 * 60 * 1000);
-
     console.log("making new enrollment record with orderId:", cfOrderId);
     const newEnrollment = await Enrollment.create({
       id: await generateEnrollmentId(),
@@ -396,11 +391,13 @@ export const cashfreeWebhook = async (req, res) => {
     const eventType = event.type;
     const orderData = event.data?.order;
     const paymentData = event.data?.payment;
-    const customerData = event.data?.customer_details;
-    const userEmail = customerData.customer_email;
+    const customerData = event.data?.customer_details || orderData?.customer_details || {};
+    const userEmail = customerData?.customer_email || "";
+    const orderTags = orderData?.order_tags || {};
+    const orderType = orderTags.type || (orderData?.order_id?.startsWith("SUB_") ? "subscription" : orderData?.order_id?.startsWith("ENR_") ? "enrollment" : null);
 
     if (!orderData?.order_id) {
-      return res.status(400).json({ error: "Order ID missing in webhook payload" });
+      return res.status(200).json({ status: "ignored", message: "Order ID missing in webhook payload" });
     }
 
     const orderId = orderData.order_id;
@@ -409,108 +406,140 @@ export const cashfreeWebhook = async (req, res) => {
     // Handle Payment Success
     if (eventType === "PAYMENT_SUCCESS_WEBHOOK") {
 
-      // handle subscription 
-      if(event.data.order.order_tags.type === "subscription") {
-     
-        const subscription = await SubscriptionBuyed.findOne({ where: { orderId } });
+      // Handle Teacher Subscription
+      if (orderType === "subscription") {
+        let subscription = await SubscriptionBuyed.findOne({ where: { orderId } });
+
+        if (!subscription && orderTags.orderId) {
+          subscription = await SubscriptionBuyed.findOne({ where: { orderId: String(orderTags.orderId) } });
+        }
+
+        if (!subscription && transactionId) {
+          subscription = await SubscriptionBuyed.findOne({ where: { transactionId } });
+        }
+
+        // Auto-create subscription record if missing but tags are present
+        if (!subscription && orderTags.teacherId && orderTags.planName) {
+          const teacher = await Teacher.findOne({ where: { teacherId: orderTags.teacherId } });
+          const teacherName = teacher?.name || "Teacher";
+          const price = paymentData?.payment_amount || 0;
+          const durationDays = parseInt(orderTags.durationDays || "0", 10);
+          const startDate = orderTags.startDate ? new Date(orderTags.startDate) : new Date();
+          const endDate = orderTags.endDate ? new Date(orderTags.endDate) : new Date(Date.now() + durationDays * 86400000);
+
+          subscription = await SubscriptionBuyed.create({
+            teacherId: String(orderTags.teacherId),
+            teacherName,
+            planName: String(orderTags.planName),
+            price,
+            durationDays,
+            startDate,
+            endDate,
+            orderId: String(orderId),
+            status: "active",
+            paymentStatus: "paid",
+            transactionId: transactionId,
+          });
+        }
 
         if (!subscription) {
           console.error(`❌ Subscription record not found for Order ID: ${orderId}`);
-          return res.status(404).json({ error: "Subscription record not found" });
+          return res.status(200).json({ status: "success", message: "Subscription record not found, acknowledged." });
         }
 
-        console.log("Customer data",customerData);
+        console.log("Customer data", customerData);
 
-      await subscription.update({
-        paymentStatus: "PAID",
-        status: "APPROVED",
-        transactionId: transactionId,
-      });
+        await subscription.update({
+          paymentStatus: "paid",
+          status: "active",
+          transactionId: transactionId,
+        });
 
-      console.log(`🎉 Subscription updated to PAID for Order ID: ${orderId}`);
+        console.log(`🎉 Subscription updated to PAID for Order ID: ${orderId}`);
 
-      // Invoke notification email with PDF invoice attached
-      await notifySubscriptionConfirmation(subscription, userEmail);
+        // Invoke notification email with PDF invoice attached
+        if (userEmail) {
+          await notifySubscriptionConfirmation(subscription, userEmail);
+        }
 
-      return res.status(200).json({ status: "success", message: "Payment processed successfully" });
-
+        return res.status(200).json({ status: "success", message: "Subscription payment processed successfully" });
       }
 
-      else if(event.data.order.order_tags.type === "enrollment") {
-        // Handle enrollment logic
-        const enrollment = await Enrollment.findOne({ where: { orderId } });
+      else if (orderType === "enrollment") {
+        // Handle Student Enrollment logic
+        let enrollment = await Enrollment.findOne({ where: { orderId } });
+
+        if (!enrollment && transactionId) {
+          enrollment = await Enrollment.findOne({ where: { transactionNumber: transactionId } });
+        }
 
         if (!enrollment) {
           console.error(`❌ Enrollment record not found for Order ID: ${orderId}`);
-          return res.status(404).json({ error: "Enrollment record not found" });
+          return res.status(200).json({ status: "success", message: "Enrollment record not found, acknowledged." });
         }
 
+        await enrollment.update({
+          paymentStatus: "PAID",
+          status: "APPROVED",
+          transactionId: transactionId,
+        });
 
-      await enrollment.update({
-        paymentStatus: "PAID",
-        status: "APPROVED",
-        transactionId: transactionId,
-      });
-      
+        console.log(`🎉 Enrollment updated to PAID for Order ID: ${orderId}`);
 
-      console.log(`🎉 Enrollment updated to PAID for Order ID: ${orderId}`);
+        // Invoke notification email with PDF invoice attached
+        if (userEmail) {
+          await notifyEnrollmentConfirmation(enrollment, userEmail);
+        }
 
-      // Invoke notification email with PDF invoice attached
-      await notifyEnrollmentConfirmation(enrollment, userEmail);
-
-      return res.status(200).json({ status: "success", message: "Payment processed successfully" });
-
+        return res.status(200).json({ status: "success", message: "Enrollment payment processed successfully" });
       }
 
-      else{
-        return res.status(400).send(`Webhook received for orderId: ${orderId}, but type is not recognized. No action taken.`);
+      else {
+        return res.status(200).json({ status: "success", message: `Webhook received for orderId: ${orderId}, but type is not recognized. Acknowledged.` });
       }
     } 
 
     // Handle Payment Failure
     else if (eventType === "PAYMENT_FAILED_WEBHOOK" || eventType === "PAYMENT_DECLINED_WEBHOOK") {
-      if(event.data.order.order_tags.type === "subscription") {
+      if (orderType === "subscription") {
         const subscription = await SubscriptionBuyed.findOne({ where: { orderId } });
 
-        if (!subscription) {
-          console.error(`❌ Subscription record not found for Order ID: ${orderId}`);
-          return res.status(404).json({ error: "Subscription record not found" });
+        if (subscription) {
+          await subscription.update({
+            paymentStatus: "failed",
+            transactionId: transactionId
+          });
+
+          console.log(`⚠️ Subscription updated to FAILED for Order ID: ${orderId}`);
+          if (userEmail) {
+            await notifySubscriptionConfirmation(subscription, userEmail);
+          }
         }
 
-        await subscription.update({
-          paymentStatus: "failed",
-          transactionId: transactionId});
-
-      console.log(`⚠️ Subscription updated to FAILED for Order ID: ${orderId}`);
-      
-      await notifySubscriptionConfirmation(subscription, userEmail);
-
-      return res.status(200).json({ status: "success", message: "Payment failure handled successfully" });
+        return res.status(200).json({ status: "success", message: "Subscription payment failure handled successfully" });
       }
 
-      else if(event.data.order.order_tags.type === "enrollment"){
+      else if (orderType === "enrollment") {
         const enrollment = await Enrollment.findOne({ where: { orderId } });
 
-        if (!enrollment) {
-          console.error(`❌ Enrollment record not found for Order ID: ${orderId}`);
-          return res.status(404).json({ error: "Enrollment record not found" });
+        if (enrollment) {
+          await enrollment.update({
+            paymentStatus: "FAILED",
+            transactionId: transactionId
+          });
+
+          console.log(`⚠️ Enrollment updated to FAILED for Order ID: ${orderId}`);
+
+          if (userEmail) {
+            await notifyEnrollmentConfirmation(enrollment, userEmail);
+          }
         }
 
-        await enrollment.update({
-          paymentStatus: "FAILED",
-          transactionId: transactionId
-        });
-
-        console.log(`⚠️ Enrollment updated to FAILED for Order ID: ${orderId}`);
-
-        // Invoke notification email with PDF invoice attached
-        await notifyEnrollmentConfirmation(enrollment, userEmail);
-
-        return res.status(200).json({ status: "success", message: "Payment failure handled successfully" });
+        return res.status(200).json({ status: "success", message: "Enrollment payment failure handled successfully" });
       } 
 
       else {
-        return res.status(400).json({ error: "Webhook received but type is not recognized. No action taken." });
+        return res.status(200).json({ status: "success", message: "Webhook received but type is not recognized. Acknowledged." });
       }
     }
 

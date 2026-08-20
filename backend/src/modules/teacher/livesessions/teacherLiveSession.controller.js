@@ -246,7 +246,7 @@ export const createLiveSession = async (req, res) => {
     let thumbnailPath = null;
     if (req.file) {
       try {
-        const result = await uploadBufferToCloudinary(req.file.buffer, "online_class_thumbnails");
+        const result = await uploadBufferToCloudinary(req.file.buffer, "online_class_thumbnails", "image", { originalname: req.file.originalname, mimetype: req.file.mimetype });
         thumbnailPath = result.secure_url;
       } catch (uploadError) {
         return res.status(500).json({ success: false, message: "Error uploading thumbnail" });
@@ -377,7 +377,7 @@ const createBulkLiveSessions = async (req, res) => {
     let thumbnailPath = null;
     if (req.file) {
       try {
-        const result = await uploadBufferToCloudinary(req.file.buffer, "online_class_thumbnails");
+        const result = await uploadBufferToCloudinary(req.file.buffer, "online_class_thumbnails", "image", { originalname: req.file.originalname, mimetype: req.file.mimetype });
         thumbnailPath = result.secure_url;
       } catch (uploadError) {
         return res.status(500).json({ success: false, message: "Error uploading thumbnail" });
@@ -684,7 +684,7 @@ export const updateLiveSession = async (req, res) => {
     // Handle thumbnail upload
     if (req.file) {
       try {
-        const result = await uploadBufferToCloudinary(req.file.buffer, "online_class_thumbnails");
+        const result = await uploadBufferToCloudinary(req.file.buffer, "online_class_thumbnails", "image", { originalname: req.file.originalname, mimetype: req.file.mimetype });
         session.thumbnailUrl = result.secure_url;
       } catch (uploadError) {
         return res.status(500).json({ success: false, message: "Error uploading thumbnail" });

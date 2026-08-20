@@ -197,14 +197,19 @@ const LiveVideo = ({ session, onClose }) => {
           }
         };
 
-        userUnpublishedHandler = (remoteUser) => {
-          const remoteDiv = document.getElementById(`remote-${remoteUser.uid}`);
-          if (remoteDiv) remoteDiv.remove();
+        userUnpublishedHandler = (remoteUser, mediaType) => {
+          if (mediaType === 'video') {
+            const remoteDiv = document.getElementById(`remote-${remoteUser.uid}`);
+            if (remoteDiv) remoteDiv.remove();
 
-          const newCount = Math.max(0, client.remoteUsers.length);
-          setRemoteUsersCount(newCount);
-          
-          setRemoteUsers(prev => prev.filter(u => u.uid !== remoteUser.uid));
+            const newCount = Math.max(0, client.remoteUsers.length);
+            setRemoteUsersCount(newCount);
+            setRemoteUsers(prev => prev.filter(u => u.uid !== remoteUser.uid));
+          } else if (mediaType === 'audio') {
+            if (remoteUser.audioTrack) {
+              remoteUser.audioTrack.stop();
+            }
+          }
         };
 
         userLeftHandler = (remoteUser) => {
@@ -447,25 +452,33 @@ const LiveVideo = ({ session, onClose }) => {
 }, [session]); // Ensure this only runs when session truly changes
 
 
-  const toggleCamera = () => {
+  const toggleCamera = async () => {
+    const nextState = !isCameraOn;
+    setIsCameraOn(nextState);
     const videoTrack = tracksRef.current.find(
       (track) => track && track.trackMediaType === 'video'
     );
     if (videoTrack) {
-      const newState = !videoTrack.enabled;
-      videoTrack.setEnabled(newState);
-      setIsCameraOn(newState);
+      try {
+        await videoTrack.setEnabled(nextState);
+      } catch (e) {
+        console.error("Error toggling camera track:", e);
+      }
     }
   };
 
-  const toggleMic = () => {
+  const toggleMic = async () => {
+    const nextState = !isMicOn;
+    setIsMicOn(nextState);
     const audioTrack = tracksRef.current.find(
       (track) => track && track.trackMediaType === 'audio'
     );
     if (audioTrack) {
-      const newState = !audioTrack.enabled;
-      audioTrack.setEnabled(newState);
-      setIsMicOn(newState);
+      try {
+        await audioTrack.setEnabled(nextState);
+      } catch (e) {
+        console.error("Error toggling audio track:", e);
+      }
     }
   };
 

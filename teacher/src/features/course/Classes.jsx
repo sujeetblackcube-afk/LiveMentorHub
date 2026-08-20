@@ -456,7 +456,7 @@ const Classes = () => {
           setSessionData={setSessionData} 
           setThumbnail={setThumbnail} 
           isSubmitting={isSubmitting} 
-          handleSubmitSession={handleSubmitSession}
+          onSubmit={handleSubmitSession}
           allowCourseSelection={true}
           courses={availableCourses}
         />
