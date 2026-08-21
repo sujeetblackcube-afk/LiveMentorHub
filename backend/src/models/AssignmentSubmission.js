@@ -1,83 +1,97 @@
 import pkg from 'sequelize';
 const { DataTypes } = pkg;
 import sequelize from '../config/db.config.js';
+import Assignment from './Assignment.js';
+import Student from './Student.js';
+import Teacher from './Teacher.js';
+import Course from './Course.js';
 
 const AssignmentSubmission = sequelize.define(
   "AssignmentSubmission",
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
       primaryKey: true,
+      autoIncrement: true,
+      field: 'id',
     },
-
     assignmentId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: Assignment,
+        key: 'id',
+      },
+      field: 'assignment_id',
     },
-
     studentId: {
       type: DataTypes.STRING,
       allowNull: false,
+      references: {
+        model: Student,
+        key: 'student_id',
+      },
+      field: 'student_id',
     },
-    studentName: {
+    submissionFileUrl: {
       type: DataTypes.STRING,
       allowNull: true,
-    },
-    teacherId: {
-      type: DataTypes.STRING, 
-      allowNull: false,
-    },
-    teacherName:{
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    courseCode: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      field: 'submission_file_url',
     },
     submissionText: {
       type: DataTypes.TEXT,
       allowNull: true,
+      field: 'submission_text',
     },
-
-    submissionFileType: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      comment: "pdf, docx, txt, jpg, png, etc",
-    },
-
-    submissionFileUrl: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-
     obtainedMarks: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      field: 'obtained_marks',
     },
-
+    teacherId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      references: {
+        model: Teacher,
+        key: 'teacher_id',
+      },
+      field: 'teacher_id',
+    },
     feedback: {
       type: DataTypes.TEXT,
       allowNull: true,
+      field: 'feedback',
     },
-
     status: {
-      type: DataTypes.ENUM("submitted", "checked", "notsubmitted"),
-      defaultValue: "submitted",
+      type: DataTypes.ENUM("SUBMITTED", "EVALUATED", "REJECTED"),
+      defaultValue: "SUBMITTED",
+      field: 'status',
     },
-    percentage: {
-  type: DataTypes.FLOAT,
-  defaultValue: 0
-},
-
+    courseCode: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      references: {
+        model: Course,
+        key: 'course_code',
+      },
+      field: 'course_code',
+    },
     submittedAt: {
       type: DataTypes.DATE,
-      allowNull: true,
+      defaultValue: DataTypes.NOW,
+      field: 'submitted_at',
     },
   },
   {
+    tableName: "assignment_submissions",
     timestamps: true,
+    indexes: [
+      { unique: true, fields: ['assignment_id', 'student_id'] },
+      { fields: ['student_id'] },
+      { fields: ['teacher_id'] },
+      { fields: ['course_code'] },
+      { fields: ['status'] }
+    ],
   }
 );
 

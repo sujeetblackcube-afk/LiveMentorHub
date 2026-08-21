@@ -6,57 +6,76 @@ const TestSubmission = sequelize.define('TestSubmission', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
-    autoIncrement: true
+    autoIncrement: true,
+    field: 'id',
   },
 
   testId: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: false,
+    field: 'test_id',
   },
 
   studentId: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    field: 'student_id',
   },
   attemptNumber: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    field: 'attempt_number',
   },
 
   answers: {
-    type: DataTypes.JSON,
+    type: DataTypes.JSONB,
     allowNull: true,
+    field: 'answers',
   },
 
   obtainedMarks: {
     type: DataTypes.INTEGER,
-    defaultValue: 0
+    defaultValue: 0,
+    field: 'obtained_marks',
   },
   teacherId: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'teacher_id',
+  },
 
   percentage: {
-  type: DataTypes.FLOAT,
-  defaultValue: 0
-},
+    type: DataTypes.FLOAT,
+    defaultValue: 0,
+    field: 'percentage',
+  },
   status: {
     type: DataTypes.ENUM('NOTSUBMITTED', 'SUBMITTED', 'GRADED'),
-    defaultValue: 'NOTSUBMITTED'
+    defaultValue: 'NOTSUBMITTED',
+    field: 'status',
   },
   courseCode:{
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'course_code',
+  },
 
   submittedAt: {
     type: DataTypes.DATE,
-    allowNull: true
+    allowNull: true,
+    field: 'submitted_at',
   }
 
 }, {
-  timestamps: true
+  tableName: 'test_submissions',
+  timestamps: true,
+  indexes: [
+    { unique: true, fields: ['test_id', 'student_id', 'attempt_number'] },
+    { fields: ['student_id'] },
+    { fields: ['teacher_id'] },
+    { fields: ['course_code'] },
+    { fields: ['status'] }
+  ]
 });
 
 export default TestSubmission;

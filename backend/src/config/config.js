@@ -10,6 +10,9 @@ const config = {
   DB_USER: process.env.DB_USER,
   DB_PASSWORD: process.env.DB_PASSWORD,
   DB_SSL: process.env.DB_SSL === 'true',
+  DB_SYNC: process.env.DB_SYNC || 'auto',
+  DB_SYNC_ALTER: process.env.DB_SYNC_ALTER === 'true',
+  DB_SYNC_FORCE: process.env.DB_SYNC_FORCE === 'true',
   JWT_SECRET: process.env.JWT_SECRET || 'change_this_secret',
   NODE_ENV: process.env.NODE_ENV || 'development',
   brevo: {

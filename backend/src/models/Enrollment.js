@@ -1,187 +1,96 @@
 import pkg from 'sequelize';
 const { DataTypes } = pkg;
 import sequelize from '../config/db.config.js';
+import Student from './Student.js';
+import Course from './Course.js';
 
 const Enrollment = sequelize.define(
   "Enrollment",
   {
+    enrollmentCode: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+      allowNull: false,
+      field: 'enrollment_code',
+    },
     id: {
       type: DataTypes.INTEGER,
+      autoIncrement: true,
       allowNull: false,
       unique: true,
+      field: 'id',
     },
-
-    // =======================
-    // Enrollment Identity
-    // =======================
-    enrollmentCode: {
-      type: DataTypes.STRING(255),
+    studentId: {
+      type: DataTypes.STRING,
       allowNull: false,
-      primaryKey: true,
+      references: {
+        model: Student,
+        key: 'student_id',
+      },
+      field: 'student_id',
     },
-
+    courseCode: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      references: {
+        model: Course,
+        key: 'course_code',
+      },
+      field: 'course_code',
+    },
+    teacherId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'teacher_id',
+    },
+    status: {
+      type: DataTypes.ENUM("ACTIVE", "EXPIRED", "CANCELLED", "COMPLETED"),
+      defaultValue: "ACTIVE",
+      field: 'status',
+    },
     enrollmentDate: {
       type: DataTypes.DATE,
+      allowNull: false,
       defaultValue: DataTypes.NOW,
+      field: 'enrollment_date',
     },
     enrollmentExpireDate: {
       type: DataTypes.DATE,
       allowNull: true,
-    },
-
-    status: {
-      type: DataTypes.ENUM("PENDING", "APPROVED", "PASSOUT"),
-      defaultValue: "APPROVED",
-      allowNull: false,
+      field: 'enrollment_expire_date',
     },
     pdfUrl: {
-  type: DataTypes.TEXT,
-  allowNull: true,
-},
-
-    // =======================
-    // Student Snapshot
-    // =======================
-    studentId: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-    },
-
-    studentName: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-    },
-
-    studentEmail: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.STRING,
       allowNull: true,
+      field: 'pdf_url',
     },
-
-    studentMobile: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
-    },
-    studentAddress: {
-      type: DataTypes.STRING(200),
-      allowNull: true,
-    },
-    teacherId: {
-      type: DataTypes.STRING(50),
-      allowNull: true,
-    },
-    // =======================
-    // Course Snapshot
-    // =======================
-
-    courseName: {
-      type: DataTypes.STRING(150),
-      allowNull: false,
-    },
-
-    courseCode: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-    },
-
-    coursePrice: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: true,
-    },
-
-    // =======================
-    // Course Validity
-    // =======================
-    courseStartDate: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-
-    courseExpiryDate: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-
-    // =======================
-    // Payment Details
-    // =======================
-    paymentStatus: {
-      type: DataTypes.STRING(20),
-      defaultValue: "UNPAID",
-      // PAID | UNPAID | FAILED | REFUNDED
-    },
-
-    transactionNumber: {
-      type: DataTypes.STRING(200),
-      allowNull: true,
-    },
-
-    orderId: {
-      type: DataTypes.STRING(200),
-      allowNull: true,
-    },
-
-    paymentMethod: {
-      type: DataTypes.STRING(30),
-      allowNull: true,
-    },
-
-    amountPaid: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: true,
-    },
-
-    currency: {
-      type: DataTypes.STRING(10),
-      defaultValue: "INR",
-    },
-
-    paymentDate: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-
-    isRefunded: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-
-    refundedAmount: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: true,
-    },
-
-    refundDate: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-
-    // =======================
-    // Learning Tracking
-    // =======================
     progress: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
+      field: 'progress',
     },
-
     lastAccessedAt: {
       type: DataTypes.DATE,
       allowNull: true,
+      field: 'last_accessed_at',
     },
-
     remarks: {
       type: DataTypes.TEXT,
       allowNull: true,
+      field: 'remarks',
     },
   },
   {
     tableName: "enrollments",
     timestamps: true,
     indexes: [
-      { fields: ['studentId', 'status'] },
-      { fields: ['courseCode', 'teacherId'] },
-      { fields: ['paymentStatus'] },
-    ]
-  },
+      { unique: true, fields: ['student_id', 'course_code'] },
+      { fields: ['student_id', 'status'] },
+      { fields: ['course_code'] },
+      { fields: ['teacher_id'] },
+      { fields: ['status'] },
+    ],
+  }
 );
 
 export default Enrollment;

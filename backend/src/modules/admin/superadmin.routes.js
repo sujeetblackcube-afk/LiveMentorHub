@@ -11,7 +11,7 @@ import {
   getCourseParticipantsByCode,
   patchCourseDetails,
 } from "./courses/course.controller.js";
-import { createClass, getAllClasses } from './classes/classLegacy.controller.js';
+import { createClass, getAllClasses } from './classes/class.controller.js';
 import { sendBroadcast } from './notifications/broadcast.controller.js';
 
 const router = express.Router();

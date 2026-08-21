@@ -9,38 +9,44 @@ const Subscription = sequelize.define(
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
+      field: 'id',
     },
     planName: {
       type: DataTypes.STRING,
       allowNull: false,
+      field: 'plan_name',
     },
 
-    // 🔥 This handles 15 days / 30 days / 90 days etc.
     durationDays: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'duration_days',
     },
-    CoursesAllowed: {
+    coursesAllowed: {
       type: DataTypes.INTEGER,
       allowNull: false,
-        defaultValue: 0,
+      defaultValue: 0,
+      field: 'courses_allowed',
     },
     price: {
       type: DataTypes.FLOAT,
       allowNull: false,
       defaultValue: 0,
+      field: 'price',
     },
 
     status: {
       type: DataTypes.ENUM("active", "expired", "cancelled"),
       defaultValue: "active",
+      field: 'status',
     },
-
-   
   }, 
   {
     tableName: "subscriptions",
     timestamps: true,
+    indexes: [
+      { fields: ['status'] }
+    ]
   }
 );
 

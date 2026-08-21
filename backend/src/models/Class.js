@@ -7,30 +7,41 @@ const Class = sequelize.define(
   {
     id: {
       type: DataTypes.INTEGER,
-      autoIncrement: true,
       primaryKey: true,
+      autoIncrement: true,
+      field: 'id',
     },
     className: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
+      field: 'class_name',
     },
-
-    class_description: {
+    classDescription: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
+      field: 'class_description',
     },
-
     status: {
       type: DataTypes.STRING(20),
       allowNull: false,
       defaultValue: "ACTIVE",
+      field: 'status',
     },
   },
   {
     tableName: "classes",
     timestamps: true,
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    getterMethods: {
+      classname() { return this.className; },
+    },
+    setterMethods: {
+      classname(val) { this.setDataValue('className', val); },
+    },
+    indexes: [
+      { fields: ['class_name'] },
+      { fields: ['status'] }
+    ]
   }
 );
 

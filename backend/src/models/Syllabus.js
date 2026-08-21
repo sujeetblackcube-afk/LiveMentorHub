@@ -12,31 +12,30 @@ const Syllabus = sequelize.define(
       allowNull: false,
       references: {
         model: Course,
-        key: 'courseCode'
-      }
-    },
-    courseName: {
-      type: DataTypes.STRING,
-      allowNull: false
+        key: 'course_code'
+      },
+      field: 'course_code',
     },
     syllabusUrl: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
+      field: 'syllabus_url',
     },
     introVideoUrl: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
+      field: 'intro_video_url',
     },
     syllabusPoints: {
-      type: DataTypes.JSON,
-      defaultValue: []
+      type: DataTypes.JSONB,
+      defaultValue: [],
+      field: 'syllabus_points',
     }
   },
   {
     tableName: "syllabus",
-    timestamps: true
+    timestamps: true,
   }
 );
 
 export default Syllabus;
-

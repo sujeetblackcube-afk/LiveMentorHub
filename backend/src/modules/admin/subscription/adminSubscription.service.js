@@ -1,5 +1,5 @@
 import Subscription from '../../../models/Subscription.js';
-import SubscriptionBuyed from '../../../models/SubscriptionBuyed.js';
+import { TeacherSubscription as SubscriptionBuyed } from '../../../models/index.js';
 import { getPaginatedData } from '../../../utils/pagination.js';
 
 export const createSubscriptionPlanService = async (payload = {}) => {

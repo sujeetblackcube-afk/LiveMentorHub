@@ -1,6 +1,6 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import  Login  from '../models/Login.js';
+import { StudentLogin as Login } from '../models/index.js';
 import pkg from 'sequelize';
 const { Op } = pkg;
 

@@ -1,136 +1,83 @@
 import pkg from 'sequelize';
 const { DataTypes } = pkg;
 import sequelize from '../config/db.config.js';
+import Course from './Course.js';
+import Teacher from './Teacher.js';
 
-const LiveSession = sequelize.define(
-  "LiveSession",
-  {
-    id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
-
-    sessionId: {
-      type: DataTypes.STRING(150),
-      allowNull: false,
-      unique: true,
-    },
-
-    courseName: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-    },
-
-    courseCode: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-    },
-
-    // Teacher Info
-    teacherId: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-
-    teacherName: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-    },
-
-    // Session Content
-    title: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-    },
-
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-
-    thumbnailUrl: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-
-    // Time
-    startTime: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-
-    endTime: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-
-    // Status
-    status: {
-      type: DataTypes.ENUM(
-        "upcoming",
-        "ongoing",
-        "completed",
-        "cancelled"
-      ),
-      defaultValue: "upcoming",
-    },
-
-    // Recording
-    recordingUrl: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-
-    // Stats
-    totalStudentsJoined: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-    },
-
-    // Agora Integration
-    platform: {
-      type: DataTypes.ENUM('Agora', 'Other'),
-      defaultValue: 'Agora',
-      allowNull: false,
-    },
-
-    appId: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-
-    channelName: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-
-    token: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-
-    uid: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-    },
-
-    maxParticipants: {
-      type: DataTypes.INTEGER,
-      defaultValue: 100,
-    },
-
-    isPrivate: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
+const LiveSession = sequelize.define('LiveSession', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+    field: 'id',
   },
-  {
-    tableName: "livesessions",
-    timestamps: true,
-    createdAt: "createdAt",
-    updatedAt: "updatedAt",
+  sessionId: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: false,
+    field: 'session_id',
+  },
+  courseCode: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    references: {
+      model: Course,
+      key: 'course_code',
+    },
+    field: 'course_code',
+  },
+  teacherId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    references: {
+      model: Teacher,
+      key: 'teacher_id',
+    },
+    field: 'teacher_id',
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    field: 'title',
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'description',
+  },
+  startTime: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    field: 'start_time',
+  },
+  endTime: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    field: 'end_time',
+  },
+  meetingLink: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'meeting_link',
+  },
+  recordingUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'recording_url',
+  },
+  status: {
+    type: DataTypes.ENUM('SCHEDULED', 'LIVE', 'COMPLETED', 'CANCELLED'),
+    defaultValue: 'SCHEDULED',
+    field: 'status',
   }
-);
+}, {
+  tableName: 'live_sessions',
+  timestamps: true,
+  indexes: [
+    { fields: ['course_code', 'status', 'start_time'] },
+    { fields: ['session_id'] },
+    { fields: ['teacher_id'] }
+  ]
+});
 
 export default LiveSession;

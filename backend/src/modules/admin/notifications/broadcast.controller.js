@@ -1,5 +1,5 @@
 import Notification from '../../../models/Notifications.js';
-import Login from '../../../models/Login.js';
+import { StudentLogin as Login } from '../../../models/index.js';
 import Student from '../../../models/Student.js';  
 import Teacher from '../../../models/Teacher.js';
 import Parent from '../../../models/Parent.js';

@@ -3,7 +3,7 @@ import authMiddleware from '../../../middleware/auth.middleware.js';
 import {
   fetchAllTestsForStudent,
   submitTestByStudent,
-} from '../../../modules/student/tests/studentTestLegacy.controller.js';
+} from './studentTest.controller.js';
 import {
   createTeacherTest,
   getTeacherTests,

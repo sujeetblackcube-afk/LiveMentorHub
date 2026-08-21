@@ -1,31 +1,35 @@
-import { ZodError } from 'zod';
+import { z } from 'zod';
 
 /**
- * Express Middleware for Request Validation using Zod Schemas
- * Sanitizes and validates req.body, req.query, and req.params.
+ * Reusable Zod Request Validation Middleware.
+ * Validates req.body, req.query, and req.params before passing execution to controller.
  */
 export const validate = (schema) => (req, res, next) => {
   try {
-    schema.parse({
-      body: req.body,
-      query: req.query,
-      params: req.params,
-    });
+    if (schema.body) {
+      req.body = schema.body.parse(req.body);
+    }
+    if (schema.query) {
+      req.query = schema.query.parse(req.query);
+    }
+    if (schema.params) {
+      req.params = schema.params.parse(req.params);
+    }
     next();
   } catch (error) {
-    if (error instanceof ZodError) {
-      const formattedErrors = error.errors.map((err) => ({
-        field: err.path.join('.').replace(/^(body|query|params)\./, ''),
-        message: err.message,
-      }));
-
+    if (error instanceof z.ZodError) {
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
-        errors: formattedErrors,
+        message: 'Validation failed before reaching controller',
+        errors: error.errors.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        })),
       });
     }
-
-    next(error);
+    return res.status(400).json({
+      success: false,
+      message: error.message || 'Invalid request payload',
+    });
   }
 };

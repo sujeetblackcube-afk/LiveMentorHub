@@ -1,60 +1,66 @@
 import pkg from 'sequelize';
 const { DataTypes } = pkg;
 import sequelize from '../config/db.config.js';
+import Teacher from './Teacher.js';
 
-const TeacherPayout = sequelize.define(
-  "TeacherPayout",
+const Payout = sequelize.define(
+  "Payout",
   {
-    id: {
+    payoutId: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
+      field: 'payout_id',
+    },
+    orderId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'order_id',
     },
     teacherId: {
       type: DataTypes.STRING,
       allowNull: false,
-    },
-    teacherName: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      references: {
+        model: Teacher,
+        key: 'teacher_id',
+      },
+      field: 'teacher_id',
     },
     amount: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.FLOAT,
       allowNull: false,
+      field: 'amount',
     },
     status: {
-      type: DataTypes.ENUM("pending", "processing", "paid", "failed"),
+      type: DataTypes.ENUM("pending", "paid", "failed"),
       defaultValue: "pending",
+      field: 'status',
     },
-    paymentMethod: {
-      type: DataTypes.STRING,
-      allowNull: false,
+    payoutDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'payout_date',
     },
-    transactionId: {
+    utrNumber: {
       type: DataTypes.STRING,
       allowNull: true,
-    },
-    OrderId: {
-      type: DataTypes.STRING,
-      allowNull: true,
+      field: 'utr_number',
     },
     remarks: {
-      type: DataTypes.TEXT,
+      type: DataTypes.STRING,
       allowNull: true,
-    },
-    requestedAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    paidAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
+      field: 'remarks',
     },
   },
   {
-    tableName: "teacherpayouts",
+    tableName: "teacher_payouts",
     timestamps: true,
+    indexes: [
+      { fields: ['teacher_id'] },
+      { fields: ['status'] },
+      { fields: ['order_id'] },
+    ],
   }
 );
 
-export default TeacherPayout;
+export default Payout;

@@ -30,11 +30,11 @@ import {
 import {
   fetchAllTestsForStudent,
   submitTestByStudent,
-} from './tests/studentTestLegacy.controller.js';
+} from './tests/studentTest.controller.js';
 import {
   getStudentAssignments,
   submitAssignment,
-} from '../teacher/assignments/assignmentLegacy.controller.js';
+} from '../teacher/assignments/teacherAssignment.controller.js';
 import {
   getEnrollmentsByStudentId,
   createCashfreeOrder,

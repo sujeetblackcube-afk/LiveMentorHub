@@ -1,53 +1,62 @@
 import pkg from 'sequelize';
 const { DataTypes } = pkg;
 import sequelize from '../config/db.config.js';
+import { StudentSupportTicket } from './Student.js';
+import { TeacherSupportTicket } from './Teacher.js';
+import { ParentSupportTicket } from './Parent.js';
 
-const ContactUs = sequelize.define('ContactUs', {
+// Pre-login Guest Support Inquiries Model
+const GuestSupportTicket = sequelize.define('GuestSupportTicket', {
   id: {
     type: DataTypes.INTEGER,
-    primaryKey: true,
     autoIncrement: true,
-    allowNull: false
+    primaryKey: true,
+    field: 'id',
   },
   name: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    field: 'name',
   },
   email: {
     type: DataTypes.STRING,
     allowNull: false,
-    validate: {
-      isEmail: true
-    }
+    field: 'email',
   },
-  phone: {
+  mobile: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true,
+    field: 'mobile',
   },
   subject: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    field: 'subject',
   },
   message: {
     type: DataTypes.TEXT,
-    allowNull: false
+    allowNull: false,
+    field: 'message',
   },
   status: {
-    type: DataTypes.ENUM('PENDING', 'REPLIED', 'CLOSED'),
+    type: DataTypes.ENUM('PENDING', 'RESOLVED'),
     defaultValue: 'PENDING',
-    allowNull: false
-  },
-  role: {
-    type: DataTypes.ENUM('student', 'teacher', 'parent'),
-    allowNull: true
-  },
-  specificId: {
-    type: DataTypes.STRING,
-    allowNull: true,
+    field: 'status',
   }
 }, {
-  tableName: 'contact_us',
-  timestamps: true
+  tableName: 'guest_support_tickets',
+  timestamps: true,
+  indexes: [
+    { fields: ['email'] },
+    { fields: ['status'] }
+  ]
 });
 
-export default ContactUs;
+export {
+  GuestSupportTicket,
+  StudentSupportTicket,
+  TeacherSupportTicket,
+  ParentSupportTicket
+};
+
+export default GuestSupportTicket;

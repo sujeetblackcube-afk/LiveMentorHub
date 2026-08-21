@@ -4,7 +4,7 @@ import Parent from '../../../models/Parent.js';
 import pkg from 'sequelize';
 const { Op } = pkg;
 import Assignment from '../../../models/Assignment.js';
-import SubscriptionBuyed from '../../../models/SubscriptionBuyed.js';
+import { TeacherSubscription as SubscriptionBuyed } from '../../../models/index.js';
 import Teacher from '../../../models/Teacher.js';
 import Livesession from '../../../models/Livesession.js';
 import { getStudentProgress } from '../../../modules/student/student.controller.js';

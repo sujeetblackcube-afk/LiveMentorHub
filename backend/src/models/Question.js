@@ -6,73 +6,90 @@ const Question = sequelize.define('Question', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
-    autoIncrement: true
+    autoIncrement: true,
+    field: 'id',
   },
 
   teacherId: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    field: 'teacher_id',
   },
   questionText: {
     type: DataTypes.TEXT,
-    allowNull: false
+    allowNull: false,
+    field: 'question_text',
   },
 
-  // 👇 Question Type
   questionType: {
     type: DataTypes.ENUM('MCQ', 'TEXT'),
-    allowNull: false
+    allowNull: false,
+    field: 'question_type',
   },
 
-  // 👇 MCQ Fields (nullable for TEXT type)
   optionA: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true,
+    field: 'option_a',
   },
 
   optionB: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true,
+    field: 'option_b',
   },
 
   optionC: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true,
+    field: 'option_c',
   },
 
   optionD: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true,
+    field: 'option_d',
   },
 
   correctAnswer: {
     type: DataTypes.ENUM('optionA', 'optionB', 'optionC', 'optionD'),
-    allowNull: true
+    allowNull: true,
+    field: 'correct_answer',
   },
 
-  // 👇 For TEXT type question
   answerText: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: true,
+    field: 'answer_text',
   },
 
   difficultyLevel: {
     type: DataTypes.ENUM('easy', 'medium', 'hard'),
-    defaultValue: 'easy'
+    defaultValue: 'easy',
+    field: 'difficulty_level',
   },
 
   marks: {
     type: DataTypes.INTEGER,
-    defaultValue: 1
+    defaultValue: 1,
+    field: 'marks',
   },
 
   isActive: {
     type: DataTypes.BOOLEAN,
-    defaultValue: true
+    defaultValue: true,
+    field: 'is_active',
   }
 
 }, {
-  timestamps: true
+  tableName: 'questions',
+  timestamps: true,
+  indexes: [
+    { fields: ['teacher_id'] },
+    { fields: ['question_type'] },
+    { fields: ['difficulty_level'] },
+    { fields: ['is_active'] }
+  ]
 });
 
 export default Question;

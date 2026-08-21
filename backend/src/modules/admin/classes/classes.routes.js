@@ -1,13 +1,5 @@
-/**
- * Admin Class Management Routes
- * Manages course classes and hierarchy
- * Consolidates class and subject management
- * Public endpoints: /api/classes, /api/subjects
- */
-
 import express from "express";
-import { createClass, getAllClasses, updateClassStatus, editClass, deleteClass, getSubjectsByClass } from '../../../modules/admin/classes/classLegacy.controller.js';
-import {createSubject, getAllSubjects, getSubjectById, updateSubject, deleteSubject, updateSubjectStatus } from '../../../modules/admin/subjects/subject.controller.js';
+import { createClass, getAllClasses, updateClassStatus, editClass, deleteClass, getSubjectsByClass } from './class.controller.js';
 import authMiddleware from '../../../middleware/auth.middleware.js';
 
 const router = express.Router();
