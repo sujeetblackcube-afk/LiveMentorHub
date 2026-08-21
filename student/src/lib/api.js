@@ -99,6 +99,7 @@ export const ENROLLMENT_PATHS = {
   getEnrollmentsByStudent: (studentId, page = 1, limit = 10) =>
     `/api/student/enrollments/student/${studentId}?page=${page}&limit=${limit}`,
   createCashfreeOrder: "/api/student/enrollments/create-cashfree-order",
+  verifyCashfreeOrder: (orderId) => `/api/student/enrollments/verify-cashfree-order/${orderId}`,
 };
 
 export const NOTIFICATION_PATHS = {
