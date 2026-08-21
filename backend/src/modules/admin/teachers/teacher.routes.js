@@ -50,6 +50,7 @@ router.patch('/:teacherId/status', updateTeacherStatus);
  * Allocate courses to teacher
  */
 router.patch('/:teacherId/courses', updateCoursename);
+router.patch('/:teacherId/course', updateCoursename);
 
 /**
  * DELETE /api/admin/teachers/:teacherId

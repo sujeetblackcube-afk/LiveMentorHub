@@ -106,7 +106,7 @@ export const updateTeacherStatus = async (teacherId, status) => {
 };
 
 export const updateTeacherCourse = async (teacherId, coursename) => {
-  return fetch(`${BASE_URL}/admin/teachers/${teacherId}/course`, {
+  return fetch(`${BASE_URL}/admin/teachers/${teacherId}/courses`, {
     method: "PATCH",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ coursename }),
