@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import { apiCall } from "@/lib/apiCall";
-import { ENROLLMENT_PATHS } from "@/lib/api";
+import { API_BASE, ENROLLMENT_PATHS } from "@/lib/api";
 import { toast } from "react-toastify";
 
 export default function CheckoutSuccessPage() {
@@ -26,7 +25,15 @@ export default function CheckoutSuccessPage() {
       }
 
       try {
-        const res = await apiCall(ENROLLMENT_PATHS.verifyCashfreeOrder(orderId), "POST");
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_BASE}${ENROLLMENT_PATHS.verifyCashfreeOrder(orderId)}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }).then((r) => r.json());
+
         if (isMounted) {
           if (res?.success) {
             setSuccess(true);
