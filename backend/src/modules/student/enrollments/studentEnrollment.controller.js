@@ -268,7 +268,7 @@ export const createCashfreeOrder = async (req, res) => {
         customer_name: student.name || "Student"
       },
       order_meta: {
-        return_url: `${normalizedReturnUrl}checkout-success?order_id={cfOrderId}`,
+        return_url: `${normalizedReturnUrl}checkout-success?order_id={order_id}`,
       },
       order_tags: {
         studentId: String(studentId),
@@ -1424,5 +1424,63 @@ export const updateExpiredEnrollments = async () => {
   } catch (error) {
     console.error("[Cron] Error updating expired enrollments:", error);
     throw error;
+  }
+};
+
+// Verify Cashfree Enrollment Order by orderId (Instant verification on return URL / redirect)
+export const verifyEnrollmentCashfreeOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    if (!orderId || orderId === '{cfOrderId}' || orderId === '{order_id}') {
+      return res.status(200).json({
+        success: false,
+        message: "No valid order ID provided",
+        order_status: "CANCELLED"
+      });
+    }
+
+    const client = createCashfreeClient();
+    const response = await client.PGFetchOrder(orderId);
+    const order = response.data;
+
+    if (!order || order.order_status !== "PAID") {
+      await Enrollment.update(
+        { status: "REJECTED", paymentStatus: "FAILED" },
+        { where: { enrollmentCode: orderId, paymentStatus: "UNPAID" } }
+      );
+
+      const isCancelled = order?.order_status === "USER_DROPPED" || order?.order_status === "CANCELLED";
+      return res.status(200).json({
+        success: false,
+        message: isCancelled ? "Payment was cancelled by user" : `Payment status: ${order?.order_status || "NOT PAID"}`,
+        order_status: order?.order_status || "CANCELLED",
+      });
+    }
+
+    await Enrollment.update(
+      {
+        status: "APPROVED",
+        paymentStatus: "PAID",
+        transactionNumber: orderId,
+        paymentDate: new Date(),
+      },
+      { where: { enrollmentCode: orderId } }
+    );
+
+    const enrollment = await Enrollment.findOne({ where: { enrollmentCode: orderId } });
+
+    return res.status(200).json({
+      success: true,
+      message: "Enrollment verified and activated successfully!",
+      data: enrollment,
+    });
+  } catch (error) {
+    console.error("Verify Cashfree enrollment order error:", error);
+    return res.status(200).json({
+      success: false,
+      message: error.message || "Failed to verify payment status",
+      order_status: "CANCELLED"
+    });
   }
 };

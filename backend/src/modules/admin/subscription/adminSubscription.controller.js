@@ -622,11 +622,11 @@ export const verifySubscriptionCashfreeOrder = async (req, res) => {
     const order = response.data;
 
     if (!order || order.order_status !== "PAID") {
-      console
-      return res.status(400).json({
+      const isCancelled = order?.order_status === "USER_DROPPED" || order?.order_status === "CANCELLED";
+      return res.status(200).json({
         success: false,
-        message: `Order status is ${order?.order_status || "NOT PAID"}`,
-        order_status: order?.order_status || "PENDING",
+        message: isCancelled ? "Payment was cancelled by user" : `Order status is ${order?.order_status || "NOT PAID"}`,
+        order_status: order?.order_status || "CANCELLED",
       });
     }
 

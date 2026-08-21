@@ -1,6 +1,6 @@
 import "./management.css";
 import { useState, useEffect, useRef } from "react";
-import { Bold, Italic, Underline, Heading1, Heading2, List, Link, Smile } from "lucide-react";
+import { Bold, Italic, Underline, Heading1, Heading2, List, Smile } from "lucide-react";
 import { toast } from "react-toastify";
 import { theme } from "../../theme";
 import { getContentByKey, createOrUpdateContent } from "../../services/api";
@@ -30,20 +30,38 @@ export default function ManageContent() {
 
   // Fetch content when tab changes
   useEffect(() => {
+    let isMounted = true;
     const fetchContent = async () => {
       setLoading(true);
       try {
         const key = getCurrentTabKey();
         const response = await getContentByKey(key);
-        const htmlContent = response.data?.description || "";
-        setContent(htmlContent);
-        if (editorRef.current) {
-          editorRef.current.innerHTML = htmlContent;
+        const htmlContent = response?.data?.description || "";
+        if (isMounted) {
+          setContent(htmlContent);
+          if (editorRef.current) {
+            editorRef.current.innerHTML = htmlContent;
+          }
         }
-      } catch (error) {}
+      } catch (error) {
+        console.error("Error fetching content:", error);
+        if (isMounted) {
+          setContent("");
+          if (editorRef.current) {
+            editorRef.current.innerHTML = "";
+          }
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     };
 
     fetchContent();
+    return () => {
+      isMounted = false;
+    };
   }, [activeTab]);
 
   // Handle toolbar actions
@@ -66,14 +84,19 @@ export default function ManageContent() {
     setSaving(true);
     try {
       const key = getCurrentTabKey();
+      const editorHtml = editorRef.current ? editorRef.current.innerHTML : content;
       await createOrUpdateContent({
         key,
-        description: content,
+        description: editorHtml,
         title: activeTab,
         status: "active"
       });
-      toast.success("Content saved successfully!");
-    } catch (error) {} finally {
+      setContent(editorHtml);
+      toast.success(`${activeTab} content saved successfully!`);
+    } catch (error) {
+      console.error("Error saving content:", error);
+      toast.error(error.message || "Failed to save content");
+    } finally {
       setSaving(false);
     }
   };
@@ -122,7 +145,7 @@ export default function ManageContent() {
             {activeTab}
           </h2>
 
-          {/* Rich text editor placeholder */}
+          {/* Rich text editor container */}
           <div className="border rounded-lg" style={{ borderColor: theme.colors.border }}>
             {/* Toolbar */}
             <div className="flex flex-wrap gap-2 p-3 border-b bg-gray-50" style={{ borderColor: theme.colors.border }}>
@@ -137,6 +160,7 @@ export default function ManageContent() {
               ].map(({ icon: Icon, label, command, value }) => (
                 <button
                   key={label}
+                  type="button"
                   onClick={() => handleToolbarAction(command, value)}
                   className="px-2 py-1 text-sm rounded hover:bg-white border border-transparent hover:border-gray-300 transition-colors"
                   title={label}
@@ -150,10 +174,10 @@ export default function ManageContent() {
             <div
               ref={editorRef}
               contentEditable={!loading}
-              className="w-full p-4 text-sm focus:outline-none rounded-b-lg min-h-[200px]"
+              suppressContentEditableWarning={true}
+              className="w-full p-4 text-sm focus:outline-none rounded-b-lg min-h-[250px]"
               style={{ color: theme.colors.textPrimary }}
               onInput={handleEditorInput}
-              data-placeholder="Write your content here..."
             />
             {loading && (
               <div className="text-center py-4 text-sm text-gray-500">
@@ -166,7 +190,7 @@ export default function ManageContent() {
           <div className="flex justify-end mt-6">
             <button
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || loading}
               className="px-6 py-2 text-white rounded-lg font-medium transition hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: theme.colors.primary }}
             >

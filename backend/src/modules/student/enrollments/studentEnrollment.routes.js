@@ -26,6 +26,7 @@ import {
   getEnrollmentsByTeacherId,
   getEnrollmentsByCourseCode,
   createCashfreeOrder,
+  verifyEnrollmentCashfreeOrder,
   getEnrollmentsByStudentId,
   cashfreeWebhook,
 } from '../../../modules/student/enrollments/studentEnrollment.controller.js';
@@ -36,8 +37,9 @@ const router = express.Router();
 router.post('/cashfree-webhook', cashfreeWebhook);
 router.post('/webhook', cashfreeWebhook);
 
-// Cashfree Create Order Route (for students to purchase courses)
+// Cashfree Order Routes
 router.post('/create-cashfree-order', authMiddleware, createCashfreeOrder);
+router.all('/verify-cashfree-order/:orderId', verifyEnrollmentCashfreeOrder);
 
 // Apply auth middleware to all other routes
 router.use(authMiddleware);

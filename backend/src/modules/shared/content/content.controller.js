@@ -17,12 +17,22 @@ export const getAllContent = async (req, res) => {
 export const getContentByKey = async (req, res) => {
   try {
     const { key } = req.params;
-    const content = await Content.findOne({
+    let content = await Content.findOne({
       where: { key }
     });
 
     if (!content) {
-      return res.status(404).json({ status: false, error: 'Content not found' });
+      return res.status(200).json({
+        status: true,
+        data: {
+          key,
+          title: key,
+          description: '',
+          liveurl: '',
+          status: 'active',
+          order: 0
+        }
+      });
     }
 
     res.json({ status: true, data: content });
@@ -36,28 +46,40 @@ export const getContentByKey = async (req, res) => {
 export const createOrUpdateContent = async (req, res) => {
   try {
     const { key, title, description, status, order } = req.body;
-    const liveurl = `content/content/`;
 
-    const [content, created] = await Content.upsert({
-      key,
-      title: title || null,
-      description,
-      liveurl,
-      status: status || 'active',
-      order: order || 0,
-    });
+    let existingContent = await Content.findOne({ where: { key } });
 
-    if (created) {
-      // Update the liveurl with the actual id after creation
-      await Content.update({ liveurl: `content/content/${content.id}` }, { where: { id: content.id } });
-      content.liveurl = `content/content/${content.id}`;
+    if (existingContent) {
+      await existingContent.update({
+        title: title || existingContent.title,
+        description: description !== undefined ? description : existingContent.description,
+        status: status || existingContent.status,
+        order: order !== undefined ? order : existingContent.order
+      });
+
+      return res.status(200).json({
+        status: true,
+        message: 'Content updated successfully',
+        data: existingContent
+      });
+    } else {
+      const newContent = await Content.create({
+        key,
+        title: title || key,
+        description: description || '',
+        liveurl: 'content/content/',
+        status: status || 'active',
+        order: order || 0
+      });
+
+      await newContent.update({ liveurl: `content/content/${newContent.id}` });
+
+      return res.status(201).json({
+        status: true,
+        message: 'Content created successfully',
+        data: newContent
+      });
     }
-
-    res.status(created ? 201 : 200).json({
-      status: true,
-      message: created ? 'Content created successfully' : 'Content updated successfully',
-      data: content
-    });
   } catch (error) {
     console.error('Error creating/updating content:', error);
     res.status(500).json({ status: false, error: 'Failed to save content' });

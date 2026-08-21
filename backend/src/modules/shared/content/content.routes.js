@@ -14,33 +14,17 @@ import authMiddleware from '../../../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-router.use(authMiddleware);
-
-// Get all content
+// Public GET routes (accessible by students, teachers, guests, and admin without blocking)
 router.get('/', getAllContent);
-
-// Get content by key
 router.get('/key/:key', getContentByKey);
-
-// Create or update content by key
-router.post('/key', createOrUpdateContent);
-// View content as HTML by id
 router.get("/content/:id", viewContentHTML);
 
-
-// Update content by key
-router.put('/key/:key', updateContentByKey);
-
-// Delete content by key
-router.delete('/key/:key', deleteContentByKey);
-
-// Get content by ID
-router.get('/:id', getContentById);
-
-// Update content by ID
-router.put('/:id', updateContentById);
-
-// Delete content by ID
-router.delete('/:id', deleteContentById);
+// Protected mutation routes (require authenticated admin token)
+router.post('/key', authMiddleware, createOrUpdateContent);
+router.put('/key/:key', authMiddleware, updateContentByKey);
+router.delete('/key/:key', authMiddleware, deleteContentByKey);
+router.get('/:id', authMiddleware, getContentById);
+router.put('/:id', authMiddleware, updateContentById);
+router.delete('/:id', authMiddleware, deleteContentById);
 
 export default router;

@@ -18,8 +18,7 @@ export default function CheckoutSuccess() {
     let isMounted = true;
 
     const verify = async () => {
-      if (!orderId) {
-        // If no orderId, just redirect to subscription
+      if (!orderId || orderId === "{order_id}") {
         navigate("/subscription", { replace: true });
         return;
       }
@@ -31,19 +30,17 @@ export default function CheckoutSuccess() {
             setSuccess(true);
             toast.success("Subscription Activated Successfully!");
             setTimeout(() => {
-              // Reload page or navigate to dashboard so gate checks new active subscription
               window.location.href = "/teacher/dashboard";
             }, 2000);
           } else {
-            setErrorMessage(res?.message || "Payment verification failed.");
-            toast.error(res?.message || "Payment verification failed.");
+            setSuccess(false);
+            setErrorMessage(res?.message || "Payment was cancelled or failed.");
           }
         }
       } catch (err) {
-
         if (isMounted) {
-          setErrorMessage(err.message || "Failed to verify payment");
-          toast.error("Failed to verify payment");
+          setSuccess(false);
+          setErrorMessage(err.message || "Payment was cancelled or failed.");
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -84,11 +81,13 @@ export default function CheckoutSuccess() {
           </div>
         ) : (
           <div className="flex flex-col items-center py-6">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-4">
+            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mb-4">
               <AlertCircle size={40} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Verification Issue</h2>
-            <p className="text-sm text-gray-600 mt-2">{errorMessage}</p>
+            <h2 className="text-xl font-bold text-gray-900">Payment Cancelled</h2>
+            <p className="text-sm text-gray-600 mt-2">
+              {errorMessage || "You cancelled the checkout process. No charges were made."}
+            </p>
             <button
               onClick={() => navigate("/subscription", { replace: true })}
               className="mt-6 px-6 py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-medium rounded-xl text-sm transition-all"
