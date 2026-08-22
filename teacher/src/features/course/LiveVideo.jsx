@@ -3,18 +3,72 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import AgoraRTC from 'agora-rtc-sdk-ng';
 import { toast } from 'react-toastify';
 import Pagination from "../../components/Pagination";
-import { Users, Video, VideoOff, Mic, MicOff, MessageCircle, Monitor, X } from 'lucide-react';
+import { Users, Video, VideoOff, Mic, MicOff, MessageCircle, Monitor, X, GripHorizontal } from 'lucide-react';
+
+// Child component for rendering individual student tile cleanly via React refs
+const StudentVideoTile = ({ participant, studentName, onClearHand }) => {
+  const videoContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (participant.hasVideo && participant.videoTrack && videoContainerRef.current) {
+      try {
+        participant.videoTrack.play(videoContainerRef.current, { fit: 'contain' });
+      } catch (e) {
+        console.error("Error playing student video track:", e);
+      }
+    }
+  }, [participant.hasVideo, participant.videoTrack]);
+
+  const displayName = studentName || participant.name || 'Student';
+
+  return (
+    <div className="relative w-full h-full bg-gray-800 rounded-xl overflow-hidden border border-white/10 shadow-lg group flex items-center justify-center">
+      {participant.hasVideo && participant.videoTrack ? (
+        <div ref={videoContainerRef} className="w-full h-full object-contain" />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 p-4 text-center">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold mb-2 shadow-lg">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+          <p className="text-white text-sm font-semibold truncate max-w-[150px]">{displayName}</p>
+          <p className="text-white/40 text-xs mt-1">Camera Off</p>
+        </div>
+      )}
+
+      {/* Name and mic status badge at top-left */}
+      <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-md text-white text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5 z-10 border border-white/10">
+        {participant.hasAudio ? (
+          <Mic className="w-3.5 h-3.5 text-green-400" />
+        ) : (
+          <MicOff className="w-3.5 h-3.5 text-red-400" />
+        )}
+        <span className="font-semibold truncate max-w-[120px]">{displayName}</span>
+      </div>
+
+      {/* Hand raise indicator at top-right */}
+      {participant.isHandRaised && (
+        <button
+          onClick={() => onClearHand(participant.uid)}
+          className="absolute top-2 right-2 bg-yellow-500 hover:bg-yellow-600 text-white p-1.5 rounded-full animate-bounce shadow-lg z-10 text-base cursor-pointer"
+          title="Student raised hand! Click to dismiss"
+        >
+          ✋
+        </button>
+      )}
+    </div>
+  );
+};
 
 const LiveVideo = ({ session, onClose }) => {
   const localVideoRef = useRef(null);
-  const remoteContainerRef = useRef(null);
-
   const clientRef = useRef(null);
   const tracksRef = useRef([]);
+  const screenTrackRef = useRef(null);
+  const dataStreamIdRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [remoteUsersCount, setRemoteUsersCount] = useState(0);
-  const [remoteUsers, setRemoteUsers] = useState([]);
+  const [remoteParticipants, setRemoteParticipants] = useState([]);
+  const [studentNames, setStudentNames] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -22,55 +76,110 @@ const LiveVideo = ({ session, onClose }) => {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
-  const screenTrackRef = useRef(null);
 
-  // Store student names by uid received via Agora stream messages: { [uid]: string }
-  const [studentNames, setStudentNames] = useState({});
+  // Draggable PIP Window State
+  const [pipPos, setPipPos] = useState({ 
+    x: typeof window !== 'undefined' ? Math.max(10, window.innerWidth - 310) : 20, 
+    y: 80 
+  });
+  const [isDraggingPip, setIsDraggingPip] = useState(false);
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
 
-  const STUDENTS_PER_PAGE = 4;
+  // 16 students per page to support up to 4x4 grid view
+  const STUDENTS_PER_PAGE = 16;
 
-  // Helper to format sender name (e.g. convert praveen2026071708511169 to Praveen)
   const formatSenderName = (sender) => {
     if (!sender) return 'Student';
     if (sender === 'You' || sender === 'Teacher' || sender.startsWith('You (')) return sender;
-    
     const match = sender.match(/^([a-zA-Z\s]+)\d{10,}$/);
     if (match && match[1]) {
       const rawName = match[1];
       return rawName.charAt(0).toUpperCase() + rawName.slice(1);
     }
-    
     return sender;
   };
 
-  // Improved grid layout function for better visual arrangement
   const getGridStyle = (count) => {
-    if (count === 0) return { gridTemplateColumns: '1fr', gridTemplateRows: '1fr' };
-    
-    if (count === 1) {
-      return { gridTemplateColumns: '1fr', gridTemplateRows: '1fr' };
-    }
-    if (count === 2) {
-      return { gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: '1fr' };
-    }
-    if (count === 3) {
-      return { gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '1fr' };
-    }
-    if (count === 4) {
-      return { gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 1fr)' };
-    }
-    
-    return { gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 1fr)' };
+    if (count <= 1) return { gridTemplateColumns: '1fr', gridTemplateRows: '1fr' };
+    if (count === 2) return { gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: '1fr' };
+    if (count <= 4) return { gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 1fr)' };
+    if (count <= 9) return { gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)' };
+    return { gridTemplateColumns: 'repeat(4, 1fr)', gridTemplateRows: 'repeat(4, 1fr)' };
   };
 
-  const totalPages = Math.ceil(remoteUsersCount / STUDENTS_PER_PAGE);
+  const remoteUsersCount = remoteParticipants.length;
+  const totalPages = Math.max(1, Math.ceil(remoteUsersCount / STUDENTS_PER_PAGE));
   const startIndex = (currentPage - 1) * STUDENTS_PER_PAGE;
   const endIndex = startIndex + STUDENTS_PER_PAGE;
-  
-  const currentPageUsers = remoteUsers.slice(startIndex, endIndex);
-  const currentPageUsersCount = currentPageUsers.length;
-  
-  const gridStyle = getGridStyle(currentPageUsersCount);
+  const currentPageParticipants = remoteParticipants.slice(startIndex, endIndex);
+  const gridStyle = getGridStyle(currentPageParticipants.length);
+
+  // Handle Dragging PIP Window
+  const handlePipMouseDown = (e) => {
+    if (e.button !== 0) return;
+    setIsDraggingPip(true);
+    dragOffsetRef.current = {
+      x: e.clientX - pipPos.x,
+      y: e.clientY - pipPos.y,
+    };
+  };
+
+  const handlePipTouchStart = (e) => {
+    if (e.touches.length !== 1) return;
+    setIsDraggingPip(true);
+    dragOffsetRef.current = {
+      x: e.touches[0].clientX - pipPos.x,
+      y: e.touches[0].clientY - pipPos.y,
+    };
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDraggingPip) return;
+      let newX = e.clientX - dragOffsetRef.current.x;
+      let newY = e.clientY - dragOffsetRef.current.y;
+
+      const maxX = Math.max(10, window.innerWidth - 300);
+      const maxY = Math.max(10, window.innerHeight - 240);
+
+      newX = Math.max(10, Math.min(newX, maxX));
+      newY = Math.max(10, Math.min(newY, maxY));
+
+      setPipPos({ x: newX, y: newY });
+    };
+
+    const handleTouchMove = (e) => {
+      if (!isDraggingPip || e.touches.length !== 1) return;
+      let newX = e.touches[0].clientX - dragOffsetRef.current.x;
+      let newY = e.touches[0].clientY - dragOffsetRef.current.y;
+
+      const maxX = Math.max(10, window.innerWidth - 300);
+      const maxY = Math.max(10, window.innerHeight - 240);
+
+      newX = Math.max(10, Math.min(newX, maxX));
+      newY = Math.max(10, Math.min(newY, maxY));
+
+      setPipPos({ x: newX, y: newY });
+    };
+
+    const handleDragEnd = () => {
+      if (isDraggingPip) setIsDraggingPip(false);
+    };
+
+    if (isDraggingPip) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleDragEnd);
+      window.addEventListener('touchmove', handleTouchMove);
+      window.addEventListener('touchend', handleDragEnd);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleDragEnd);
+    };
+  }, [isDraggingPip]);
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
@@ -78,65 +187,33 @@ const LiveVideo = ({ session, onClose }) => {
     }
   }, [remoteUsersCount, totalPages, currentPage]);
 
-  const renderRemoteVideo = useCallback((remoteUser, container) => {
-    if (remoteUser.videoTrack) {
-      remoteUser.videoTrack.play(container, { fit: 'cover' });
+  const clearHandRaise = useCallback((uid) => {
+    setRemoteParticipants(prev =>
+      prev.map(p => (String(p.uid) === String(uid) ? { ...p, isHandRaised: false } : p))
+    );
+  }, []);
+
+  const sendStreamMsg = useCallback(async (dataObj) => {
+    if (!clientRef.current || clientRef.current.connectionState !== 'CONNECTED') return;
+    try {
+      const jsonStr = JSON.stringify(dataObj);
+      const encoded = new TextEncoder().encode(jsonStr);
+      if (dataStreamIdRef.current !== null) {
+        await clientRef.current.sendStreamMessage(dataStreamIdRef.current, encoded);
+      } else {
+        await clientRef.current.sendStreamMessage(encoded);
+      }
+    } catch (err) {
+      try {
+        const encoded = new TextEncoder().encode(JSON.stringify(dataObj));
+        await clientRef.current.sendStreamMessage(encoded);
+      } catch (e) {}
     }
   }, []);
 
-  const renderCurrentPageUsers = useCallback(() => {
-    if (!remoteContainerRef.current) return;
-    
-    remoteContainerRef.current.innerHTML = '';
-    
-    const usersToRender = remoteUsers.slice(startIndex, endIndex);
-    
-    usersToRender.forEach((remoteUser) => {
-      if (remoteUser.videoTrack) {
-        const remoteDiv = document.createElement('div');
-        remoteDiv.id = `remote-${remoteUser.uid}`;
-        remoteDiv.className = 'relative w-full h-full bg-gray-800 rounded-lg overflow-hidden';
-        
-        // Name overlay at top-left
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'absolute top-2 left-2 bg-black bg-opacity-60 text-white text-sm px-2 py-1 rounded flex items-center gap-1 z-10';
-        const studentName = studentNames[remoteUser.uid] || 'Student';
-        infoDiv.innerHTML = `<span class="font-semibold">${studentName}</span>`;
-        remoteDiv.appendChild(infoDiv);
-
-        if (remoteContainerRef.current) {
-          remoteContainerRef.current.appendChild(remoteDiv);
-        }
-
-        setTimeout(() => {
-          if (remoteUser.videoTrack && remoteDiv) {
-            renderRemoteVideo(remoteUser, remoteDiv);
-          }
-        }, 100);
-      }
-    });
-  }, [remoteUsers, startIndex, endIndex, renderRemoteVideo, studentNames]);
-
-  useEffect(() => {
-    if (remoteUsersCount > 0) {
-      renderCurrentPageUsers();
-    }
-  }, [currentPage, renderCurrentPageUsers, remoteUsersCount]);
-
-  // Re-render when student names update
-  useEffect(() => {
-    if (remoteUsersCount > 0) {
-      renderCurrentPageUsers();
-    }
-  }, [studentNames, remoteUsersCount, currentPage, renderCurrentPageUsers]);
-
   useEffect(() => {
     if (!session) return;
-
     let mounted = true;
-    let userPublishedHandler = null;
-    let userUnpublishedHandler = null;
-    let userLeftHandler = null;
 
     const initAgora = async () => {
       try {
@@ -149,145 +226,163 @@ const LiveVideo = ({ session, onClose }) => {
 
         clientRef.current = client;
 
-        userPublishedHandler = async (remoteUser, mediaType) => {
+        const userJoinedHandler = (remoteUser) => {
+          if (!mounted) return;
+          const uidStr = String(remoteUser.uid);
+          toast.info('A student joined the session');
+
+          setRemoteParticipants(prev => {
+            const exists = prev.some(p => String(p.uid) === uidStr);
+            if (exists) return prev;
+            return [
+              ...prev,
+              {
+                uid: remoteUser.uid,
+                name: studentNames[uidStr] || 'Student',
+                hasVideo: false,
+                hasAudio: false,
+                videoTrack: null,
+                audioTrack: null,
+                isHandRaised: false,
+              },
+            ];
+          });
+        };
+
+        const userPublishedHandler = async (remoteUser, mediaType) => {
           if (!mounted) return;
           try {
             await client.subscribe(remoteUser, mediaType);
             if (!mounted) return;
 
-            if (mediaType === 'video') {
-              const newCount = client.remoteUsers.length;
-              setRemoteUsersCount(newCount);
-              toast.info('A student joined the session');
-              
-              setRemoteUsers(prev => {
-                const exists = prev.some(u => u.uid === remoteUser.uid);
-                if (exists) return prev;
-                return [...prev, remoteUser];
-              });
+            const uidStr = String(remoteUser.uid);
 
-              const remoteDiv = document.createElement('div');
-              remoteDiv.id = `remote-${remoteUser.uid}`;
-              remoteDiv.className = 'relative w-full h-full bg-gray-800 rounded-lg overflow-hidden';
-              
-              // Name overlay at top-left
-              const infoDiv = document.createElement('div');
-              infoDiv.className = 'absolute top-2 left-2 bg-black bg-opacity-60 text-white text-sm px-2 py-1 rounded flex items-center gap-1 z-10';
-              const studentName = studentNames[remoteUser.uid] || 'Student';
-              infoDiv.innerHTML = `<span class="font-semibold">${studentName}</span>`;
-              remoteDiv.appendChild(infoDiv);
-
-              if (remoteContainerRef.current && mounted) {
-                remoteContainerRef.current.appendChild(remoteDiv);
+            setRemoteParticipants(prev => {
+              const exists = prev.some(p => String(p.uid) === uidStr);
+              if (exists) {
+                return prev.map(p => {
+                  if (String(p.uid) === uidStr) {
+                    return {
+                      ...p,
+                      hasVideo: mediaType === 'video' ? true : p.hasVideo,
+                      hasAudio: mediaType === 'audio' ? true : p.hasAudio,
+                      videoTrack: mediaType === 'video' ? remoteUser.videoTrack : p.videoTrack,
+                      audioTrack: mediaType === 'audio' ? remoteUser.audioTrack : p.audioTrack,
+                    };
+                  }
+                  return p;
+                });
+              } else {
+                return [
+                  ...prev,
+                  {
+                    uid: remoteUser.uid,
+                    name: studentNames[uidStr] || 'Student',
+                    hasVideo: mediaType === 'video',
+                    hasAudio: mediaType === 'audio',
+                    videoTrack: mediaType === 'video' ? remoteUser.videoTrack : null,
+                    audioTrack: mediaType === 'audio' ? remoteUser.audioTrack : null,
+                    isHandRaised: false,
+                  },
+                ];
               }
+            });
 
-              setTimeout(() => {
-                if (mounted && remoteUser.videoTrack) {
-                  remoteUser.videoTrack.play(remoteDiv, { fit: 'cover' });
-                }
-              }, 100);
-            }
-
-            if (mediaType === 'audio' && mounted) {
+            if (mediaType === 'audio' && mounted && remoteUser.audioTrack) {
               remoteUser.audioTrack.play();
             }
           } catch (error) {
-            if (mounted && !error.message?.includes('cancel token canceled') && !error.message?.includes('OPERATION_ABORTED')) {
-            }
+            console.error("Subscribe error:", error);
           }
         };
 
-        userUnpublishedHandler = (remoteUser, mediaType) => {
-          if (mediaType === 'video') {
-            const remoteDiv = document.getElementById(`remote-${remoteUser.uid}`);
-            if (remoteDiv) remoteDiv.remove();
+        const userUnpublishedHandler = (remoteUser, mediaType) => {
+          if (!mounted) return;
+          const uidStr = String(remoteUser.uid);
 
-            const newCount = Math.max(0, client.remoteUsers.length);
-            setRemoteUsersCount(newCount);
-            setRemoteUsers(prev => prev.filter(u => u.uid !== remoteUser.uid));
-          } else if (mediaType === 'audio') {
-            if (remoteUser.audioTrack) {
-              remoteUser.audioTrack.stop();
-            }
-          }
+          setRemoteParticipants(prev =>
+            prev.map(p => {
+              if (String(p.uid) === uidStr) {
+                if (mediaType === 'video') {
+                  return { ...p, hasVideo: false, videoTrack: null };
+                }
+                if (mediaType === 'audio') {
+                  if (p.audioTrack) p.audioTrack.stop();
+                  return { ...p, hasAudio: false, audioTrack: null };
+                }
+              }
+              return p;
+            })
+          );
         };
 
-        userLeftHandler = (remoteUser) => {
+        const userLeftHandler = (remoteUser) => {
+          if (!mounted) return;
+          const uidStr = String(remoteUser.uid);
           toast.info('A student left the session');
-          const remoteDiv = document.getElementById(`remote-${remoteUser.uid}`);
-          if (remoteDiv) remoteDiv.remove();
 
-          const newCount = Math.max(0, client.remoteUsers.length - 1);
-          setRemoteUsersCount(newCount);
-          
-          setRemoteUsers(prev => prev.filter(u => u.uid !== remoteUser.uid));
+          setRemoteParticipants(prev => prev.filter(p => String(p.uid) !== uidStr));
         };
 
-        // 🔥 STREAM MESSAGE - Receive messages, hand raises, and student info from students via Agora
-        client.on('stream-message', (remoteUser, message) => {
+        const streamMessageHandler = (remoteUser, message) => {
           if (!mounted) return;
           try {
+            const uidStr = String(remoteUser.uid);
             const text = new TextDecoder().decode(message);
             const msgData = JSON.parse(text);
-            
-            // Handle student name/info broadcasted via stream message
+
             if (msgData.type === 'student_info' && msgData.name) {
               setStudentNames(prev => ({
                 ...prev,
-                [remoteUser.uid]: msgData.name,
+                [uidStr]: msgData.name,
               }));
+              setRemoteParticipants(prev =>
+                prev.map(p => (String(p.uid) === uidStr ? { ...p, name: msgData.name } : p))
+              );
               return;
             }
 
             if (msgData.type === 'hand_raise') {
-              const remoteDiv = document.getElementById(`remote-${remoteUser.uid}`);
-              const handIconId = `hand-${remoteUser.uid}`;
-              const displayName = formatSenderName(msgData.studentName || msgData.sender || msgData.studentId || 'A student');
-              
+              const displayName = formatSenderName(msgData.studentName || msgData.name || 'A student');
               if (msgData.isRaised) {
                 toast.info(`${displayName} raised a hand!`);
-                
-                if (remoteDiv && !document.getElementById(handIconId)) {
-                  const handIcon = document.createElement('div');
-                  handIcon.id = handIconId;
-                  handIcon.className = 'absolute top-2 right-2 bg-blue-500 text-white p-1.5 rounded-full shadow-lg z-10 animate-bounce cursor-pointer text-xl';
-                  handIcon.innerHTML = '✋';
-                  handIcon.title = 'Click to acknowledge and remove';
-                  handIcon.onclick = () => handIcon.remove();
-                  
-                  remoteDiv.appendChild(handIcon);
-                }
-              } else {
-                const existingHand = document.getElementById(handIconId);
-                if (existingHand) {
-                  existingHand.remove();
-                }
               }
+              setRemoteParticipants(prev =>
+                prev.map(p => (String(p.uid) === uidStr ? { ...p, isHandRaised: Boolean(msgData.isRaised) } : p))
+              );
               return;
             }
 
-            // Add message to state
-            setMessages(prev => [...prev, { 
-              sender: formatSenderName(msgData.sender) || 'Student', 
-              text: msgData.text,
-              isLocal: false
-            }]);
+            if (msgData.type === 'chat' || msgData.text) {
+              setMessages(prev => [
+                ...prev,
+                {
+                  sender: formatSenderName(msgData.sender || msgData.name || 'Student'),
+                  text: msgData.text,
+                  isLocal: false,
+                },
+              ]);
+            }
           } catch (error) {
             try {
               const text = new TextDecoder().decode(message);
-              setMessages(prev => [...prev, { 
-                sender: 'Student', 
-                text: text,
-                isLocal: false
-              }]);
-            } catch (e) {
-            }
+              setMessages(prev => [
+                ...prev,
+                {
+                  sender: 'Student',
+                  text: text,
+                  isLocal: false,
+                },
+              ]);
+            } catch (e) {}
           }
-        });
+        };
 
+        client.on('user-joined', userJoinedHandler);
         client.on('user-published', userPublishedHandler);
         client.on('user-unpublished', userUnpublishedHandler);
         client.on('user-left', userLeftHandler);
+        client.on('stream-message', streamMessageHandler);
 
         if (!mounted) return;
         await client.join(
@@ -297,74 +392,67 @@ const LiveVideo = ({ session, onClose }) => {
           session.uid
         );
 
-        if (!mounted) return;
-        const existingUsers = client.remoteUsers;
-        setRemoteUsers(existingUsers);
-        setRemoteUsersCount(existingUsers.length);
-        
-        for (const remoteUser of existingUsers) {
-          if (!mounted) return;
-          await client.subscribe(remoteUser, 'video');
-          if (!mounted) return;
-          await client.subscribe(remoteUser, 'audio');
-
-          if (remoteUser.hasVideo) {
-            const remoteDiv = document.createElement('div');
-            remoteDiv.id = `remote-${remoteUser.uid}`;
-            remoteDiv.className = 'relative w-full h-full bg-gray-800 rounded-lg overflow-hidden';
-
-            // Name overlay at top-left
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'absolute top-2 left-2 bg-black bg-opacity-60 text-white text-sm px-2 py-1 rounded flex items-center gap-1 z-10';
-            const studentName = studentNames[remoteUser.uid] || 'Student';
-            infoDiv.innerHTML = `<span class="font-semibold">${studentName}</span>`;
-            remoteDiv.appendChild(infoDiv);
-
-            if (remoteContainerRef.current) {
-              remoteContainerRef.current.appendChild(remoteDiv);
-            }
-
-            setTimeout(() => {
-              if (remoteUser.videoTrack) {
-                remoteUser.videoTrack.play(remoteDiv, { fit: 'cover' });
-              }
-            }, 100);
-          }
-
-          if (remoteUser.hasAudio) {
-            remoteUser.audioTrack.play();
-          }
+        try {
+          dataStreamIdRef.current = await client.createDataStream({ syncWithAudio: false, ordered: true });
+        } catch (e) {
+          dataStreamIdRef.current = null;
         }
 
         if (!mounted) return;
-        await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
 
-        if (!mounted) return;
-        const [audioTrack, videoTrack] =
-          await AgoraRTC.createMicrophoneAndCameraTracks();
+        // Initialize any users already in channel
+        const existingUsers = client.remoteUsers || [];
+        const initialParticipants = [];
 
-        tracksRef.current = [audioTrack, videoTrack];
+        for (const remoteUser of existingUsers) {
+          if (!mounted) return;
+          try {
+            if (remoteUser.hasVideo) await client.subscribe(remoteUser, 'video');
+            if (remoteUser.hasAudio) await client.subscribe(remoteUser, 'audio');
+            if (remoteUser.hasAudio && remoteUser.audioTrack) {
+              remoteUser.audioTrack.play();
+            }
 
-        setTimeout(() => {
-          if (localVideoRef.current) {
-            videoTrack.play(localVideoRef.current, { fit: 'cover' });
-          }
-        }, 100);
+            initialParticipants.push({
+              uid: remoteUser.uid,
+              name: studentNames[String(remoteUser.uid)] || 'Student',
+              hasVideo: Boolean(remoteUser.hasVideo && remoteUser.videoTrack),
+              hasAudio: Boolean(remoteUser.hasAudio && remoteUser.audioTrack),
+              videoTrack: remoteUser.videoTrack || null,
+              audioTrack: remoteUser.audioTrack || null,
+              isHandRaised: false,
+            });
+          } catch (subErr) {}
+        }
 
-        if (!mounted) return;
-        await client.publish([audioTrack, videoTrack]);
+        if (mounted) {
+          setRemoteParticipants(initialParticipants);
+        }
+
+        // Create local camera and mic tracks for teacher
+        try {
+          if (!mounted) return;
+          const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+
+          tracksRef.current = [audioTrack, videoTrack];
+
+          setTimeout(() => {
+            if (mounted && localVideoRef.current && videoTrack) {
+              videoTrack.play(localVideoRef.current, { fit: 'cover' });
+            }
+          }, 100);
+
+          if (!mounted) return;
+          await client.publish([audioTrack, videoTrack]);
+        } catch (mediaError) {
+          console.warn("Teacher media tracks error:", mediaError);
+        }
 
         if (mounted) {
           setIsLoading(false);
           toast.success('Live streaming started!');
         }
       } catch (error) {
-        if (error.message && (error.message.includes('cancel token canceled') || error.message.includes('OPERATION_ABORTED'))) {
-          return;
-        }
         if (mounted) {
           toast.error('Failed to start live streaming');
           setIsLoading(false);
@@ -375,17 +463,18 @@ const LiveVideo = ({ session, onClose }) => {
     const handleBeforeUnload = () => {
       tracksRef.current.forEach((track) => {
         if (track) {
-          track.stop();
-          track.close();
+          try {
+            track.stop();
+            track.close();
+          } catch (e) {}
         }
       });
       if (clientRef.current) {
-        clientRef.current.leave();
+        clientRef.current.leave().catch(() => {});
       }
     };
     
     window.addEventListener('beforeunload', handleBeforeUnload);
-
     initAgora();
 
     return () => {
@@ -394,35 +483,51 @@ const LiveVideo = ({ session, onClose }) => {
 
       tracksRef.current.forEach((track) => {
         if (track) {
-          track.stop();
-          track.close();
+          try {
+            track.stop();
+            track.close();
+          } catch (e) {}
         }
       });
       tracksRef.current = [];
 
-      if (remoteContainerRef.current) {
-        remoteContainerRef.current.innerHTML = '';
+      if (screenTrackRef.current) {
+        try {
+          screenTrackRef.current.stop();
+          screenTrackRef.current.close();
+        } catch (e) {}
+        screenTrackRef.current = null;
       }
 
       if (clientRef.current) {
         clientRef.current.removeAllListeners();
-        clientRef.current.leave();
+        clientRef.current.leave().catch(() => {});
       }
 
-      setRemoteUsersCount(0);
-      setRemoteUsers([]);
+      setRemoteParticipants([]);
       setCurrentPage(1);
     };
-  }, [session, renderRemoteVideo, studentNames]);
+  }, [session]);
 
   const handleEndStream = async () => {
     try {
       tracksRef.current.forEach((track) => {
         if (track) {
-          track.stop();
-          track.close();
+          try {
+            track.stop();
+            track.close();
+          } catch (e) {}
         }
       });
+      tracksRef.current = [];
+
+      if (screenTrackRef.current) {
+        try {
+          screenTrackRef.current.stop();
+          screenTrackRef.current.close();
+        } catch (e) {}
+        screenTrackRef.current = null;
+      }
 
       if (clientRef.current) {
         await clientRef.current.leave();
@@ -433,24 +538,9 @@ const LiveVideo = ({ session, onClose }) => {
       onClose();
     } catch (error) {
       toast.error('Failed to end stream');
+      onClose();
     }
   };
-
-  useEffect(() => {
-  let mounted = true;
-  // ... init code ...
-  return () => {
-    mounted = false;
-    if (clientRef.current) {
-      clientRef.current.leave();
-      tracksRef.current.forEach(track => {
-        track.stop();
-        track.close();
-      });
-    }
-  };
-}, [session]); // Ensure this only runs when session truly changes
-
 
   const toggleCamera = async () => {
     const nextState = !isCameraOn;
@@ -486,35 +576,20 @@ const LiveVideo = ({ session, onClose }) => {
     if (input.trim() && clientRef.current) {
       const messageText = input.trim();
       
-      const messageData = JSON.stringify({
+      sendStreamMsg({
+        type: 'chat',
         sender: 'Teacher',
         text: messageText,
         timestamp: Date.now()
       });
       
-      const encoder = new TextEncoder();
-      const messageBytes = encoder.encode(messageData);
+      setMessages(prev => [...prev, { 
+        sender: 'You (Teacher)', 
+        text: messageText,
+        isLocal: true
+      }]);
       
-      try {
-        if (clientRef.current && clientRef.current.connectionState === 'CONNECTED') {
-          await clientRef.current.sendStreamMessage(messageBytes);
-        }
-        
-        setMessages(prev => [...prev, { 
-          sender: 'You (Teacher)', 
-          text: messageText,
-          isLocal: true
-        }]);
-        
-        setInput('');
-      } catch (error) {
-        setMessages(prev => [...prev, { 
-          sender: 'You (Teacher)', 
-          text: messageText,
-          isLocal: true
-        }]);
-        setInput('');
-      }
+      setInput('');
     }
   };
 
@@ -522,34 +597,41 @@ const LiveVideo = ({ session, onClose }) => {
     try {
       if (isScreenSharing) {
         if (screenTrackRef.current) {
-          await clientRef.current.unpublish(screenTrackRef.current);
-          screenTrackRef.current.stop();
-          screenTrackRef.current.close();
+          try {
+            await clientRef.current.unpublish(screenTrackRef.current);
+            screenTrackRef.current.stop();
+            screenTrackRef.current.close();
+          } catch (e) {}
           screenTrackRef.current = null;
         }
         
-        const videoTrack = tracksRef.current.find(
+        const camVideoTrack = tracksRef.current.find(
           (track) => track && track.trackMediaType === 'video'
         );
-        if (videoTrack) {
-          await clientRef.current.publish(videoTrack);
+        if (camVideoTrack && isCameraOn && clientRef.current) {
+          try {
+            await clientRef.current.publish(camVideoTrack);
+          } catch (pubErr) {}
         }
         
         setIsScreenSharing(false);
         toast.success('Screen sharing stopped');
       } else {
-        const videoTrack = tracksRef.current.find(
-          (track) => track && track.trackMediaType === 'video'
-        );
-        if (videoTrack) {
-          await clientRef.current.unpublish(videoTrack);
-        }
-        
         const screenTrack = await AgoraRTC.createScreenVideoTrack({
           encoderConfig: '1080p_1',
-        });
+        }, 'disable');
+
+        const camVideoTrack = tracksRef.current.find(
+          (track) => track && track.trackMediaType === 'video'
+        );
+        if (camVideoTrack && clientRef.current) {
+          try {
+            await clientRef.current.unpublish(camVideoTrack);
+          } catch (e) {}
+        }
+
         screenTrackRef.current = screenTrack;
- 
+
         screenTrack.on('track-ended', async () => {
           try {
             if (screenTrackRef.current) {
@@ -559,40 +641,48 @@ const LiveVideo = ({ session, onClose }) => {
               screenTrackRef.current = null;
             }
             
-            const videoTrack = tracksRef.current.find(
+            const currentCamTrack = tracksRef.current.find(
               (track) => track && track.trackMediaType === 'video'
             );
-            if (videoTrack) {
-              await clientRef.current.publish(videoTrack);
+            if (currentCamTrack && isCameraOn && clientRef.current) {
+              await clientRef.current.publish(currentCamTrack);
             }
             
             setIsScreenSharing(false);
-            toast.info('Screen sharing ended by user');
-          } catch (err) {
-          }
+            toast.info('Screen sharing ended');
+          } catch (err) {}
         });
-        
-        await clientRef.current.publish(screenTrack);
+
+        if (clientRef.current) {
+          await clientRef.current.publish(screenTrack);
+        }
         setIsScreenSharing(true);
         toast.success('Screen sharing started');
       }
     } catch (error) {
-      if (!isScreenSharing) {
-        const videoTrack = tracksRef.current.find(
-          (track) => track && track.trackMediaType === 'video'
-        );
-        if (videoTrack) {
-          try {
-            await clientRef.current.publish(videoTrack);
-          } catch (pubError) {
-          }
-        }
-      }
-      
-      if (error.message?.includes('CAN_NOT_PUBLISH_MULTIPLE_VIDEO_TRACKS')) {
+      console.warn("Screen share toggle error:", error);
+      setIsScreenSharing(false);
+
+      const isUserCancel = error?.code === 'PERMISSION_DENIED' || 
+                           error?.message?.includes('User canceled') || 
+                           error?.message?.includes('Permission denied') ||
+                           error?.name === 'NotAllowedError';
+
+      if (isUserCancel) {
+        toast.info('Screen sharing was cancelled');
+      } else if (error?.message?.includes('CAN_NOT_PUBLISH_MULTIPLE_VIDEO_TRACKS')) {
         toast.error('Please stop camera first before sharing screen');
       } else {
         toast.error('Failed to start screen share');
+      }
+
+      const camVideoTrack = tracksRef.current.find(
+        (track) => track && track.trackMediaType === 'video'
+      );
+      if (camVideoTrack && isCameraOn && clientRef.current) {
+        try {
+          await clientRef.current.publish(camVideoTrack);
+        } catch (e) {}
       }
     }
   };
@@ -620,21 +710,21 @@ const LiveVideo = ({ session, onClose }) => {
           <div>
             <h2 className="text-xl font-bold text-white">{session.title}</h2>
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-green-400 flex items-center gap-1">
-                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+              <span className="text-green-400 flex items-center gap-1 font-medium">
+                <span className="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse"></span>
                 Live
               </span>
               <span className="text-white/50">|</span>
-              <span className="text-white/70 flex items-center gap-1">
+              <span className="text-white/70 flex items-center gap-1 font-medium">
                 <Users className="w-4 h-4" />
-                {remoteUsersCount} Student{remoteUsersCount !== 1 ? 's' : ''}
+                {remoteUsersCount} Student{remoteUsersCount !== 1 ? 's' : ''} Connected
               </span>
             </div>
           </div>
         </div>
         <button
           onClick={handleEndStream}
-          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 px-6 py-2.5 rounded-lg text-white font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg shadow-red-500/30"
+          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 px-6 py-2.5 rounded-lg text-white font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg shadow-red-500/30 cursor-pointer"
         >
           <X className="w-5 h-5" />
           End Stream
@@ -642,17 +732,11 @@ const LiveVideo = ({ session, onClose }) => {
       </div>
 
       {/* Video Area */}
-      <div className="flex-1 relative flex p-4 gap-4">
-        {/* Remote Videos / Teacher Screen */}
-        <div
-          ref={remoteContainerRef}
-          className={`flex-1 bg-gray-800/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/10 shadow-2xl ${
-            remoteUsersCount > 0 ? 'grid' : 'flex items-center justify-center'
-          }`}
-          style={gridStyle}
-        >
-          {remoteUsersCount === 0 && (
-            <div className="text-center p-8">
+      <div className="flex-1 relative flex p-4 gap-4 overflow-hidden">
+        {/* Student Grid / Waiting State */}
+        <div className="flex-1 bg-gray-800/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/10 shadow-2xl p-4 flex items-center justify-center">
+          {remoteUsersCount === 0 ? (
+            <div className="text-center p-8 flex flex-col items-center justify-center h-full">
               <div className="relative inline-block mb-6">
                 <div className="w-32 h-32 mx-auto bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl shadow-purple-500/50">
                   <Video className="w-16 h-16 text-white" />
@@ -662,46 +746,100 @@ const LiveVideo = ({ session, onClose }) => {
                 </div>
               </div>
               <h3 className="text-2xl font-bold text-white mb-2">Waiting for Students</h3>
-              <p className="text-white/60 text-lg">Students will appear here when they join the class</p>
+              <p className="text-white/60 text-lg">Students will appear here in real time as they join the class</p>
               <div className="mt-6 flex justify-center gap-2">
                 <span className="w-3 h-3 bg-purple-500 rounded-full animate-bounce"></span>
                 <span className="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
                 <span className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
               </div>
             </div>
+          ) : (
+            <div 
+              className={`w-full h-full ${
+                currentPageParticipants.length === 1 
+                  ? 'flex items-center justify-center' 
+                  : 'grid gap-4'
+              }`}
+              style={currentPageParticipants.length === 1 ? {} : gridStyle}
+            >
+              {currentPageParticipants.length === 1 ? (
+                <div className="w-full max-w-4xl h-full max-h-[80vh]">
+                  <StudentVideoTile
+                    participant={currentPageParticipants[0]}
+                    studentName={studentNames[String(currentPageParticipants[0].uid)] || currentPageParticipants[0].name}
+                    onClearHand={clearHandRaise}
+                  />
+                </div>
+              ) : (
+                currentPageParticipants.map((participant) => (
+                  <StudentVideoTile
+                    key={participant.uid}
+                    participant={participant}
+                    studentName={studentNames[String(participant.uid)] || participant.name}
+                    onClearHand={clearHandRaise}
+                  />
+                ))
+              )}
+            </div>
           )}
         </div>
 
-        {/* Local Video (Teacher) - Always visible */}
-        <div className="absolute top-6 right-6 w-72 h-54 bg-gray-800 rounded-xl overflow-hidden shadow-2xl border-2 border-white/20 z-10">
-          {isCameraOn ? (
-            <div ref={localVideoRef} className="w-full h-full" />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-r from-gray-700 to-gray-800 flex items-center justify-center">
-              <div className="text-center">
-                <VideoOff className="w-12 h-12 text-white/50 mx-auto mb-2" />
-                <p className="text-white/50 text-sm">Camera Off</p>
-              </div>
+        {/* Local Video (Teacher Preview) - DRAGGABLE WINDOW */}
+        <div 
+          style={{ 
+            position: 'fixed',
+            left: `${pipPos.x}px`,
+            top: `${pipPos.y}px`,
+            touchAction: 'none'
+          }}
+          className={`w-72 h-52 bg-gray-800 rounded-xl overflow-hidden shadow-2xl border-2 border-white/20 z-30 transition-shadow ${
+            isDraggingPip ? 'shadow-purple-500/50 ring-2 ring-purple-400' : 'hover:border-purple-400/60'
+          }`}
+        >
+          {/* Drag Handle Header */}
+          <div 
+            onMouseDown={handlePipMouseDown}
+            onTouchStart={handlePipTouchStart}
+            className="absolute top-0 left-0 right-0 h-7 bg-black/70 backdrop-blur-md z-20 flex items-center justify-between px-2 cursor-grab active:cursor-grabbing select-none border-b border-white/10"
+            title="Click and drag to move preview window anywhere"
+          >
+            <div className="flex items-center gap-1.5 text-white/80 text-xs font-semibold">
+              <GripHorizontal className="w-4 h-4 text-purple-400" />
+              <span>Drag Preview</span>
             </div>
-          )}
-          <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-sm px-3 py-1.5 rounded-full flex items-center gap-2">
-            {isMicOn ? <Mic className="w-3 h-3" /> : <MicOff className="w-3 h-3 text-red-400" />}
-            You (Teacher)
+            <span className="text-[10px] bg-purple-500/30 text-purple-300 px-1.5 py-0.5 rounded font-mono">You</span>
           </div>
-          {!isCameraOn && (
-            <div className="absolute top-2 right-2 bg-red-500 p-1.5 rounded-full">
-              <VideoOff className="w-3 h-3 text-white" />
+
+          <div className="w-full h-full pt-7 relative">
+            {isCameraOn ? (
+              <div ref={localVideoRef} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-r from-gray-700 to-gray-800 flex items-center justify-center">
+                <div className="text-center">
+                  <VideoOff className="w-10 h-10 text-white/50 mx-auto mb-1" />
+                  <p className="text-white/50 text-xs">Camera Off</p>
+                </div>
+              </div>
+            )}
+            <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5 z-10 border border-white/10">
+              {isMicOn ? <Mic className="w-3.5 h-3.5 text-green-400" /> : <MicOff className="w-3.5 h-3.5 text-red-400" />}
+              <span>You (Teacher)</span>
             </div>
-          )}
+            {!isCameraOn && (
+              <div className="absolute top-9 right-2 bg-red-500 p-1.5 rounded-full z-10">
+                <VideoOff className="w-3.5 h-3.5 text-white" />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Chat Panel */}
         {showChat && (
-          <div className="absolute bottom-24 right-6 w-96 h-96 bg-gray-800/95 backdrop-blur-md rounded-2xl flex flex-col border border-white/10 shadow-2xl z-20">
+          <div className="absolute bottom-24 right-8 w-96 h-96 bg-gray-800/95 backdrop-blur-md rounded-2xl flex flex-col border border-white/10 shadow-2xl z-20">
             <div className="p-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-2xl flex justify-between items-center">
               <span className="font-semibold flex items-center gap-2">
                 <MessageCircle className="w-5 h-5" />
-                Chat
+                Live Chat
               </span>
               <button 
                 onClick={() => setShowChat(false)} 
@@ -738,7 +876,7 @@ const LiveVideo = ({ session, onClose }) => {
                 />
                 <button 
                   onClick={sendMessage} 
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-5 py-3 rounded-xl text-white font-semibold transition-all"
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-5 py-3 rounded-xl text-white font-semibold transition-all cursor-pointer"
                 >
                   Send
                 </button>
@@ -752,7 +890,7 @@ const LiveVideo = ({ session, onClose }) => {
       {totalPages > 1 && (
         <div className="px-6 py-4 bg-black/30 backdrop-blur-md border-t border-white/10">
           <div className="flex justify-between items-center">
-            <div className="text-white/70">
+            <div className="text-white/70 text-sm">
               Showing {startIndex + 1}-{Math.min(endIndex, remoteUsersCount)} of {remoteUsersCount} students
             </div>
             <Pagination
@@ -772,7 +910,7 @@ const LiveVideo = ({ session, onClose }) => {
             isCameraOn 
               ? 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600' 
               : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
-          } text-white shadow-lg`}
+          } text-white shadow-lg cursor-pointer`}
         >
           {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
           {isCameraOn ? 'Camera' : 'Camera Off'}
@@ -784,7 +922,7 @@ const LiveVideo = ({ session, onClose }) => {
             isMicOn 
               ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600' 
               : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
-          } text-white shadow-lg`}
+          } text-white shadow-lg cursor-pointer`}
         >
           {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
           {isMicOn ? 'Mic' : 'Mic Off'}
@@ -792,7 +930,7 @@ const LiveVideo = ({ session, onClose }) => {
 
         <button
           onClick={() => setShowChat(!showChat)}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-6 py-3 rounded-xl text-white font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg"
+          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-6 py-3 rounded-xl text-white font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg cursor-pointer"
         >
           <MessageCircle className="w-5 h-5" />
           Chat
@@ -805,7 +943,7 @@ const LiveVideo = ({ session, onClose }) => {
 
         <button
           onClick={toggleScreenShare}
-          className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg ${
+          className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg cursor-pointer ${
             isScreenSharing 
               ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700' 
               : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600'

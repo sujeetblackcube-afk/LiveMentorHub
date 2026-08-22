@@ -16,6 +16,7 @@ import LiveVideo from "./LiveVideo";
 import { getImageUrl, DEFAULT_BANNER_IMAGE } from "../../utils/image";
 import Pagination from "../../components/Pagination";
 import ClassCreationModal from "./ClassCreationModal";
+import { FileUploadZone } from "../../components/FileUploadZone";
 
 const Classes = () => {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ const Classes = () => {
   const [liveSession, setLiveSession] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingSession, setEditingSession] = useState(null);
+  const [editThumbnail, setEditThumbnail] = useState(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   
   const [editForm, setEditForm] = useState({
@@ -139,112 +141,100 @@ const Classes = () => {
       } catch (error) {
       }
     };
-
     if (user?.teacherId) {
       fetchCourses();
     }
   }, [user]);
 
-  useEffect(() => {
-    const fetchSessions = async () => {
-      setLoading(true);
-      try {
-        const data = await getTeacherLiveSessions(user.teacherId, {
-          status: activeTab,
-          page: currentPage,
-          limit: itemsPerPage,
-        });
-        setSessions(data.data || []);
-        setFilteredSessions(data.data || []);
-        if (data.pagination) {
-          setTotalPages(data.pagination.totalPages || 1);
-        }
-      } catch (error) {
-        toast.error("Failed to fetch sessions");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user?.teacherId) fetchSessions();
-  }, [user, activeTab, currentPage]);
-
-  useEffect(() => {
-    if (activeTab === "completed") {
-      const filtered = sessions.filter(
-        (s) =>
-          s.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.courseName?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredSessions(filtered);
-    } else {
-      setFilteredSessions(sessions);
-    }
-  }, [searchTerm, sessions, activeTab]);
-
-  const refreshSessions = async () => {
-    const data = await getTeacherLiveSessions(user.teacherId, {
-      status: activeTab,
-    });
-    setSessions(data.data || []);
-    setFilteredSessions(data.data || []);
-  };
-
-  const formatDate = (isoString) => {
-    if (!isoString) return "N/A";
-    const d = new Date(isoString);
-    if (isNaN(d.getTime())) return isoString;
-    return d.toLocaleDateString("en-IN", {
+  // Format date helper
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
-    });
-  };
-
-  const formatTime = (isoString) => {
-    if (!isoString) return "N/A";
-    const d = new Date(isoString);
-    if (isNaN(d.getTime())) return isoString;
-    return d.toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
     });
   };
 
-  const formatDateTime = (isoString) => {
-    if (!isoString) return "N/A";
-    return `${formatDate(isoString)}, ${formatTime(isoString)}`;
+  // Fetch live sessions
+  const refreshSessions = async () => {
+    if (!user || !user.teacherId) return;
+    setLoading(true);
+
+    try {
+      const data = await getTeacherLiveSessions(user.teacherId);
+      const rawList = data?.data || data?.sessions || (Array.isArray(data) ? data : []);
+      const sessionList = Array.isArray(rawList) ? rawList : (rawList?.data || []);
+
+      // Filter based on active tab
+      const currentTabSessions = sessionList.filter((session) => {
+        return session.status === activeTab;
+      });
+
+      setSessions(currentTabSessions);
+    } catch {
+      toast.error("Failed to load live sessions");
+      setSessions([]);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    refreshSessions();
+  }, [user, activeTab]);
+
+  // Filter based on search term
+  useEffect(() => {
+    let result = sessions;
+
+    if (searchTerm.trim() !== "") {
+      result = result.filter(
+        (session) =>
+          session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          session.courseName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setFilteredSessions(result);
+    setTotalPages(Math.ceil(result.length / itemsPerPage) || 1);
+  }, [sessions, searchTerm]);
 
   return (
     <div
-      className="h-screen flex flex-col relative"
-      style={{ backgroundColor: theme.colors.background }}
+      className="min-h-screen flex flex-col"
+      style={{
+        backgroundColor: theme.colors.background,
+        color: theme.colors.textPrimary,
+      }}
     >
-      {/* ================= HEADER (FIXED) ================= */}
+      {/* ================= STICKY HEADER SECTION ================= */}
       <div
-        className="sticky top-0 z-40 border-b"
+        className="sticky top-0 z-10 px-6 py-6 transition-all duration-300"
         style={{
-          background: theme.gradients.secondary,
-          borderColor: theme.colors.border,
+          backgroundColor: theme.colors.background,
+          borderBottom: `1px solid ${theme.colors.border}`,
+          boxShadow: `0 4px 12px ${theme.colors.shadow}`,
         }}
       >
-        <div className="p-5">
-          <div className="flex justify-center items-center relative">
-            <h1
-              className="text-3xl font-bold text-center"
-              style={{
-                background: theme.gradients.primary,
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              Classes
-            </h1>
-          </div>
+        <div className="max-w-7xl mx-auto text-center">
+          <h1
+            className="text-4xl font-extrabold tracking-tight mb-6"
+            style={{
+              background: theme.gradients.primary,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            Classes
+          </h1>
 
-          <div className="mt-6 flex justify-center gap-3 flex-wrap">
+          {/* TABS */}
+          <div className="flex justify-center gap-3 flex-wrap">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -252,7 +242,7 @@ const Classes = () => {
                   setActiveTab(tab.id);
                   setSearchTerm("");
                 }}
-                className="px-5 py-2 rounded-full text-sm font-medium transition-all duration-300"
+                className="px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 cursor-pointer"
                 style={{
                   background:
                     activeTab === tab.id
@@ -310,52 +300,72 @@ const Classes = () => {
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredSessions.map((session) => (
               <div
-                key={session.id}
-                className="rounded-2xl p-5 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+                key={session.id || session.sessionId}
+                className="rounded-2xl p-5 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl flex flex-col justify-between"
                 style={{
                   background: theme.gradients.card,
                   border: `1px solid ${theme.colors.border}`,
                   boxShadow: `0 8px 20px ${theme.colors.shadow}`,
                 }}
               >
-                <img
-                  src={getImageUrl(session.thumbnailUrl || session.thumbnail || session.image)}
-                  alt={session.title || "Class"}
-                  className="w-full h-40 object-cover rounded-xl mb-4"
-                  onError={(e) => {
-                    e.target.src = DEFAULT_BANNER_IMAGE;
-                  }}
-                />
+                <div>
+                  <img
+                    src={getImageUrl(session.thumbnailUrl || session.thumbnail || session.image)}
+                    alt={session.title || "Class"}
+                    className="w-full h-40 object-cover rounded-xl mb-4"
+                    onError={(e) => {
+                      e.target.src = DEFAULT_BANNER_IMAGE;
+                    }}
+                  />
 
-                <h2
-                  className="text-lg font-semibold mb-2"
-                  style={{ color: theme.colors.textPrimary }}
-                >
-                  {session.title}
-                </h2>
+                  <h2
+                    className="text-lg font-semibold mb-2"
+                    style={{ color: theme.colors.textPrimary }}
+                  >
+                    {session.title}
+                  </h2>
 
-                <p
-                  className="text-sm mb-3 line-clamp-2"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  {session.description}
-                </p>
+                  <p
+                    className="text-sm mb-3 line-clamp-2"
+                    style={{ color: theme.colors.textSecondary }}
+                  >
+                    {session.description}
+                  </p>
 
-                <div className="text-xs space-y-1 mb-3">
-                  <p style={{ color: theme.colors.primary }}>
-                    {session.courseName}
-                  </p>
-                  <p style={{ color: theme.colors.textSecondary }}>
-                    {formatDateTime(session.startTime)}
-                  </p>
-                  <p style={{ color: theme.colors.textSecondary }}>
-                    End: {formatDateTime(session.endTime)}
-                  </p>
+                  <div className="text-xs space-y-1 mb-3">
+                    <p style={{ color: theme.colors.primary }}>
+                      {session.courseName}
+                    </p>
+                    <p style={{ color: theme.colors.textSecondary }}>
+                      {formatDateTime(session.startTime)}
+                    </p>
+                    <p style={{ color: theme.colors.textSecondary }}>
+                      End: {formatDateTime(session.endTime)}
+                    </p>
+                  </div>
                 </div>
 
-                {(activeTab === "upcoming" ||
-                  activeTab === "ongoing") && (
-                  <div className="flex gap-2">
+                {(activeTab === "upcoming" || activeTab === "ongoing") && (
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => {
+                        setEditingSession(session);
+                        setEditThumbnail(null);
+                        setEditForm({
+                          courseCode: session.courseCode || "",
+                          title: session.title || "",
+                          description: session.description || "",
+                          startTime: session.startTime ? new Date(session.startTime).toISOString().slice(0, 16) : "",
+                          endTime: session.endTime ? new Date(session.endTime).toISOString().slice(0, 16) : "",
+                          maxParticipants: session.maxParticipants || 100,
+                          isPrivate: Boolean(session.isPrivate),
+                        });
+                      }}
+                      className="px-3 py-2 rounded-lg text-white text-xs font-semibold bg-blue-600 hover:bg-blue-700 transition-colors cursor-pointer"
+                    >
+                      Edit
+                    </button>
+
                     <button
                       onClick={() => {
                         if (window.confirm(`Are you sure you want to delete "${session.title}"?`)) {
@@ -368,12 +378,12 @@ const Classes = () => {
                                 toast.error(result.message || "Failed to delete session");
                               }
                             })
-                            .catch((error) => {
+                            .catch(() => {
                               toast.error("Failed to delete session");
                             });
                         }
                       }}
-                      className="flex-1 py-2 rounded-lg text-white text-sm"
+                      className="px-3 py-2 rounded-lg text-white text-xs font-semibold cursor-pointer"
                       style={{ background: theme.colors.danger || '#dc2626' }}
                     >
                       Delete
@@ -382,20 +392,16 @@ const Classes = () => {
                     <button
                       onClick={async () => {
                         try {
-                          const stream =
-                            await navigator.mediaDevices.getUserMedia({
-                              video: true,
-                              audio: true,
-                            });
-                          stream
-                            .getTracks()
-                            .forEach((track) => track.stop());
+                          const stream = await navigator.mediaDevices.getUserMedia({
+                            video: true,
+                            audio: true,
+                          });
+                          stream.getTracks().forEach((track) => track.stop());
 
-                          const response =
-                            await startLiveSession(
-                              session.sessionId,
-                              user.teacherId
-                            );
+                          const response = await startLiveSession(
+                            session.sessionId,
+                            user.teacherId
+                          );
 
                           setLiveSession({
                             ...session,
@@ -405,17 +411,13 @@ const Classes = () => {
                             uid: response.uid,
                           });
                         } catch {
-                          toast.error(
-                            "Failed to start live session"
-                          );
+                          toast.error("Failed to start live session");
                         }
                       }}
-                      className="flex-1 py-2 rounded-lg text-white text-sm"
+                      className="flex-1 py-2 rounded-lg text-white text-xs font-semibold cursor-pointer"
                       style={{ background: theme.colors.success }}
                     >
-                      {activeTab === "ongoing"
-                        ? "Join"
-                        : "Go Live"}
+                      {activeTab === "ongoing" ? "Join" : "Go Live"}
                     </button>
                   </div>
                 )}
@@ -429,7 +431,7 @@ const Classes = () => {
 
       <button
         onClick={() => setIsScheduleModalOpen(true)}
-        className="fixed bottom-15 right-15 z-50 px-6 py-3.5 rounded-full font-bold text-white shadow-2xl transition-all duration-300 hover:scale-105 flex items-center gap-2"
+        className="fixed bottom-15 right-15 z-40 px-6 py-3.5 rounded-full font-bold text-white shadow-2xl transition-all duration-300 hover:scale-105 flex items-center gap-2 cursor-pointer"
         style={{ 
           background: theme.gradients.primary || '#3b82f6',
           boxShadow: `0 10px 25px ${theme.colors.shadow || 'rgba(0,0,0,0.3)'}`
@@ -464,17 +466,17 @@ const Classes = () => {
 
       {editingSession && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+          <div className="bg-white p-6 rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
             <h2 className="text-xl font-bold mb-4">Edit Session</h2>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
                 
-                if (new Date(editForm.startTime) < new Date()) {
+                if (editForm.startTime && new Date(editForm.startTime) < new Date()) {
                   toast.error("Start time cannot be in the past");
                   return;
                 }
-                if (new Date(editForm.endTime) <= new Date(editForm.startTime)) {
+                if (editForm.startTime && editForm.endTime && new Date(editForm.endTime) <= new Date(editForm.startTime)) {
                   toast.error("End time must be after start time");
                   return;
                 }
@@ -486,42 +488,57 @@ const Classes = () => {
                       formData.append(key, editForm[key]);
                     }
                   });
-                  await updateLiveSession(editingSession.sessionId, formData);
-                  toast.success("Session updated successfully");
-                  setEditingSession(null);
-                  refreshSessions();
+                  if (editThumbnail) {
+                    formData.append("thumbnail", editThumbnail);
+                  }
+                  const res = await updateLiveSession(editingSession.sessionId, formData);
+                  if (res && res.success !== false) {
+                    toast.success("Session updated successfully");
+                    setEditingSession(null);
+                    setEditThumbnail(null);
+                    refreshSessions();
+                  } else {
+                    toast.error(res?.message || "Failed to update session");
+                  }
                 } catch (error) {
                   toast.error("Failed to update session");
                 }
               }}
             >
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Title</label>
+                <label className="block text-sm font-medium mb-1">Title *</label>
                 <input
                   type="text"
                   value={editForm.title}
                   onChange={(e) =>
                     setEditForm({ ...editForm, title: e.target.value })
                   }
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border rounded text-sm"
+                  required
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Description
-                </label>
+                <label className="block text-sm font-medium mb-1">Description</label>
                 <textarea
                   value={editForm.description}
                   onChange={(e) =>
                     setEditForm({ ...editForm, description: e.target.value })
                   }
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border rounded text-sm"
                 />
               </div>
+
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Start Time
-                </label>
+                <FileUploadZone
+                  label="Change Thumbnail Image"
+                  accept="image/*"
+                  onFileSelect={(f) => setEditThumbnail(f)}
+                  currentUrl={editingSession.thumbnailUrl}
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">Start Time *</label>
                 <input
                   type="datetime-local"
                   min={new Date().toISOString().slice(0, 16)}
@@ -529,13 +546,12 @@ const Classes = () => {
                   onChange={(e) =>
                     setEditForm({ ...editForm, startTime: e.target.value })
                   }
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border rounded text-sm"
+                  required
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  End Time
-                </label>
+                <label className="block text-sm font-medium mb-1">End Time *</label>
                 <input
                   type="datetime-local"
                   min={editForm.startTime || new Date().toISOString().slice(0, 16)}
@@ -543,11 +559,12 @@ const Classes = () => {
                   onChange={(e) =>
                     setEditForm({ ...editForm, endTime: e.target.value })
                   }
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border rounded text-sm"
+                  required
                 />
               </div>
               <div className="mb-4">
-                <label className="flex items-center">
+                <label className="flex items-center text-sm font-medium">
                   <input
                     type="checkbox"
                     checked={editForm.isPrivate}
@@ -556,22 +573,25 @@ const Classes = () => {
                     }
                     className="mr-2"
                   />
-                  Private
+                  Private Session
                 </label>
               </div>
               <div className="flex justify-end space-x-2">
                 <button
                   type="button"
-                  onClick={() => setEditingSession(null)}
-                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                  onClick={() => {
+                    setEditingSession(null);
+                    setEditThumbnail(null);
+                  }}
+                  className="px-4 py-2 border rounded text-sm font-medium hover:bg-slate-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm font-medium"
                 >
-                  Update
+                  Update Session
                 </button>
               </div>
             </form>

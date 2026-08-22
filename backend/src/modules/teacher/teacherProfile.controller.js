@@ -483,8 +483,10 @@ export const getTeacherLiveSessions = async (req, res) => {
       const paginatedResult = await getPaginatedData(Livesession, queryOptions, page || 1, limit || 10);
       return res.status(200).json({
         status: true,
+        success: true,
         message: 'Live sessions fetched successfully',
         data: paginatedResult.data,
+        sessions: paginatedResult.data,
         pagination: {
           totalItems: paginatedResult.totalItems,
           totalPages: paginatedResult.totalPages,
@@ -497,8 +499,10 @@ export const getTeacherLiveSessions = async (req, res) => {
     const liveSessions = await Livesession.findAll(queryOptions);
     return res.status(200).json({
       status: true,
+      success: true,
       message: 'Live sessions fetched successfully',
       data: liveSessions,
+      sessions: liveSessions,
     });
   } catch (error) {
     console.error(error);

@@ -118,7 +118,7 @@ const createSingleSession = async (sessionData, course, teacher, thumbnailPath) 
     teacherName: teacher.name,
     title,
     description,
-    thumbnailUrl: thumbnailPath,
+    thumbnailUrl: thumbnailPath || course.thumbnailUrl || course.thumbnail || null,
     startTime: utcStartTime,
     endTime: utcEndTime,
     status,
